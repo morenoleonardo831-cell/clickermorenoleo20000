@@ -1,0 +1,236 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Imperio do Clique</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <section class="hud glass">
+      <div class="game-logo">Imperio do Clique</div>
+      <div class="money" id="money">R$ 0,00</div>
+      <div class="progress-wrap"><div class="progress-bar" id="monthBar"></div></div>
+      <div class="subline">
+        <span id="dateLine">Ano 1 • Mes 1</span>
+        <span id="countdown">Prox. mes em 30s</span>
+      </div>
+      <div class="subline">
+        <span id="clickLine">Valor por clique: R$ 10,00</span>
+        <span id="incomeLine">Renda mensal empresas: R$ 0,00</span>
+      </div>
+      <div class="subline">
+        <span id="econLine">Economia: inflacao 4.0% | juros 9.0% | confianca 100%</span>
+        <span id="expenseLine">Custos operacionais: R$ 0,00/mes</span>
+      </div>
+      <button class="btn alt skip-month-btn" id="skipMonthBtn">Pular para proximo mes</button>
+    </section>
+
+    <section class="tabs glass">
+      <button class="tab-btn active" data-tab="jogo">Jogo</button>
+      <button class="tab-btn" data-tab="empresas">Empresas</button>
+      <button class="tab-btn" data-tab="participacoes">Participacoes</button>
+      <button class="tab-btn" data-tab="loja">Loja</button>
+      <button class="tab-btn" data-tab="avioes">Avioes</button>
+      <button class="tab-btn" data-tab="viagens">Viagens</button>
+      <button class="tab-btn" data-tab="passaporte">Passaporte</button>
+      <button class="tab-btn" data-tab="perfil">Perfil</button>
+      <button class="tab-btn" data-tab="banco">Banco</button>
+      <button class="tab-btn" data-tab="ranking">Ranking</button>
+      <button class="tab-btn" data-tab="reset">Reset</button>
+      <button class="tab-btn" data-tab="dados">Dados</button>
+    </section>
+
+    <section class="panel active glass" id="tab-jogo">
+      <div class="click-area">
+        <button class="click-btn" id="clickBtn">CLICAR (+R$ 10,00)</button>
+        <div class="float-gain" id="floatGain">+R$ 10,00</div>
+      </div>
+      <div class="title">Prestigio</div>
+      <div class="mini">Reseta progresso de dinheiro/empresas/upgrades e concede bonus permanente de renda.</div>
+      <div class="row"><span>Bônus atual:</span><strong id="prestigeBonusText">x1.00</strong></div>
+      <button class="btn alt" id="prestigeBtn">Fazer prestigio</button>
+      <div class="row">
+        <span>Receita do mes atual:</span>
+        <strong id="monthRevenue">R$ 0,00</strong>
+      </div>
+      <div class="title">Contratos especiais</div>
+      <div class="mini">Projetos de prazo curto com investimento e recompensa no fechamento.</div>
+      <button class="btn" id="refreshContractsBtn">Atualizar ofertas de contrato</button>
+      <div class="list" id="contractList"></div>
+      <div class="title">Upgrades de clique</div>
+      <div class="list" id="upgradeList"></div>
+      <div class="title">Eventos</div>
+      <div class="log" id="eventLog"></div>
+    </section>
+
+    <section class="panel glass" id="tab-empresas">
+      <div class="title">Mercado de empresas</div>
+      <div class="mini">Compre unidades e faca upgrade de cada empresa para aumentar a renda mensal.</div>
+      <div class="mini" id="workforceLine">Funcionarios: 0 | Folha: R$ 0,00/mes</div>
+      <div class="list" id="companyList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-participacoes">
+      <div class="title">Participacoes em empresas reais</div>
+      <div class="mini">Compre e venda % de empresas. Com 51% voce vira socio majoritario. Com 100% vira dono total.</div>
+      <div class="row"><span>Resumo:</span><strong id="participationSummary">Sem participacoes no momento.</strong></div>
+      <div class="list" id="participationList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-loja">
+      <div class="title">Loja de carros</div>
+      <div class="mini">Compre carros reais, acompanhe quilometragem e venda antes de quebrar.</div>
+      <div class="row"><span>Garagem:</span><strong id="garageSummary">0 carros | Valor R$ 0,00 | IPVA anual R$ 0,00</strong></div>
+      <div class="title">Carros disponiveis</div>
+      <div class="list" id="carShopList"></div>
+      <div class="title">Minha garagem</div>
+      <div class="list" id="garageList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-avioes">
+      <div class="title">Mercado de avioes privados</div>
+      <div class="mini">Compra em USD. Imposto anual em USD (5%), hangar e tripulacao acumulados para pagar no fim do ano.</div>
+      <div class="row"><span>Frota:</span><strong id="aircraftSummary">0 avioes | Valor US$ 0,00</strong></div>
+      <div class="row"><span>Custos anuais em USD:</span><strong id="aircraftAnnualDue">US$ 0,00</strong></div>
+      <div class="row"><span>Divida aeronautica USD:</span><strong id="aircraftDebtUsd">US$ 0,00</strong></div>
+      <div class="title">Avioes disponiveis (luxo privado)</div>
+      <div class="list" id="aircraftShopList"></div>
+      <div class="title">Minha frota</div>
+      <div class="list" id="aircraftFleetList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-viagens">
+      <div class="title">Viagens privadas</div>
+      <div class="mini">Rotas reais saindo de Sao Paulo. A viagem usa um aviao da sua frota e debita custo em BRL da conta pessoal.</div>
+      <div class="row"><span>Aviao selecionado:</span><strong id="travelAircraftInfo">Sem aviao</strong></div>
+      <select id="travelAircraftSelect"></select>
+      <div class="mini" id="travelStats">Sem viagens realizadas.</div>
+      <div class="title">Rotas disponiveis</div>
+      <div class="list" id="routeList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-passaporte">
+      <div class="title">Passaporte de viagens</div>
+      <div class="mini" id="passportSummary">Nenhum pais visitado ainda.</div>
+      <div class="list" id="passportList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-perfil">
+      <div class="title">Criacao de personagem</div>
+      <input id="nameInput" maxlength="28" placeholder="Nome" />
+      <input id="ageInput" type="number" min="8" max="120" placeholder="Idade" />
+      <input id="phoneInput" maxlength="20" placeholder="Telefone (ex: 11999990000)" />
+      <button class="btn" id="saveProfileBtn">Salvar personagem</button>
+      <div class="mini" id="profilePreview"></div>
+
+      <div class="title">Estatisticas</div>
+      <div class="row"><span>Nivel:</span><strong id="statLevel">1</strong></div>
+      <div class="row"><span>XP:</span><strong id="statXp">0 / 100</strong></div>
+      <div class="row"><span>Multiplicador:</span><strong id="statMultiplier">x1.00</strong></div>
+      <div class="row"><span>Prestigio:</span><strong id="statPrestige">0</strong></div>
+      <div class="row"><span>Reputacao:</span><strong id="statReputation">50</strong></div>
+      <div class="row"><span>Patrimonio:</span><strong id="statWealth">R$ 0,00</strong></div>
+      <div class="row"><span>Total cliques:</span><strong id="statClicks">0</strong></div>
+      <div class="row"><span>Receita por clique:</span><strong id="statClickIncome">R$ 0,00</strong></div>
+      <div class="row"><span>Receita por empresas:</span><strong id="statCompanyIncome">R$ 0,00</strong></div>
+      <div class="row"><span>Total em impostos:</span><strong id="statTaxPaid">R$ 0,00</strong></div>
+      <div class="row"><span>Juros pagos:</span><strong id="statInterestPaid">R$ 0,00</strong></div>
+      <div class="row"><span>Folha salarial:</span><strong id="statPayrollPaid">R$ 0,00</strong></div>
+      <div class="row"><span>Receita em contratos:</span><strong id="statContractRevenue">R$ 0,00</strong></div>
+      <div class="row"><span>Custos operacionais:</span><strong id="statOpsCost">R$ 0,00</strong></div>
+      <div class="row"><span>Maior saldo:</span><strong id="statPeak">R$ 0,00</strong></div>
+      <div class="title">Conquistas</div>
+      <div class="ach-list" id="achievementList"></div>
+      <div class="title">Missoes diarias</div>
+      <div class="mini" id="dailyInfo">Renova automaticamente uma vez por dia.</div>
+      <div class="ach-list" id="dailyMissionList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-dados">
+      <div class="title">Salvar e recuperar</div>
+      <div class="mini">O save local usa telefone como chave. Para outro dispositivo, use o codigo de backup.</div>
+      <button class="btn" id="saveLocalBtn">Salvar local por telefone</button>
+      <button class="btn alt" id="loadLocalBtn">Recuperar local por telefone</button>
+      <button class="btn" id="exportBtn">Gerar codigo de backup</button>
+      <textarea id="backupCode" placeholder="Cole aqui o codigo para recuperar em outro dispositivo"></textarea>
+      <button class="btn alt" id="importBtn">Importar backup</button>
+      <div class="mini" id="statusMsg"></div>
+      <div class="title">Ranking local por telefone</div>
+      <button class="btn" id="refreshRankingBtn">Atualizar ranking</button>
+      <div class="ranking-list" id="rankingList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-banco">
+      <div class="title">Banco central</div>
+      <div class="mini">Resumo financeiro essencial e conta global de cambio.</div>
+      <div class="row"><span>Saldo BRL:</span><strong id="bankCash">R$ 0,00</strong></div>
+      <div class="row"><span>Divida fiscal acumulada:</span><strong id="bankTaxDebt">R$ 0,00</strong></div>
+      <div class="title">Emprestimo</div>
+      <div class="mini" id="loanStatus">Sem emprestimo ativo.</div>
+      <div class="btn-row">
+        <button class="btn" id="loanSmallBtn">Emprestimo pequeno</button>
+        <button class="btn" id="loanMediumBtn">Emprestimo medio</button>
+      </div>
+      <button class="btn alt" id="loanLargeBtn">Emprestimo grande</button>
+      <div class="title">Conta global (cambio)</div>
+      <div class="mini">USD varia de R$ 4,90 a R$ 7,10. EUR varia de R$ 6,70 a R$ 7,80. Taxa atualiza a cada mes.</div>
+      <div class="row"><span>Dolar (USD):</span><strong id="usdRate">R$ 0,00</strong></div>
+      <div class="row"><span>Saldo USD:</span><strong id="usdWallet">$ 0,00</strong></div>
+      <div class="row"><span>Valor em BRL (USD):</span><strong id="usdWalletBrl">R$ 0,00</strong></div>
+      <input id="usdBuyInput" type="number" min="1" step="1" placeholder="Quanto em BRL investir em USD" />
+      <div class="btn-row">
+        <button class="btn" id="usdBuyBtn">Comprar USD</button>
+        <button class="btn alt" id="usdSellAllBtn">Vender todo USD</button>
+      </div>
+      <div class="row"><span>Euro (EUR):</span><strong id="eurRate">R$ 0,00</strong></div>
+      <div class="row"><span>Saldo EUR:</span><strong id="eurWallet">€ 0,00</strong></div>
+      <div class="row"><span>Valor em BRL (EUR):</span><strong id="eurWalletBrl">R$ 0,00</strong></div>
+      <input id="eurBuyInput" type="number" min="1" step="1" placeholder="Quanto em BRL investir em EUR" />
+      <div class="btn-row">
+        <button class="btn" id="eurBuyBtn">Comprar EUR</button>
+        <button class="btn alt" id="eurSellAllBtn">Vender todo EUR</button>
+      </div>
+      <div class="row"><span>Total conta global (BRL):</span><strong id="fxTotalBrl">R$ 0,00</strong></div>
+      <div class="title">P&D (Pesquisa)</div>
+      <div class="mini">Investimentos permanentes para reduzir custos e aumentar desempenho.</div>
+      <div class="row"><span>Automacao:</span><strong id="researchAutomation">Nv. 0</strong></div>
+      <button class="btn" id="researchAutomationBtn">Investir em automacao</button>
+      <div class="row"><span>Gestao de pessoas:</span><strong id="researchHr">Nv. 0</strong></div>
+      <button class="btn" id="researchHrBtn">Investir em RH</button>
+      <div class="row"><span>Marca e reputacao:</span><strong id="researchBranding">Nv. 0</strong></div>
+      <button class="btn" id="researchBrandingBtn">Investir em marca</button>
+    </section>
+
+    <section class="panel glass" id="tab-reset">
+      <div class="title">Resetar personagem</div>
+      <div class="mini">Apaga apenas nome, idade e telefone. Seu progresso financeiro e empresas continuam.</div>
+      <button class="btn alt" id="resetCharacterBtn">Resetar dados do personagem</button>
+    </section>
+
+    <section class="panel glass" id="tab-ranking">
+      <div class="title">Top 5 mais ricos do mundo</div>
+      <div class="mini" id="worldRankingInfo">Base Forbes 2025 (valores em USD convertidos para BRL pela taxa do jogo).</div>
+      <div class="ranking-list" id="worldRankingList"></div>
+    </section>
+  </div>
+
+  <div class="tax-overlay" id="taxOverlay">
+    <div class="tax-dialog glass">
+      <div class="title">Fechamento anual</div>
+      <div class="mini">Fim do mes 12. Voce deseja quitar os impostos agora?</div>
+      <div class="tax-due" id="taxDueText">Total devido: R$ 0,00</div>
+      <div class="btn-row">
+        <button class="btn" id="taxPayNowBtn">Pagar imposto agora</button>
+        <button class="btn alt" id="taxPayLaterBtn">Deixar para o proximo mes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./game.js"></script>
+</body>
+</html>

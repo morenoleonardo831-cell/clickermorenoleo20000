@@ -1,0 +1,2810 @@
+﻿const MONTH_SECONDS = 30;
+const RANKING_KEY = "imperio_clicker_ranking_v1";
+
+const upgrades = [
+  { id: "mouse", nome: "Mouse turbo", baseCost: 120, add: 8, level: 0 },
+  { id: "teclado", nome: "Teclado rapido", baseCost: 800, add: 40, level: 0 },
+  { id: "studio", nome: "Studio digital", baseCost: 4500, add: 180, level: 0 },
+  { id: "agencia", nome: "Agencia de cliques", baseCost: 18000, add: 700, level: 0 },
+  { id: "ia", nome: "Automacao IA", baseCost: 72000, add: 2800, level: 0 }
+];
+
+const companies = [
+  { id: "quiosque", nome: "Quiosque", setor: "Varejo", baseCost: 900, baseIncome: 140, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "cafeteria", nome: "Cafeteria", setor: "Alimentos", baseCost: 4200, baseIncome: 720, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "mercado", nome: "Mini mercado", setor: "Varejo", baseCost: 15000, baseIncome: 2800, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "academia", nome: "Academia", setor: "Servicos", baseCost: 26000, baseIncome: 4200, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "agencia_marketing", nome: "Agencia de marketing", setor: "Digital", baseCost: 44000, baseIncome: 7600, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "startup", nome: "Startup", setor: "Tecnologia", baseCost: 70000, baseIncome: 11800, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fabrica", nome: "Fabrica", setor: "Industria", baseCost: 190000, baseIncome: 37000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "rede_hoteis", nome: "Rede de hoteis", setor: "Turismo", baseCost: 380000, baseIncome: 76000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fintech", nome: "Fintech", setor: "Financeiro", baseCost: 760000, baseIncome: 155000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 1800000, baseIncome: 390000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
+];
+
+const participationCatalog = [
+  { id: "petrobras", nome: "Petrobras", ticker: "PETR4", setor: "Energia", baseValuation: 7800000, growthAnnual: 0.1, volatility: 0.028, payoutAnnual: 0.09 },
+  { id: "vale", nome: "Vale", ticker: "VALE3", setor: "Mineracao", baseValuation: 5600000, growthAnnual: 0.08, volatility: 0.024, payoutAnnual: 0.08 },
+  { id: "itau", nome: "Itaú Unibanco", ticker: "ITUB4", setor: "Financeiro", baseValuation: 6100000, growthAnnual: 0.085, volatility: 0.018, payoutAnnual: 0.07 },
+  { id: "ambev", nome: "Ambev", ticker: "ABEV3", setor: "Bebidas", baseValuation: 4200000, growthAnnual: 0.07, volatility: 0.017, payoutAnnual: 0.06 },
+  { id: "weg", nome: "WEG", ticker: "WEGE3", setor: "Industria", baseValuation: 3900000, growthAnnual: 0.12, volatility: 0.022, payoutAnnual: 0.035 },
+  { id: "magalu", nome: "Magazine Luiza", ticker: "MGLU3", setor: "Varejo", baseValuation: 1100000, growthAnnual: 0.13, volatility: 0.035, payoutAnnual: 0.015 },
+  { id: "nubank", nome: "Nubank", ticker: "NU", setor: "Fintech", baseValuation: 8500000, growthAnnual: 0.14, volatility: 0.03, payoutAnnual: 0.02 }
+];
+
+const worldBillionaires = [
+  { id: "elon_musk", nome: "Elon Musk", usdBillion: 342 },
+  { id: "mark_zuckerberg", nome: "Mark Zuckerberg", usdBillion: 216 },
+  { id: "jeff_bezos", nome: "Jeff Bezos", usdBillion: 215 },
+  { id: "larry_ellison", nome: "Larry Ellison", usdBillion: 192 },
+  { id: "bernard_arnault", nome: "Bernard Arnault & family", usdBillion: 178 }
+];
+
+const carCatalog = [
+  { id: "fiat_mobi", nome: "Fiat Mobi Like", price: 76990 },
+  { id: "renault_kwid", nome: "Renault Kwid Zen", price: 76999 },
+  { id: "chevrolet_onix", nome: "Chevrolet Onix 1.0 MT", price: 93430 },
+  { id: "hyundai_hb20", nome: "Hyundai HB20 Sense", price: 95790 },
+  { id: "vw_polo", nome: "Volkswagen Polo Track", price: 96290 },
+  { id: "fiat_argo", nome: "Fiat Argo 1.0", price: 89990 },
+  { id: "vw_tcross", nome: "Volkswagen T-Cross 200 TSI", price: 119990 },
+  { id: "honda_hrv", nome: "Honda HR-V EX", price: 156100 },
+  { id: "toyota_corolla", nome: "Toyota Corolla GLi", price: 158490 },
+  { id: "toyota_corolla_cross", nome: "Toyota Corolla Cross XR", price: 179190 },
+  { id: "jeep_compass", nome: "Jeep Compass Sport", price: 186990 },
+  { id: "byd_dolphin_mini", nome: "BYD Dolphin Mini", price: 115800 },
+  { id: "byd_song_pro", nome: "BYD Song Pro", price: 189800 },
+  { id: "gwm_haval_h6", nome: "GWM Haval H6 HEV2", price: 219000 },
+  { id: "honda_civic", nome: "Honda Civic Advanced Hybrid", price: 265900 }
+];
+
+const aircraftCatalog = [
+  { id: "embraer_phenom_300e", nome: "Embraer Phenom 300E", priceUsd: 10000000, cruiseKmh: 839, opCostUsdPerHour: 3400 },
+  { id: "cessna_citation_latitude", nome: "Cessna Citation Latitude", priceUsd: 19000000, cruiseKmh: 826, opCostUsdPerHour: 4800 },
+  { id: "bombardier_challenger_3500", nome: "Bombardier Challenger 3500", priceUsd: 26700000, cruiseKmh: 870, opCostUsdPerHour: 6200 },
+  { id: "gulfstream_g500", nome: "Gulfstream G500", priceUsd: 52000000, cruiseKmh: 956, opCostUsdPerHour: 8800 },
+  { id: "dassault_falcon_8x", nome: "Dassault Falcon 8X", priceUsd: 62000000, cruiseKmh: 900, opCostUsdPerHour: 9800 }
+];
+
+const travelRoutes = [
+  { id: "gru_gig", origem: "Sao Paulo", destino: "Rio de Janeiro", pais: "Brasil", km: 360, airportFeeUsd: 700 },
+  { id: "gru_bsb", origem: "Sao Paulo", destino: "Brasilia", pais: "Brasil", km: 870, airportFeeUsd: 850 },
+  { id: "gru_ssa", origem: "Sao Paulo", destino: "Salvador", pais: "Brasil", km: 1450, airportFeeUsd: 1200 },
+  { id: "gru_eze", origem: "Sao Paulo", destino: "Buenos Aires", pais: "Argentina", km: 1670, airportFeeUsd: 1900 },
+  { id: "gru_scl", origem: "Sao Paulo", destino: "Santiago", pais: "Chile", km: 2620, airportFeeUsd: 2200 },
+  { id: "gru_lim", origem: "Sao Paulo", destino: "Lima", pais: "Peru", km: 3470, airportFeeUsd: 2500 },
+  { id: "gru_mia", origem: "Sao Paulo", destino: "Miami", pais: "Estados Unidos", km: 6570, airportFeeUsd: 4200 },
+  { id: "gru_lis", origem: "Sao Paulo", destino: "Lisboa", pais: "Portugal", km: 7940, airportFeeUsd: 4600 },
+  { id: "gru_lhr", origem: "Sao Paulo", destino: "Londres", pais: "Reino Unido", km: 9500, airportFeeUsd: 5200 },
+  { id: "gru_dxb", origem: "Sao Paulo", destino: "Dubai", pais: "Emirados Arabes Unidos", km: 12100, airportFeeUsd: 6900 }
+];
+
+const state = {
+  player: { nome: "", idade: "", telefone: "" },
+  money: 0,
+  clickValue: 10,
+  monthRevenue: 0,
+  year: 1,
+  month: 1,
+  secondsToMonth: MONTH_SECONDS,
+  yearlyRevenues: [],
+  level: 1,
+  xp: 0,
+  reputation: 50,
+  prestigePoints: 0,
+  research: {
+    automation: 0,
+    hr: 0,
+    branding: 0
+  },
+  contracts: {
+    lastOfferMonthStamp: 0,
+    offers: [],
+    active: []
+  },
+  dailyMissions: {
+    dateKey: "",
+    list: []
+  },
+  economy: {
+    inflation: 0.04,
+    interest: 0.09,
+    confidence: 1,
+    sectorBoosts: {}
+  },
+  loan: {
+    principalRemaining: 0,
+    installment: 0,
+    monthsLeft: 0,
+    annualRate: 0,
+    label: ""
+  },
+  tax: {
+    debt: 0,
+    pendingYearClose: null
+  },
+  participations: {
+    holdings: {},
+    market: {}
+  },
+  aviation: {
+    fleet: [],
+    nextAircraftId: 1,
+    accruedUsd: 0,
+    debtUsd: 0,
+    selectedAircraftId: 0
+  },
+  passport: {
+    countries: {},
+    totalTrips: 0
+  },
+  worldWealth: {},
+  garage: [],
+  nextCarId: 1,
+  forex: {
+    usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
+    eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
+  },
+  stats: {
+    totalClicks: 0,
+    clickRevenue: 0,
+    companyRevenue: 0,
+    operationalCosts: 0,
+    payrollPaid: 0,
+    taxesPaid: 0,
+    interestPaid: 0,
+    contractRevenue: 0,
+    dailyRevenue: 0,
+    achievementRevenue: 0,
+    loanReceived: 0,
+    fxRevenue: 0,
+    taxDebtInterestPaid: 0,
+    ipvaPaid: 0,
+    carSalesRevenue: 0,
+    carsBroken: 0,
+    travelSpendBrl: 0,
+    totalFlightKm: 0,
+    totalFlightHours: 0,
+    aircraftTaxPaidUsd: 0,
+    aircraftHangarPaidUsd: 0,
+    aircraftCrewPaidUsd: 0,
+    aircraftDebtInterestPaidUsd: 0,
+    researchSpent: 0,
+    spentUpgrades: 0,
+    spentCompanies: 0,
+    peakMoney: 0
+  },
+  logs: [],
+  achievementsUnlocked: []
+};
+
+const achievements = [
+  {
+    id: "cliques_100",
+    title: "Dedos rapidos",
+    desc: "Chegue a 100 cliques.",
+    check: () => state.stats.totalClicks >= 100,
+    progress: () => `${state.stats.totalClicks}/100`
+  },
+  {
+    id: "empresa_1",
+    title: "Primeiro CNPJ",
+    desc: "Compre 1 empresa.",
+    check: () => companies.reduce((s, c) => s + c.owned, 0) >= 1,
+    progress: () => `${companies.reduce((s, c) => s + c.owned, 0)}/1`
+  },
+  {
+    id: "clique_100",
+    title: "Clique premium",
+    desc: "Atinga R$ 100 por clique base.",
+    check: () => state.clickValue >= 100,
+    progress: () => `${formatMoney(state.clickValue)} / ${formatMoney(100)}`
+  },
+  {
+    id: "passivo_5k",
+    title: "Renda passiva",
+    desc: "Ganhe R$ 5.000/mes em empresas.",
+    check: () => effectiveCompanyIncome() >= 5000,
+    progress: () => `${formatMoney(effectiveCompanyIncome())} / ${formatMoney(5000)}`
+  },
+  {
+    id: "imposto_1k",
+    title: "Contribuinte oficial",
+    desc: "Pague R$ 1.000 em impostos acumulados.",
+    check: () => state.stats.taxesPaid >= 1000,
+    progress: () => `${formatMoney(state.stats.taxesPaid)} / ${formatMoney(1000)}`
+  },
+  {
+    id: "patrimonio_500k",
+    title: "Magnata",
+    desc: "Chegue a R$ 500.000 de patrimonio.",
+    check: () => getPatrimonio() >= 500000,
+    progress: () => `${formatMoney(getPatrimonio())} / ${formatMoney(500000)}`
+  }
+];
+
+const el = {
+  money: document.getElementById("money"),
+  dateLine: document.getElementById("dateLine"),
+  countdown: document.getElementById("countdown"),
+  clickLine: document.getElementById("clickLine"),
+  incomeLine: document.getElementById("incomeLine"),
+  econLine: document.getElementById("econLine"),
+  expenseLine: document.getElementById("expenseLine"),
+  skipMonthBtn: document.getElementById("skipMonthBtn"),
+  monthRevenue: document.getElementById("monthRevenue"),
+  clickBtn: document.getElementById("clickBtn"),
+  floatGain: document.getElementById("floatGain"),
+  monthBar: document.getElementById("monthBar"),
+  contractList: document.getElementById("contractList"),
+  refreshContractsBtn: document.getElementById("refreshContractsBtn"),
+  upgradeList: document.getElementById("upgradeList"),
+  companyList: document.getElementById("companyList"),
+  participationSummary: document.getElementById("participationSummary"),
+  participationList: document.getElementById("participationList"),
+  garageSummary: document.getElementById("garageSummary"),
+  carShopList: document.getElementById("carShopList"),
+  garageList: document.getElementById("garageList"),
+  aircraftSummary: document.getElementById("aircraftSummary"),
+  aircraftAnnualDue: document.getElementById("aircraftAnnualDue"),
+  aircraftDebtUsd: document.getElementById("aircraftDebtUsd"),
+  aircraftShopList: document.getElementById("aircraftShopList"),
+  aircraftFleetList: document.getElementById("aircraftFleetList"),
+  travelAircraftInfo: document.getElementById("travelAircraftInfo"),
+  travelAircraftSelect: document.getElementById("travelAircraftSelect"),
+  travelStats: document.getElementById("travelStats"),
+  routeList: document.getElementById("routeList"),
+  passportSummary: document.getElementById("passportSummary"),
+  passportList: document.getElementById("passportList"),
+  workforceLine: document.getElementById("workforceLine"),
+  eventLog: document.getElementById("eventLog"),
+  nameInput: document.getElementById("nameInput"),
+  ageInput: document.getElementById("ageInput"),
+  phoneInput: document.getElementById("phoneInput"),
+  profilePreview: document.getElementById("profilePreview"),
+  statLevel: document.getElementById("statLevel"),
+  statXp: document.getElementById("statXp"),
+  statMultiplier: document.getElementById("statMultiplier"),
+  statPrestige: document.getElementById("statPrestige"),
+  statReputation: document.getElementById("statReputation"),
+  statWealth: document.getElementById("statWealth"),
+  statClicks: document.getElementById("statClicks"),
+  statClickIncome: document.getElementById("statClickIncome"),
+  statCompanyIncome: document.getElementById("statCompanyIncome"),
+  statTaxPaid: document.getElementById("statTaxPaid"),
+  statInterestPaid: document.getElementById("statInterestPaid"),
+  statPayrollPaid: document.getElementById("statPayrollPaid"),
+  statContractRevenue: document.getElementById("statContractRevenue"),
+  statOpsCost: document.getElementById("statOpsCost"),
+  statPeak: document.getElementById("statPeak"),
+  achievementList: document.getElementById("achievementList"),
+  dailyInfo: document.getElementById("dailyInfo"),
+  dailyMissionList: document.getElementById("dailyMissionList"),
+  saveProfileBtn: document.getElementById("saveProfileBtn"),
+  saveLocalBtn: document.getElementById("saveLocalBtn"),
+  loadLocalBtn: document.getElementById("loadLocalBtn"),
+  exportBtn: document.getElementById("exportBtn"),
+  importBtn: document.getElementById("importBtn"),
+  refreshRankingBtn: document.getElementById("refreshRankingBtn"),
+  worldRankingInfo: document.getElementById("worldRankingInfo"),
+  worldRankingList: document.getElementById("worldRankingList"),
+  resetCharacterBtn: document.getElementById("resetCharacterBtn"),
+  loanStatus: document.getElementById("loanStatus"),
+  loanSmallBtn: document.getElementById("loanSmallBtn"),
+  loanMediumBtn: document.getElementById("loanMediumBtn"),
+  loanLargeBtn: document.getElementById("loanLargeBtn"),
+  researchAutomation: document.getElementById("researchAutomation"),
+  researchAutomationBtn: document.getElementById("researchAutomationBtn"),
+  researchHr: document.getElementById("researchHr"),
+  researchHrBtn: document.getElementById("researchHrBtn"),
+  researchBranding: document.getElementById("researchBranding"),
+  researchBrandingBtn: document.getElementById("researchBrandingBtn"),
+  prestigeBonusText: document.getElementById("prestigeBonusText"),
+  prestigeBtn: document.getElementById("prestigeBtn"),
+  backupCode: document.getElementById("backupCode"),
+  statusMsg: document.getElementById("statusMsg"),
+  rankingList: document.getElementById("rankingList"),
+  bankCash: document.getElementById("bankCash"),
+  bankTaxDebt: document.getElementById("bankTaxDebt"),
+  usdRate: document.getElementById("usdRate"),
+  usdWallet: document.getElementById("usdWallet"),
+  usdWalletBrl: document.getElementById("usdWalletBrl"),
+  usdBuyInput: document.getElementById("usdBuyInput"),
+  usdBuyBtn: document.getElementById("usdBuyBtn"),
+  usdSellAllBtn: document.getElementById("usdSellAllBtn"),
+  eurRate: document.getElementById("eurRate"),
+  eurWallet: document.getElementById("eurWallet"),
+  eurWalletBrl: document.getElementById("eurWalletBrl"),
+  eurBuyInput: document.getElementById("eurBuyInput"),
+  eurBuyBtn: document.getElementById("eurBuyBtn"),
+  eurSellAllBtn: document.getElementById("eurSellAllBtn"),
+  fxTotalBrl: document.getElementById("fxTotalBrl"),
+  taxOverlay: document.getElementById("taxOverlay"),
+  taxDueText: document.getElementById("taxDueText"),
+  taxPayNowBtn: document.getElementById("taxPayNowBtn"),
+  taxPayLaterBtn: document.getElementById("taxPayLaterBtn")
+};
+
+const moneyFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const usdFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" });
+const eurFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "EUR" });
+let audioCtx;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  }
+}
+
+function playTone(freq, ms, gain = 0.02, type = "sine") {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const vol = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  vol.gain.value = gain;
+  osc.connect(vol);
+  vol.connect(audioCtx.destination);
+  osc.start();
+  setTimeout(() => {
+    osc.stop();
+    osc.disconnect();
+    vol.disconnect();
+  }, ms);
+}
+
+function sfxClick() {
+  playTone(620, 45, 0.02, "triangle");
+}
+
+function sfxBuy() {
+  playTone(520, 70, 0.03, "square");
+  setTimeout(() => playTone(760, 95, 0.025, "square"), 45);
+}
+
+function sfxMonthClose() {
+  playTone(330, 120, 0.03, "sine");
+  setTimeout(() => playTone(440, 120, 0.03, "sine"), 120);
+}
+
+function sfxTax() {
+  playTone(180, 190, 0.035, "sawtooth");
+}
+
+function sfxAchievement() {
+  playTone(740, 80, 0.03, "triangle");
+  setTimeout(() => playTone(980, 120, 0.03, "triangle"), 70);
+}
+
+function formatMoney(v) {
+  return moneyFmt.format(v || 0);
+}
+
+function formatUsd(v) {
+  return usdFmt.format(v || 0);
+}
+
+function formatEur(v) {
+  return eurFmt.format(v || 0);
+}
+
+function safeNumber(value, fallback = 0) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function safeInt(value, fallback = 0) {
+  return Math.trunc(safeNumber(value, fallback));
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function toBase64Utf8(text) {
+  const bytes = new TextEncoder().encode(String(text));
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+function fromBase64Utf8(base64) {
+  const binary = atob(base64);
+  const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function currentDateKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getIncomeMultiplier() {
+  const levelBonus = (state.level - 1) * 0.02;
+  const prestigeBonus = state.prestigePoints * 0.1;
+  const confidenceBonus = (state.economy.confidence - 1) * 0.3;
+  const reputationBonus = (state.reputation - 50) / 500;
+  const brandingBonus = state.research.branding * 0.015;
+  return 1 + levelBonus + prestigeBonus + confidenceBonus + reputationBonus + brandingBonus;
+}
+
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function getSectorMultiplier(setor) {
+  return safeNumber(state.economy.sectorBoosts[setor], 1);
+}
+
+function forexValueBrl(code) {
+  if (code === "USD") return state.forex.usd.balance * state.forex.usd.rate;
+  return state.forex.eur.balance * state.forex.eur.rate;
+}
+
+function garageTotalValue() {
+  return state.garage.reduce((sum, car) => sum + car.currentValue, 0);
+}
+
+function garageAnnualIpva() {
+  return state.garage.reduce((sum, car) => sum + car.currentValue * 0.05, 0);
+}
+
+function carBreakRisk(car) {
+  if (car.km < 180000) return 0;
+  const kmPressure = (car.km - 180000) / 220000;
+  const agePressure = car.monthsOwned / 240;
+  return clamp(kmPressure + agePressure, 0, 0.92);
+}
+
+function aircraftTaxUsd(aircraft) {
+  return aircraft.currentValueUsd * 0.05;
+}
+
+function aircraftMonthlyHangarUsd() {
+  return 30000;
+}
+
+function aircraftMonthlyCrewUsd() {
+  return 30000;
+}
+
+function aviationAnnualDueUsdPreview() {
+  const taxDue = state.aviation.fleet.reduce((sum, a) => sum + aircraftTaxUsd(a), 0);
+  const debtInterestPreview = state.aviation.debtUsd * state.economy.interest;
+  return state.aviation.accruedUsd + taxDue + state.aviation.debtUsd + debtInterestPreview;
+}
+
+function ensureWorldWealthInitialized() {
+  if (!state.worldWealth || typeof state.worldWealth !== "object") state.worldWealth = {};
+  worldBillionaires.forEach((p) => {
+    const current = safeNumber(state.worldWealth[p.id], NaN);
+    if (!Number.isFinite(current) || current <= 0) {
+      state.worldWealth[p.id] = p.usdBillion;
+    }
+  });
+}
+
+function evolveWorldWealthMonthly() {
+  ensureWorldWealthInitialized();
+  worldBillionaires.forEach((p) => {
+    const base = p.usdBillion;
+    const current = safeNumber(state.worldWealth[p.id], base);
+    const macro = (state.economy.confidence - 1) * 0.0025 - (state.economy.interest - 0.09) * 0.002;
+    const noise = Math.random() * 0.0075 - 0.00375;
+    const meanReversion = (base - current) / base * 0.015;
+    const monthlyPct = clamp(macro + noise + meanReversion, -0.009, 0.009);
+    const next = current * (1 + monthlyPct);
+    state.worldWealth[p.id] = Math.max(base * 0.7, Math.min(base * 1.45, next));
+  });
+}
+
+function baseSalaryBySector(setor) {
+  const map = {
+    Varejo: 1200,
+    Alimentos: 1300,
+    Servicos: 1450,
+    Digital: 1800,
+    Tecnologia: 2200,
+    Industria: 2100,
+    Turismo: 1700,
+    Financeiro: 2600,
+    Conglomerado: 3200
+  };
+  return Number(map[setor] || 1500);
+}
+
+function salaryTierMultiplier(tier) {
+  if (tier <= 0) return 0.88;
+  if (tier === 1) return 1;
+  return 1.18;
+}
+
+function automationCostFactor() {
+  return clamp(1 - state.research.automation * 0.04, 0.72, 1);
+}
+
+function hrTurnoverFactor() {
+  return clamp(1 - state.research.hr * 0.08, 0.55, 1);
+}
+
+function effectiveClickValue() {
+  return Math.floor(state.clickValue * getIncomeMultiplier());
+}
+
+function companyLevelMultiplier(c) {
+  return 1 + c.level * 0.35;
+}
+
+function requiredEmployees(c) {
+  return c.owned * 3;
+}
+
+function staffingRatio(c) {
+  const need = requiredEmployees(c);
+  if (need <= 0) return 1;
+  return c.employees / need;
+}
+
+function companyProductivity(c) {
+  const staff = staffingRatio(c);
+  const salaryMul = salaryTierMultiplier(c.salaryTier);
+  return clamp(staff * salaryMul, 0.35, 1.35);
+}
+
+function companyIncomePerUnit(c) {
+  return Math.floor(c.baseIncome * companyLevelMultiplier(c) * companyProductivity(c) * getSectorMultiplier(c.setor));
+}
+
+function companyTotalIncome(c) {
+  return companyIncomePerUnit(c) * c.owned;
+}
+
+function totalCompanyIncome() {
+  return companies.reduce((sum, c) => sum + companyTotalIncome(c), 0);
+}
+
+function totalCompanyUnits() {
+  return companies.reduce((sum, c) => sum + c.owned, 0);
+}
+
+function totalEmployees() {
+  return companies.reduce((sum, c) => sum + c.employees, 0);
+}
+
+function initParticipationMarket() {
+  if (!state.participations || typeof state.participations !== "object") {
+    state.participations = { holdings: {}, market: {} };
+  }
+  if (!state.participations.holdings || typeof state.participations.holdings !== "object") {
+    state.participations.holdings = {};
+  }
+  if (!state.participations.market || typeof state.participations.market !== "object") {
+    state.participations.market = {};
+  }
+
+  participationCatalog.forEach((c) => {
+    const current = state.participations.market[c.id];
+    const valuation = Math.max(100000, safeNumber(current?.valuation, c.baseValuation));
+    state.participations.market[c.id] = {
+      valuation,
+      lastValuation: Math.max(100000, safeNumber(current?.lastValuation, valuation))
+    };
+    state.participations.holdings[c.id] = clamp(safeNumber(state.participations.holdings[c.id], 0), 0, 100);
+  });
+}
+
+function participationMonthlyIncome(catalogItem) {
+  initParticipationMarket();
+  const pct = clamp(safeNumber(state.participations.holdings[catalogItem.id], 0), 0, 100) / 100;
+  if (pct <= 0) return 0;
+  const valuation = Math.max(0, safeNumber(state.participations.market[catalogItem.id]?.valuation, catalogItem.baseValuation));
+  const monthlyYield = catalogItem.payoutAnnual / 12;
+  return Math.floor(valuation * monthlyYield * pct);
+}
+
+function totalParticipationIncome() {
+  initParticipationMarket();
+  return participationCatalog.reduce((sum, c) => sum + participationMonthlyIncome(c), 0);
+}
+
+function totalParticipationValue() {
+  initParticipationMarket();
+  return participationCatalog.reduce((sum, c) => {
+    const pct = clamp(safeNumber(state.participations.holdings[c.id], 0), 0, 100) / 100;
+    const valuation = Math.max(0, safeNumber(state.participations.market[c.id]?.valuation, c.baseValuation));
+    return sum + valuation * pct;
+  }, 0);
+}
+
+function participationControlLabel(pct) {
+  if (pct >= 100) return "Dono total (100%)";
+  if (pct >= 51) return "Socio majoritario";
+  if (pct > 0) return "Socio minoritario";
+  return "Sem participacao";
+}
+
+function buyParticipation(companyId, pctPoints) {
+  initParticipationMarket();
+  const c = participationCatalog.find((x) => x.id === companyId);
+  if (!c) return;
+  const buyPct = clamp(Math.floor(safeNumber(pctPoints, 0)), 1, 100);
+  const currentPct = clamp(safeNumber(state.participations.holdings[c.id], 0), 0, 100);
+  if (currentPct >= 100) {
+    setStatus("Voce ja possui 100% dessa empresa.", "warn");
+    return;
+  }
+  const realPct = Math.min(buyPct, 100 - currentPct);
+  const valuation = Math.max(0, safeNumber(state.participations.market[c.id]?.valuation, c.baseValuation));
+  const cost = Math.floor(valuation * (realPct / 100) * 1.01);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para comprar essa participacao.", "bad");
+    return;
+  }
+  const wasMajor = currentPct >= 51;
+  const wasOwner = currentPct >= 100;
+  state.money -= cost;
+  state.participations.holdings[c.id] = clamp(currentPct + realPct, 0, 100);
+  const nowPct = state.participations.holdings[c.id];
+  state.stats.spentCompanies += cost;
+  logEvent(`Participacao comprada: ${c.nome} +${realPct}% por ${formatMoney(cost)} (total ${nowPct.toFixed(1)}%).`, "ok");
+  if (!wasMajor && nowPct >= 51) {
+    logEvent(`Controle societario em ${c.nome}: voce virou socio majoritario.`, "ok");
+  }
+  if (!wasOwner && nowPct >= 100) {
+    logEvent(`Controle total em ${c.nome}: agora voce e dono da empresa.`, "ok");
+  }
+  sfxBuy();
+  render();
+}
+
+function sellParticipation(companyId, pctPoints) {
+  initParticipationMarket();
+  const c = participationCatalog.find((x) => x.id === companyId);
+  if (!c) return;
+  const sellPct = clamp(Math.floor(safeNumber(pctPoints, 0)), 1, 100);
+  const currentPct = clamp(safeNumber(state.participations.holdings[c.id], 0), 0, 100);
+  if (currentPct <= 0) {
+    setStatus("Voce nao possui participacao para vender nessa empresa.", "warn");
+    return;
+  }
+  const realPct = Math.min(sellPct, currentPct);
+  const valuation = Math.max(0, safeNumber(state.participations.market[c.id]?.valuation, c.baseValuation));
+  const proceeds = Math.floor(valuation * (realPct / 100) * 0.99);
+  const wasMajor = currentPct >= 51;
+  const wasOwner = currentPct >= 100;
+  state.participations.holdings[c.id] = clamp(currentPct - realPct, 0, 100);
+  const nowPct = state.participations.holdings[c.id];
+  state.money += proceeds;
+  state.monthRevenue += proceeds;
+  logEvent(`Participacao vendida: ${c.nome} -${realPct}% por ${formatMoney(proceeds)} (restante ${nowPct.toFixed(1)}%).`, "warn");
+  if (wasOwner && nowPct < 100) {
+    logEvent(`Voce deixou de ser dono total de ${c.nome}.`, "warn");
+  }
+  if (wasMajor && nowPct < 51) {
+    logEvent(`Voce deixou de ser socio majoritario de ${c.nome}.`, "warn");
+  }
+  sfxBuy();
+  render();
+}
+
+function updateParticipationMarketMonthly() {
+  initParticipationMarket();
+  participationCatalog.forEach((c) => {
+    const row = state.participations.market[c.id];
+    const current = Math.max(100000, safeNumber(row.valuation, c.baseValuation));
+    const macro = (state.economy.confidence - 1) * 0.015 - (state.economy.interest - 0.09) * 0.02;
+    const drift = c.growthAnnual / 12;
+    const noise = (Math.random() * 2 - 1) * c.volatility;
+    const monthlyPct = clamp(drift + macro + noise, -0.11, 0.14);
+    const next = Math.max(c.baseValuation * 0.35, current * (1 + monthlyPct));
+    row.lastValuation = current;
+    row.valuation = Math.floor(next);
+  });
+}
+
+function companyValuationMultiple(c) {
+  const map = {
+    Varejo: 2.8,
+    Alimentos: 3.2,
+    Servicos: 3.1,
+    Digital: 4.5,
+    Tecnologia: 5.3,
+    Industria: 3.9,
+    Turismo: 3.3,
+    Financeiro: 4.4,
+    Conglomerado: 4.1
+  };
+  return Number(map[c.setor] || 3.2);
+}
+
+function companyFairValuation(c) {
+  const monthly = companyTotalIncome(c);
+  if (c.owned <= 0 || monthly <= 0) return 0;
+  const annualRevenue = monthly * 12;
+  const growthBonus = 1 + c.level * 0.045 + Math.max(0, state.reputation - 50) / 380;
+  const marketFactor = clamp(safeNumber(c.marketFactor, 1), 0.65, 3.8);
+  const valuation = annualRevenue * companyValuationMultiple(c) * growthBonus * marketFactor;
+  return Math.floor(Math.max(c.baseCost * c.owned * 0.75, valuation));
+}
+
+function updateCompanyValuationsMonthly() {
+  companies.forEach((c) => {
+    const currentIncome = Math.max(0, companyTotalIncome(c));
+    const prev = Math.max(0, safeNumber(c.lastIncome, 0));
+    const growth = prev > 0 ? (currentIncome - prev) / prev : 0;
+    const macro = (state.economy.confidence - 1) * 0.02 - (state.economy.interest - 0.09) * 0.015;
+    const drift = 0.004 + clamp(growth * 0.2, -0.02, 0.035) + macro;
+    const noise = Math.random() * 0.018 - 0.009;
+    c.marketFactor = clamp(safeNumber(c.marketFactor, 1) * (1 + drift + noise), 0.65, 3.8);
+    c.lastIncome = currentIncome;
+  });
+}
+
+function companySellOfferPerUnit(c) {
+  if (c.owned <= 0) return 0;
+  const fairPerUnit = companyFairValuation(c) / Math.max(1, c.owned);
+  const marketSpread = 0.97 + Math.random() * 0.08;
+  const confidenceAdj = clamp(0.97 + (state.economy.confidence - 1) * 0.18, 0.9, 1.08);
+  return Math.floor(Math.max(c.baseCost * 0.55, fairPerUnit * marketSpread * confidenceAdj));
+}
+
+function companyPayroll(c) {
+  const monthly = baseSalaryBySector(c.setor) * salaryTierMultiplier(c.salaryTier);
+  return Math.floor(c.employees * monthly);
+}
+
+function monthlyPayrollCost() {
+  return companies.reduce((sum, c) => sum + companyPayroll(c), 0);
+}
+
+function monthlyOperationalCost() {
+  const fixed = totalCompanyUnits() * 90;
+  const variable = Math.floor(totalCompanyIncome() * (0.18 + state.economy.interest * 0.15));
+  return Math.floor((fixed + variable) * automationCostFactor());
+}
+
+function recruitmentCost(c) {
+  return Math.floor(baseSalaryBySector(c.setor) * 0.7);
+}
+
+function totalMonthlyInstallment() {
+  return state.loan.monthsLeft > 0 ? state.loan.installment : 0;
+}
+
+function requestLoan(amount, months, annualRate, label) {
+  if (state.loan.monthsLeft > 0 || state.loan.principalRemaining > 0) {
+    setStatus("Ja existe emprestimo ativo. Quite o atual antes de contratar outro.", "warn");
+    return;
+  }
+  const score = 1 + state.level * 0.03 + state.prestigePoints * 0.08 + state.reputation / 250 + state.research.branding * 0.03;
+  const granted = Math.floor(amount * score);
+  const totalPay = Math.floor(granted * (1 + annualRate * (months / 12)));
+  const installment = Math.ceil(totalPay / months);
+
+  state.loan = {
+    principalRemaining: totalPay,
+    installment,
+    monthsLeft: months,
+    annualRate,
+    label
+  };
+  state.money += granted;
+  state.stats.loanReceived += granted;
+  logEvent(`Emprestimo aprovado (${label}): +${formatMoney(granted)} em ${months}x de ${formatMoney(installment)}.`, "ok");
+  setStatus("Emprestimo contratado.", "ok");
+  sfxBuy();
+  render();
+}
+
+function updateForexRates() {
+  const usdPressure = (state.economy.interest - 0.09) * 0.25 + (1 - state.economy.confidence) * 0.2;
+  const eurPressure = (state.economy.interest - 0.09) * 0.2 + (1 - state.economy.confidence) * 0.15;
+  const usdNoise = Math.random() * 0.24 - 0.12;
+  const eurNoise = Math.random() * 0.2 - 0.1;
+  state.forex.usd.rate = clamp(state.forex.usd.rate + usdNoise + usdPressure, state.forex.usd.min, state.forex.usd.max);
+  state.forex.eur.rate = clamp(state.forex.eur.rate + eurNoise + eurPressure, state.forex.eur.min, state.forex.eur.max);
+}
+
+function liquidateForexForAmount(targetBrl) {
+  let remaining = Math.max(0, safeNumber(targetBrl, 0));
+  let paid = 0;
+  let soldUsd = 0;
+  let soldEur = 0;
+
+  if (remaining > 0 && state.forex.usd.balance > 0) {
+    const usdNeeded = remaining / state.forex.usd.rate;
+    const usdSold = Math.min(state.forex.usd.balance, usdNeeded);
+    const brlFromUsd = usdSold * state.forex.usd.rate;
+    state.forex.usd.balance -= usdSold;
+    paid += brlFromUsd;
+    remaining -= brlFromUsd;
+    soldUsd = usdSold;
+  }
+
+  if (remaining > 0 && state.forex.eur.balance > 0) {
+    const eurNeeded = remaining / state.forex.eur.rate;
+    const eurSold = Math.min(state.forex.eur.balance, eurNeeded);
+    const brlFromEur = eurSold * state.forex.eur.rate;
+    state.forex.eur.balance -= eurSold;
+    paid += brlFromEur;
+    remaining -= brlFromEur;
+    soldEur = eurSold;
+  }
+
+  if (remaining < 0.005) remaining = 0;
+  state.forex.usd.balance = Math.max(0, state.forex.usd.balance);
+  state.forex.eur.balance = Math.max(0, state.forex.eur.balance);
+  return { paid, remaining, soldUsd, soldEur };
+}
+
+function buyForex(code) {
+  const isUsd = code === "USD";
+  const wallet = isUsd ? state.forex.usd : state.forex.eur;
+  const input = isUsd ? el.usdBuyInput : el.eurBuyInput;
+  const label = isUsd ? "USD" : "EUR";
+  const brlAmount = Math.floor(safeNumber(input.value, 0));
+
+  if (brlAmount <= 0) {
+    setStatus(`Informe um valor valido em BRL para comprar ${label}.`, "warn");
+    return;
+  }
+  if (state.money < brlAmount) {
+    setStatus("Saldo insuficiente em BRL.", "bad");
+    return;
+  }
+
+  const units = brlAmount / wallet.rate;
+  state.money -= brlAmount;
+  wallet.balance += units;
+  input.value = "";
+  logEvent(`Compra ${label}: ${isUsd ? formatUsd(units) : formatEur(units)} por ${formatMoney(brlAmount)}.`);
+  sfxBuy();
+  render();
+}
+
+function sellAllForex(code) {
+  const isUsd = code === "USD";
+  const wallet = isUsd ? state.forex.usd : state.forex.eur;
+  const label = isUsd ? "USD" : "EUR";
+  if (wallet.balance <= 0) {
+    setStatus(`Sem saldo de ${label} para vender.`, "warn");
+    return;
+  }
+  const units = wallet.balance;
+  const brlBack = units * wallet.rate;
+  wallet.balance = 0;
+  state.money += brlBack;
+  state.monthRevenue += brlBack;
+  state.stats.fxRevenue += brlBack;
+  logEvent(`Venda ${label}: ${isUsd ? formatUsd(units) : formatEur(units)} por ${formatMoney(brlBack)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function processLoanPayment() {
+  if (state.loan.monthsLeft <= 0 || state.loan.principalRemaining <= 0) return 0;
+  const installment = state.loan.installment;
+  if (state.money >= installment) {
+    const interestPart = Math.floor(state.loan.principalRemaining * (state.loan.annualRate / 12));
+    state.money -= installment;
+    state.loan.principalRemaining = Math.max(0, state.loan.principalRemaining - installment);
+    state.loan.monthsLeft -= 1;
+    state.stats.interestPaid += interestPart;
+    if (state.loan.monthsLeft <= 0 || state.loan.principalRemaining <= 0) {
+      state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
+      logEvent("Emprestimo quitado com sucesso.", "ok");
+    }
+    return installment;
+  }
+
+  const penalty = Math.floor(state.loan.principalRemaining * 0.03) + 500;
+  state.loan.principalRemaining += penalty;
+  state.economy.confidence = clamp(state.economy.confidence - 0.05, 0.75, 1.35);
+  logEvent(`Atraso de parcela! Multa de ${formatMoney(penalty)} aplicada ao saldo do emprestimo.`, "warn");
+  return 0;
+}
+
+function processTurnover() {
+  companies.forEach((c) => {
+    if (c.employees <= 0) return;
+    const salaryMul = salaryTierMultiplier(c.salaryTier);
+    const staffPressure = Math.max(0, requiredEmployees(c) - c.employees);
+    const pressureFactor = staffPressure > 0 ? clamp(1 + staffPressure / Math.max(1, requiredEmployees(c)), 1, 1.6) : 1;
+    const reputationRelief = (state.reputation - 50) / 1000;
+    const baseRate = 0.01 + state.economy.interest * 0.04 + (1 - state.economy.confidence) * 0.02 + (1 - salaryMul) * 0.06 - reputationRelief;
+    const rate = clamp(baseRate * pressureFactor * hrTurnoverFactor(), 0, 0.22);
+    const lost = Math.floor(c.employees * rate);
+    if (lost > 0) {
+      c.employees = Math.max(0, c.employees - lost);
+      logEvent(`Turnover em ${c.nome}: ${lost} funcionario(s) sairam.`, "warn");
+    }
+  });
+}
+
+function effectiveCompanyIncome() {
+  return Math.floor((totalCompanyIncome() + totalParticipationIncome()) * getIncomeMultiplier());
+}
+
+function getPatrimonio() {
+  const aircraftBrl = state.aviation.fleet.reduce((sum, a) => sum + a.currentValueUsd * state.forex.usd.rate, 0);
+  const aviationDebtBrl = state.aviation.debtUsd * state.forex.usd.rate;
+  return state.money + effectiveCompanyIncome() * 6 + totalParticipationValue() + garageTotalValue() + aircraftBrl + forexValueBrl("USD") + forexValueBrl("EUR") - state.tax.debt - aviationDebtBrl;
+}
+
+function xpToNext(level) {
+  return 100 + (level - 1) * 35;
+}
+
+function addXp(amount) {
+  if (amount <= 0) return;
+  state.xp += Math.floor(amount);
+  while (state.xp >= xpToNext(state.level)) {
+    state.xp -= xpToNext(state.level);
+    state.level += 1;
+    logEvent(`Nivel aumentado para ${state.level}.`, "ok");
+    sfxAchievement();
+  }
+}
+
+function calcUpgradeCost(u) {
+  return Math.floor(u.baseCost * Math.pow(1.7, u.level));
+}
+
+function calcCompanyCost(c) {
+  return Math.floor(c.baseCost * Math.pow(1.52, c.owned) * (1 + c.level * 0.08));
+}
+
+function calcCompanyUpgradeCost(c) {
+  return Math.floor(c.baseCost * 1.35 * Math.pow(1.72, c.level) * (1 + c.owned * 0.18));
+}
+
+function logEvent(text, type = "") {
+  const stamp = `Ano ${state.year}, Mes ${state.month}`;
+  const cls = type ? `class="${type}"` : "";
+  const safeText = escapeHtml(text);
+  state.logs.unshift(`<div ${cls}>[${stamp}] ${safeText}</div>`);
+  state.logs = state.logs.slice(0, 50);
+  el.eventLog.innerHTML = state.logs.join("");
+}
+
+function setStatus(msg, type = "") {
+  el.statusMsg.className = `mini ${type}`.trim();
+  el.statusMsg.textContent = msg;
+}
+
+function taxRateFor(avgMonthly) {
+  const income = Math.max(0, safeNumber(avgMonthly, 0));
+  if (income <= 10000) return 0.07;
+  if (income <= 50000) return 0.12;
+  if (income <= 150000) return 0.18;
+  if (income <= 400000) return 0.24;
+  if (income <= 900000) return 0.3;
+  return 0.35;
+}
+
+function applyYearlyInflation() {
+  const f = 1 + state.economy.inflation;
+  upgrades.forEach((u) => {
+    u.baseCost = Math.floor(u.baseCost * f);
+  });
+  companies.forEach((c) => {
+    c.baseCost = Math.floor(c.baseCost * f);
+    c.baseIncome = Math.floor(c.baseIncome * (1 + state.economy.inflation * 0.55));
+  });
+}
+
+function evolveEconomyYearly() {
+  state.economy.inflation = clamp(state.economy.inflation + (Math.random() * 0.03 - 0.015), 0.01, 0.14);
+  state.economy.interest = clamp(state.economy.interest + (Math.random() * 0.04 - 0.02), 0.02, 0.22);
+  state.economy.confidence = clamp(state.economy.confidence + (Math.random() * 0.12 - 0.06), 0.75, 1.35);
+}
+
+function maybeMarketEvent() {
+  if (state.month % 3 !== 0) return;
+  const sectorOptions = ["Varejo", "Alimentos", "Servicos", "Digital", "Tecnologia", "Industria", "Turismo", "Financeiro", "Conglomerado"];
+  const sector = sectorOptions[Math.floor(Math.random() * sectorOptions.length)];
+  const boost = Math.random() < 0.5 ? clamp(0.86 + Math.random() * 0.08, 0.84, 0.95) : clamp(1.05 + Math.random() * 0.14, 1.05, 1.2);
+  state.economy.sectorBoosts[sector] = boost;
+  const kind = boost >= 1 ? "aquecimento" : "recessao";
+  logEvent(`Mercado: ${kind} no setor ${sector} (x${boost.toFixed(2)}).`, boost >= 1 ? "ok" : "warn");
+}
+
+function monthStamp() {
+  return state.year * 12 + state.month;
+}
+
+function contractInvestmentCost(c) {
+  return Math.floor(c.baseReward * 0.45);
+}
+
+function generateContractOffers() {
+  const pool = [
+    { id: "marketing", title: "Campanha nacional", months: 2, baseReward: 18000, repGain: 4, xp: 18 },
+    { id: "supply", title: "Contrato de fornecimento", months: 3, baseReward: 36000, repGain: 6, xp: 30 },
+    { id: "software", title: "Transformacao digital", months: 4, baseReward: 72000, repGain: 8, xp: 45 },
+    { id: "expansao", title: "Expansao regional", months: 5, baseReward: 130000, repGain: 10, xp: 60 }
+  ];
+  const levelFactor = 1 + state.level * 0.04 + state.research.branding * 0.06 + state.reputation / 220;
+  const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, 3).map((p, i) => ({
+    offerId: `${p.id}_${monthStamp()}_${i}`,
+    title: p.title,
+    months: p.months,
+    baseReward: Math.floor(p.baseReward * levelFactor),
+    repGain: p.repGain,
+    xp: p.xp
+  }));
+  state.contracts.offers = picked;
+  state.contracts.lastOfferMonthStamp = monthStamp();
+}
+
+function ensureContractOffers() {
+  if (state.contracts.lastOfferMonthStamp === 0) {
+    generateContractOffers();
+    return;
+  }
+  if (monthStamp() - state.contracts.lastOfferMonthStamp >= 6) {
+    generateContractOffers();
+    logEvent("Novas ofertas de contratos chegaram ao mercado.", "ok");
+  }
+}
+
+function startContract(offerId) {
+  const offer = state.contracts.offers.find((x) => x.offerId === offerId);
+  if (!offer) return;
+  if (state.contracts.active.length >= 2) {
+    setStatus("Limite de 2 contratos ativos atingido.", "warn");
+    return;
+  }
+  const invest = contractInvestmentCost(offer);
+  if (state.money < invest) {
+    setStatus("Dinheiro insuficiente para iniciar esse contrato.", "bad");
+    return;
+  }
+  state.money -= invest;
+  state.contracts.active.push({
+    id: offer.offerId,
+    title: offer.title,
+    monthsLeft: offer.months,
+    reward: offer.baseReward,
+    repGain: offer.repGain,
+    xp: offer.xp
+  });
+  state.contracts.offers = state.contracts.offers.filter((x) => x.offerId !== offerId);
+  logEvent(`Contrato iniciado: ${offer.title} (investimento ${formatMoney(invest)}).`);
+  render();
+}
+
+function processContractsMonth() {
+  if (!state.contracts.active.length) return 0;
+  let totalPayout = 0;
+  const done = [];
+  state.contracts.active.forEach((c) => {
+    c.monthsLeft -= 1;
+    if (c.monthsLeft <= 0) done.push(c);
+  });
+  state.contracts.active = state.contracts.active.filter((c) => c.monthsLeft > 0);
+  done.forEach((c) => {
+    const payout = Math.floor(c.reward * (1 + state.research.branding * 0.05));
+    state.money += payout;
+    totalPayout += payout;
+    state.stats.contractRevenue += payout;
+    state.reputation = clamp(state.reputation + c.repGain, 0, 100);
+    addXp(c.xp);
+    logEvent(`Contrato finalizado: ${c.title}. Recebido ${formatMoney(payout)}.`, "ok");
+  });
+  return totalPayout;
+}
+
+function renderContracts() {
+  ensureContractOffers();
+  el.contractList.innerHTML = "";
+
+  state.contracts.active.forEach((c) => {
+    const title = escapeHtml(c.title);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">Ativo: ${title}</div>
+      <div class="meta">Prazo restante: ${c.monthsLeft} mes(es)</div>
+      <div class="meta">Pagamento previsto: ${formatMoney(c.reward)}</div>
+    `;
+    el.contractList.appendChild(card);
+  });
+
+  state.contracts.offers.forEach((c) => {
+    const invest = contractInvestmentCost(c);
+    const title = escapeHtml(c.title);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${title}</div>
+      <div class="meta">Duracao: ${c.months} mes(es) | Reputacao: +${c.repGain}</div>
+      <div class="meta">Investimento: ${formatMoney(invest)} | Retorno: ${formatMoney(c.baseReward)}</div>
+      <button class="btn" ${state.money < invest ? "disabled" : ""}>Assinar contrato</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => startContract(c.offerId));
+    el.contractList.appendChild(card);
+  });
+}
+
+function checkAchievements() {
+  achievements.forEach((a) => {
+    if (state.achievementsUnlocked.includes(a.id)) return;
+    if (!a.check()) return;
+    state.achievementsUnlocked.push(a.id);
+    state.money += 500;
+    state.stats.achievementRevenue += 500;
+    logEvent(`Conquista desbloqueada: ${a.title} (+${formatMoney(500)}).`, "ok");
+    sfxAchievement();
+  });
+}
+
+function renderAchievements() {
+  el.achievementList.innerHTML = "";
+  achievements.forEach((a) => {
+    const done = state.achievementsUnlocked.includes(a.id);
+    const card = document.createElement("div");
+    card.className = `ach-item ${done ? "done" : ""}`.trim();
+    card.innerHTML = `
+      <div class="title">${done ? "Desbloqueada" : "Bloqueada"} - ${a.title}</div>
+      <div class="meta">${a.desc}</div>
+      <div class="mini">${a.progress()}</div>
+    `;
+    el.achievementList.appendChild(card);
+  });
+}
+
+function generateDailyMissions() {
+  const clicksTarget = 50 + Math.floor(Math.random() * 100);
+  const clickRevTarget = 2000 + Math.floor(Math.random() * 6000);
+  const companyRevTarget = 1000 + Math.floor(Math.random() * 4000);
+
+  state.dailyMissions = {
+    dateKey: currentDateKey(),
+    list: [
+      {
+        id: "d_clicks",
+        title: "Cliqueiro do dia",
+        desc: `Faça ${clicksTarget} cliques hoje`,
+        metric: "totalClicks",
+        start: state.stats.totalClicks,
+        target: clicksTarget,
+        rewardMoney: 1200,
+        rewardXp: 40,
+        claimed: false
+      },
+      {
+        id: "d_click_rev",
+        title: "Receita ativa",
+        desc: `Ganhe ${formatMoney(clickRevTarget)} em cliques hoje`,
+        metric: "clickRevenue",
+        start: state.stats.clickRevenue,
+        target: clickRevTarget,
+        rewardMoney: 2600,
+        rewardXp: 80,
+        claimed: false
+      },
+      {
+        id: "d_company_rev",
+        title: "Renda passiva",
+        desc: `Ganhe ${formatMoney(companyRevTarget)} de empresas hoje`,
+        metric: "companyRevenue",
+        start: state.stats.companyRevenue,
+        target: companyRevTarget,
+        rewardMoney: 2000,
+        rewardXp: 70,
+        claimed: false
+      }
+    ]
+  };
+}
+
+function ensureDailyMissionsFresh() {
+  if (state.dailyMissions.dateKey !== currentDateKey() || !Array.isArray(state.dailyMissions.list) || !state.dailyMissions.list.length) {
+    generateDailyMissions();
+    logEvent("Missoes diarias renovadas.", "ok");
+  }
+}
+
+function missionProgress(mission) {
+  const current = Number(state.stats[mission.metric] || 0);
+  return Math.max(0, Math.floor(current - Number(mission.start || 0)));
+}
+
+function claimDailyMission(id) {
+  const mission = state.dailyMissions.list.find((m) => m.id === id);
+  if (!mission || mission.claimed) return;
+  if (missionProgress(mission) < mission.target) return;
+  mission.claimed = true;
+  state.money += mission.rewardMoney;
+  state.stats.dailyRevenue += mission.rewardMoney;
+  addXp(mission.rewardXp);
+  logEvent(`Missao diaria concluida: ${mission.title} (+${formatMoney(mission.rewardMoney)} e +${mission.rewardXp} XP).`, "ok");
+  sfxAchievement();
+  render();
+}
+
+function renderDailyMissions() {
+  ensureDailyMissionsFresh();
+  el.dailyMissionList.innerHTML = "";
+  el.dailyInfo.textContent = `Missoes de ${state.dailyMissions.dateKey}.`;
+
+  state.dailyMissions.list.forEach((m) => {
+    const progress = missionProgress(m);
+    const done = progress >= m.target;
+    const title = escapeHtml(m.title);
+    const desc = escapeHtml(m.desc);
+    const card = document.createElement("div");
+    card.className = `ach-item ${done && !m.claimed ? "claimable" : ""}`.trim();
+    card.innerHTML = `
+      <div class="title">${title}</div>
+      <div class="meta">${desc}</div>
+      <div class="pill">${Math.min(progress, m.target)} / ${m.target}</div>
+      <div class="mini">Recompensa: ${formatMoney(m.rewardMoney)} + ${m.rewardXp} XP</div>
+      <button class="btn" ${done && !m.claimed ? "" : "disabled"}>${m.claimed ? "Resgatada" : "Resgatar"}</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => claimDailyMission(m.id));
+    el.dailyMissionList.appendChild(card);
+  });
+}
+
+function researchCost(type) {
+  const level = Number(state.research[type] || 0);
+  const base = type === "automation" ? 18000 : type === "hr" ? 16000 : 22000;
+  return Math.floor(base * Math.pow(1.8, level));
+}
+
+function investResearch(type) {
+  const cost = researchCost(type);
+  if (state.money < cost) {
+    setStatus("Dinheiro insuficiente para investimento em P&D.", "bad");
+    return;
+  }
+  state.money -= cost;
+  state.research[type] += 1;
+  state.stats.researchSpent += cost;
+  if (type === "branding") state.reputation = clamp(state.reputation + 2, 0, 100);
+  addXp(20);
+  logEvent(`P&D realizado em ${type}. Nivel atual: ${state.research[type]}.`);
+  sfxBuy();
+  render();
+}
+
+function loadRanking() {
+  try {
+    const raw = localStorage.getItem(RANKING_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRanking(list) {
+  localStorage.setItem(RANKING_KEY, JSON.stringify(list.slice(0, 100)));
+}
+
+function upsertRankingEntry() {
+  const phone = (state.player.telefone || "").replace(/\D/g, "");
+  if (!phone) return false;
+  const name = (state.player.nome || "Jogador").trim();
+  const entry = {
+    phone,
+    name,
+    patrimonio: getPatrimonio(),
+    money: state.money,
+    level: state.level,
+    prestige: state.prestigePoints,
+    year: state.year,
+    month: state.month,
+    updatedAt: new Date().toISOString()
+  };
+
+  const list = loadRanking();
+  const idx = list.findIndex((x) => String(x.phone) === phone);
+  if (idx >= 0) list[idx] = entry;
+  else list.push(entry);
+  list.sort((a, b) => Number(b.patrimonio || 0) - Number(a.patrimonio || 0));
+  saveRanking(list);
+  return true;
+}
+
+function renderRanking() {
+  const list = loadRanking();
+  el.rankingList.innerHTML = "";
+  if (!list.length) {
+    el.rankingList.innerHTML = `<div class="mini">Ranking vazio. Salve um jogo vinculado ao telefone.</div>`;
+    return;
+  }
+
+  list
+    .sort((a, b) => Number(b.patrimonio || 0) - Number(a.patrimonio || 0))
+    .slice(0, 20)
+    .forEach((r, i) => {
+      const name = escapeHtml(r.name || "Jogador");
+      const phone = escapeHtml(r.phone || "-");
+      const row = document.createElement("div");
+      row.className = "rank-item";
+      row.innerHTML = `
+        <div class="rank-head"><span>#${i + 1} ${name}</span><span>${formatMoney(Number(r.patrimonio || 0))}</span></div>
+        <div class="rank-meta">Tel: ${phone} | Nivel ${Number(r.level || 1)} | Prestigio ${Number(r.prestige || 0)}</div>
+        <div class="rank-meta">Tempo: Ano ${Number(r.year || 1)}, Mes ${Number(r.month || 1)}</div>
+      `;
+      el.rankingList.appendChild(row);
+    });
+}
+
+function renderWorldRanking() {
+  const usdRate = state.forex.usd.rate;
+  ensureWorldWealthInitialized();
+  const roster = worldBillionaires.map((p) => ({
+    id: p.id,
+    name: p.nome,
+    wealthBrl: safeNumber(state.worldWealth[p.id], p.usdBillion) * 1000000000 * usdRate,
+    isPlayer: false
+  }));
+  const playerName = (state.player.nome || "Voce").trim();
+  roster.push({
+    id: "player",
+    name: playerName,
+    wealthBrl: getPatrimonio(),
+    isPlayer: true
+  });
+
+  roster.sort((a, b) => b.wealthBrl - a.wealthBrl);
+  const playerRank = roster.findIndex((x) => x.isPlayer) + 1;
+  const top5 = roster.slice(0, 5);
+
+  el.worldRankingInfo.textContent = `Base Forbes 2025 • Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
+  el.worldRankingList.innerHTML = "";
+  top5.forEach((r, i) => {
+    const row = document.createElement("div");
+    row.className = "rank-item";
+    const label = r.isPlayer ? `${escapeHtml(r.name)} (voce)` : escapeHtml(r.name);
+    row.innerHTML = `
+      <div class="rank-head"><span>#${i + 1} ${label}</span><span>${formatMoney(r.wealthBrl)}</span></div>
+      <div class="rank-meta">${r.isPlayer ? "Patrimonio atual no jogo" : "Fortuna de referencia convertida para BRL"}</div>
+    `;
+    el.worldRankingList.appendChild(row);
+  });
+}
+
+function buildAnnualCloseSummary() {
+  const total = state.yearlyRevenues.reduce((a, b) => a + b, 0);
+  const avg = Math.max(0, total / 12);
+  const rate = taxRateFor(avg);
+  const yearlyTax = Math.floor(avg * rate);
+  const yearlyIpva = Math.floor(garageAnnualIpva());
+  const previousDebt = Math.max(0, safeNumber(state.tax.debt, 0));
+  const debtInterest = Math.floor(previousDebt * state.economy.interest);
+  const debtDue = previousDebt + debtInterest;
+  return {
+    closeYear: state.year,
+    avg,
+    rate,
+    yearlyTax,
+    yearlyIpva,
+    previousDebt,
+    debtInterest,
+    debtDue,
+    totalDue: yearlyTax + yearlyIpva + debtDue
+  };
+}
+
+function hasPendingTaxDecision() {
+  return Boolean(state.tax.pendingYearClose && typeof state.tax.pendingYearClose === "object");
+}
+
+function updateTaxOverlay() {
+  if (!el.taxOverlay || !el.taxDueText) return;
+  if (!hasPendingTaxDecision()) {
+    el.taxOverlay.classList.remove("show");
+    return;
+  }
+  const due = Math.max(0, safeNumber(state.tax.pendingYearClose.totalDue, 0));
+  el.taxDueText.textContent = `Total devido: ${formatMoney(due)}`;
+  el.taxOverlay.classList.add("show");
+}
+
+function closeYear(settleNow) {
+  settleAviationYearlyCharges();
+  const summary = hasPendingTaxDecision() ? state.tax.pendingYearClose : buildAnnualCloseSummary();
+  const {
+    avg,
+    rate,
+    yearlyTax,
+    yearlyIpva,
+    previousDebt,
+    debtInterest,
+    totalDue
+  } = summary;
+
+  let paidFromCash = 0;
+  let paidFromFx = 0;
+  let paidTotal = 0;
+  let paidDebtInterest = 0;
+  let paidIpva = 0;
+
+  if (settleNow) {
+    let remaining = totalDue;
+    paidFromCash = Math.min(state.money, remaining);
+    state.money -= paidFromCash;
+    remaining -= paidFromCash;
+
+    if (remaining > 0) {
+      const fx = liquidateForexForAmount(remaining);
+      paidFromFx = fx.paid;
+      remaining = fx.remaining;
+      if (fx.soldUsd > 0) {
+        logEvent(`Imposto: saque de ${formatUsd(fx.soldUsd)} da conta USD para quitar tributos.`, "warn");
+      }
+      if (fx.soldEur > 0) {
+        logEvent(`Imposto: saque de ${formatEur(fx.soldEur)} da conta EUR para quitar tributos.`, "warn");
+      }
+    }
+
+    paidTotal = totalDue - remaining;
+    let alloc = paidTotal;
+    const paidOldPrincipal = Math.min(alloc, previousDebt);
+    alloc -= paidOldPrincipal;
+    paidDebtInterest = Math.min(alloc, debtInterest);
+    alloc -= paidDebtInterest;
+    const paidYearlyTax = Math.min(alloc, yearlyTax);
+    alloc -= paidYearlyTax;
+    paidIpva = Math.min(alloc, yearlyIpva);
+
+    state.stats.taxesPaid += paidTotal;
+    state.stats.taxDebtInterestPaid += paidDebtInterest;
+    state.stats.ipvaPaid += paidIpva;
+    state.tax.debt = Math.max(0, remaining);
+  } else {
+    state.tax.debt = Math.max(0, totalDue);
+    logEvent(`Imposto adiado para o proximo mes. Nova divida fiscal: ${formatMoney(state.tax.debt)}.`, "bad");
+  }
+
+  logEvent(
+    `Fechamento anual: media ${formatMoney(avg)} | imposto base ${formatMoney(yearlyTax)} (${Math.round(rate * 100)}%) | IPVA ${formatMoney(yearlyIpva)} | divida anterior ${formatMoney(previousDebt)} + juros ${formatMoney(debtInterest)} | pago ${formatMoney(paidTotal)}.`,
+    "warn"
+  );
+  if (state.tax.debt > 0) {
+    logEvent(`Divida fiscal pendente: ${formatMoney(state.tax.debt)} (impostos/IPVA nao pagos acumularao juros no proximo fechamento anual).`, "bad");
+  } else if (totalDue > 0) {
+    logEvent(`Impostos/IPVA quitados. BRL ${formatMoney(paidFromCash)} + contas globais ${formatMoney(paidFromFx)}.`, "ok");
+  }
+
+  evolveEconomyYearly();
+  applyYearlyInflation();
+  logEvent(
+    `Economia anual: inflacao ${(state.economy.inflation * 100).toFixed(1)}% | juros ${(state.economy.interest * 100).toFixed(1)}% | confianca ${(state.economy.confidence * 100).toFixed(0)}%.`,
+    "warn"
+  );
+  state.yearlyRevenues = [];
+  state.tax.pendingYearClose = null;
+  state.month = 1;
+  state.year += 1;
+  state.secondsToMonth = MONTH_SECONDS;
+  sfxTax();
+}
+
+function processMonth() {
+  updateParticipationMarketMonthly();
+  updateCompanyValuationsMonthly();
+  const passive = effectiveCompanyIncome();
+  const opsCost = monthlyOperationalCost();
+  const payroll = monthlyPayrollCost();
+  state.money += passive;
+  state.money -= opsCost + payroll;
+  const loanPaid = processLoanPayment();
+  const contractPayout = processContractsMonth();
+  const totalCosts = opsCost + payroll + loanPaid;
+  const netPassive = passive - opsCost - payroll - loanPaid + contractPayout;
+  if (state.money < 0) state.money = 0;
+  state.monthRevenue += netPassive;
+  state.stats.companyRevenue += passive;
+  state.stats.operationalCosts += opsCost;
+  state.stats.payrollPaid += payroll;
+  state.reputation = clamp(
+    state.reputation + (netPassive >= 0 ? 0.3 : -0.8) + state.research.branding * 0.05 - (state.loan.monthsLeft > 0 ? 0.1 : 0),
+    0,
+    100
+  );
+
+  state.yearlyRevenues.push(state.monthRevenue);
+  logEvent(
+    `Mes fechado: bruto ${formatMoney(passive)} | contratos ${formatMoney(contractPayout)} | custos ${formatMoney(totalCosts)} (ops ${formatMoney(opsCost)}, folha ${formatMoney(payroll)}, banco ${formatMoney(loanPaid)}) | liquido ${formatMoney(netPassive)}.`
+  );
+  addXp(6 + Math.floor(passive / 1000));
+  state.monthRevenue = 0;
+
+  processTurnover();
+  processGarageMonth();
+  processAviationMonth();
+  updateForexRates();
+  evolveWorldWealthMonthly();
+  if (state.month === 12) {
+    state.tax.pendingYearClose = buildAnnualCloseSummary();
+    state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+    state.secondsToMonth = MONTH_SECONDS;
+    sfxMonthClose();
+    updateTaxOverlay();
+    render();
+    return;
+  }
+  state.month += 1;
+  maybeMarketEvent();
+  state.secondsToMonth = MONTH_SECONDS;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  sfxMonthClose();
+  render();
+}
+
+function animateClickFx(value) {
+  el.clickBtn.classList.remove("flash");
+  void el.clickBtn.offsetWidth;
+  el.clickBtn.classList.add("flash");
+
+  el.floatGain.textContent = `+${formatMoney(value)}`;
+  el.floatGain.classList.remove("show");
+  void el.floatGain.offsetWidth;
+  el.floatGain.classList.add("show");
+}
+
+function renderUpgrades() {
+  el.upgradeList.innerHTML = "";
+  upgrades.forEach((u) => {
+    const cost = calcUpgradeCost(u);
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${u.nome} (Nv. ${u.level})</div>
+      <div class="meta">+${formatMoney(u.add)} no clique base | Custo: ${formatMoney(cost)}</div>
+      <button class="btn" ${state.money < cost ? "disabled" : ""}>Comprar upgrade</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => {
+      if (state.money < cost) return;
+      ensureAudio();
+      state.money -= cost;
+      state.clickValue += u.add;
+      u.level += 1;
+      state.stats.spentUpgrades += cost;
+      addXp(5);
+      logEvent(`Upgrade comprado: ${u.nome}. Novo clique base: ${formatMoney(state.clickValue)}.`);
+      sfxBuy();
+      render();
+    });
+    el.upgradeList.appendChild(card);
+  });
+}
+
+function renderCompanies() {
+  el.companyList.innerHTML = "";
+  companies.forEach((c) => {
+    const buyCost = calcCompanyCost(c);
+    const upgradeCost = calcCompanyUpgradeCost(c);
+    const hireCost = recruitmentCost(c);
+    const perUnit = companyIncomePerUnit(c);
+    const total = companyTotalIncome(c);
+    const sectorMult = getSectorMultiplier(c.setor);
+    const req = requiredEmployees(c);
+    const prod = companyProductivity(c);
+    const payroll = companyPayroll(c);
+    const valuation = companyFairValuation(c);
+    const offer = c.owned > 0 ? companySellOfferPerUnit(c) : 0;
+    const salaryLabel = c.salaryTier === 0 ? "Baixo" : c.salaryTier === 1 ? "Mercado" : "Alto";
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${c.nome}</div>
+      <div class="meta">Setor: ${c.setor} (x${sectorMult.toFixed(2)}) | Unidades: ${c.owned} | Nivel: ${c.level}</div>
+      <div class="meta">Funcionarios: ${c.employees}/${req} | Salario: ${salaryLabel} | Produtividade: x${prod.toFixed(2)}</div>
+      <div class="meta">Renda por unidade: ${formatMoney(perUnit)}/mes | Total: ${formatMoney(total)}/mes</div>
+      <div class="meta">Valuation estimado: ${formatMoney(valuation)} | Oferta justa por unidade: ${formatMoney(offer)}</div>
+      <div class="meta">Folha: ${formatMoney(payroll)}/mes | Contratacao: ${formatMoney(hireCost)}</div>
+      <div class="meta">Compra: ${formatMoney(buyCost)} | Upgrade: ${formatMoney(upgradeCost)}</div>
+      <div class="btn-row">
+        <button class="btn" data-act="buy" ${state.money < buyCost ? "disabled" : ""}>Comprar unidade</button>
+        <button class="btn alt" data-act="upg" ${state.money < upgradeCost || c.owned === 0 ? "disabled" : ""}>Upgrade empresa</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" data-act="hire" ${state.money < hireCost || c.owned === 0 ? "disabled" : ""}>Contratar</button>
+        <button class="btn alt" data-act="fire" ${c.employees <= 0 ? "disabled" : ""}>Demitir</button>
+      </div>
+      <button class="btn alt" data-act="sell" ${c.owned <= 0 ? "disabled" : ""}>Vender 1 unidade (proposta)</button>
+      <button class="btn" data-act="salary">Ajustar salario (${salaryLabel})</button>
+    `;
+    card.querySelector('[data-act="buy"]').addEventListener("click", () => {
+      if (state.money < buyCost) return;
+      ensureAudio();
+      state.money -= buyCost;
+      c.owned += 1;
+      state.stats.spentCompanies += buyCost;
+      addXp(10);
+      logEvent(`Nova unidade comprada: ${c.nome} (unidades: ${c.owned}).`);
+      sfxBuy();
+      render();
+    });
+    card.querySelector('[data-act="upg"]').addEventListener("click", () => {
+      if (c.owned === 0 || state.money < upgradeCost) return;
+      ensureAudio();
+      state.money -= upgradeCost;
+      c.level += 1;
+      state.stats.spentCompanies += upgradeCost;
+      addXp(14);
+      logEvent(`Upgrade da ${c.nome} para nivel ${c.level}.`);
+      sfxBuy();
+      render();
+    });
+    card.querySelector('[data-act="hire"]').addEventListener("click", () => {
+      if (c.owned === 0 || state.money < hireCost) return;
+      ensureAudio();
+      state.money -= hireCost;
+      c.employees += 1;
+      logEvent(`Contratacao em ${c.nome}. Total de funcionarios: ${c.employees}.`);
+      sfxBuy();
+      render();
+    });
+    card.querySelector('[data-act="fire"]').addEventListener("click", () => {
+      if (c.employees <= 0) return;
+      c.employees -= 1;
+      logEvent(`Demissao em ${c.nome}. Funcionarios restantes: ${c.employees}.`, "warn");
+      render();
+    });
+    card.querySelector('[data-act="sell"]').addEventListener("click", () => {
+      if (c.owned <= 0) return;
+      const sale = companySellOfferPerUnit(c);
+      c.owned = Math.max(0, c.owned - 1);
+      if (c.employees > requiredEmployees(c)) {
+        const cut = c.employees - requiredEmployees(c);
+        c.employees = requiredEmployees(c);
+        if (cut > 0) logEvent(`Ajuste de equipe em ${c.nome}: ${cut} desligamento(s) apos venda de unidade.`, "warn");
+      }
+      state.money += sale;
+      state.monthRevenue += sale;
+      logEvent(`Unidade vendida em ${c.nome} por proposta de ${formatMoney(sale)}.`, "ok");
+      sfxBuy();
+      render();
+    });
+    card.querySelector('[data-act="salary"]').addEventListener("click", () => {
+      c.salaryTier = (c.salaryTier + 1) % 3;
+      const nextLabel = c.salaryTier === 0 ? "Baixo" : c.salaryTier === 1 ? "Mercado" : "Alto";
+      logEvent(`Politica salarial de ${c.nome} alterada para ${nextLabel}.`);
+      render();
+    });
+    el.companyList.appendChild(card);
+  });
+}
+
+function renderParticipations() {
+  if (!el.participationList || !el.participationSummary) return;
+  initParticipationMarket();
+  const monthly = totalParticipationIncome();
+  const invested = totalParticipationValue();
+  const ownedCount = participationCatalog.filter((c) => safeNumber(state.participations.holdings[c.id], 0) > 0).length;
+  el.participationSummary.textContent = `${ownedCount} posicao(oes) | Valor de mercado ${formatMoney(invested)} | Proventos estimados ${formatMoney(monthly)}/mes`;
+  el.participationList.innerHTML = "";
+
+  participationCatalog.forEach((c) => {
+    const pct = clamp(safeNumber(state.participations.holdings[c.id], 0), 0, 100);
+    const market = state.participations.market[c.id];
+    const valuation = Math.max(0, safeNumber(market?.valuation, c.baseValuation));
+    const prev = Math.max(0, safeNumber(market?.lastValuation, valuation));
+    const variationPct = prev > 0 ? ((valuation - prev) / prev) * 100 : 0;
+    const monthlyIncome = participationMonthlyIncome(c);
+    const unit1 = Math.floor(valuation * 0.01 * 1.01);
+    const unit5 = Math.floor(valuation * 0.05 * 1.01);
+    const unit10 = Math.floor(valuation * 0.1 * 1.01);
+    const sell1 = Math.floor(valuation * 0.01 * 0.99);
+    const sell5 = Math.floor(valuation * 0.05 * 0.99);
+    const sell10 = Math.floor(valuation * 0.1 * 0.99);
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${escapeHtml(c.nome)} (${escapeHtml(c.ticker)})</div>
+      <div class="meta">Setor: ${escapeHtml(c.setor)} | Valuation: ${formatMoney(valuation)} | Variacao mes: ${variationPct.toFixed(2)}%</div>
+      <div class="meta">Sua participacao: ${pct.toFixed(1)}% (${participationControlLabel(pct)})</div>
+      <div class="meta">Recebimento estimado: ${formatMoney(monthlyIncome)}/mes</div>
+      <div class="btn-row">
+        <button class="btn" data-act="buy1" ${state.money < unit1 || pct >= 100 ? "disabled" : ""}>Comprar 1%</button>
+        <button class="btn" data-act="buy5" ${state.money < unit5 || pct >= 100 ? "disabled" : ""}>Comprar 5%</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" data-act="buy10" ${state.money < unit10 || pct >= 100 ? "disabled" : ""}>Comprar 10%</button>
+        <button class="btn alt" data-act="sell1" ${pct < 1 ? "disabled" : ""}>Vender 1%</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn alt" data-act="sell5" ${pct < 5 ? "disabled" : ""}>Vender 5%</button>
+        <button class="btn alt" data-act="sell10" ${pct < 10 ? "disabled" : ""}>Vender 10%</button>
+      </div>
+      <div class="meta">Custo compra (1/5/10%): ${formatMoney(unit1)} / ${formatMoney(unit5)} / ${formatMoney(unit10)}</div>
+      <div class="meta">Recebe na venda (1/5/10%): ${formatMoney(sell1)} / ${formatMoney(sell5)} / ${formatMoney(sell10)}</div>
+    `;
+    card.querySelector('[data-act="buy1"]').addEventListener("click", () => buyParticipation(c.id, 1));
+    card.querySelector('[data-act="buy5"]').addEventListener("click", () => buyParticipation(c.id, 5));
+    card.querySelector('[data-act="buy10"]').addEventListener("click", () => buyParticipation(c.id, 10));
+    card.querySelector('[data-act="sell1"]').addEventListener("click", () => sellParticipation(c.id, 1));
+    card.querySelector('[data-act="sell5"]').addEventListener("click", () => sellParticipation(c.id, 5));
+    card.querySelector('[data-act="sell10"]').addEventListener("click", () => sellParticipation(c.id, 10));
+    el.participationList.appendChild(card);
+  });
+}
+
+function buyCar(modelId) {
+  const model = carCatalog.find((x) => x.id === modelId);
+  if (!model) return;
+  if (state.money < model.price) {
+    setStatus("Saldo insuficiente para comprar esse carro.", "bad");
+    return;
+  }
+  state.money -= model.price;
+  state.garage.push({
+    id: state.nextCarId++,
+    modelId: model.id,
+    nome: model.nome,
+    originalPrice: model.price,
+    currentValue: model.price,
+    km: 0,
+    monthsOwned: 0
+  });
+  logEvent(`Carro comprado: ${model.nome} por ${formatMoney(model.price)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function sellCar(carId) {
+  const idx = state.garage.findIndex((c) => c.id === carId);
+  if (idx < 0) return;
+  const car = state.garage[idx];
+  state.money += car.currentValue;
+  state.monthRevenue += car.currentValue;
+  state.stats.carSalesRevenue += car.currentValue;
+  state.garage.splice(idx, 1);
+  logEvent(`Carro vendido: ${car.nome} por ${formatMoney(car.currentValue)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function processGarageMonth() {
+  if (!state.garage.length) return;
+  const survivors = [];
+  state.garage.forEach((car) => {
+    const kmGain = Math.floor(700 + Math.random() * 1300 + car.monthsOwned * 3);
+    car.km += kmGain;
+    car.monthsOwned += 1;
+    const wearRate = 0.008 + kmGain / 140000 + car.monthsOwned / 2200 + (car.km > 120000 ? 0.006 : 0);
+    const floor = car.originalPrice * 0.08;
+    car.currentValue = Math.max(floor, car.currentValue * (1 - wearRate));
+    const broke = car.km >= 420000 || Math.random() < carBreakRisk(car);
+    if (broke) {
+      state.stats.carsBroken += 1;
+      logEvent(`Carro quebrado sem recuperacao: ${car.nome} (${Math.floor(car.km)} km).`, "bad");
+      return;
+    }
+    survivors.push(car);
+  });
+  state.garage = survivors;
+}
+
+function renderCarShop() {
+  el.carShopList.innerHTML = "";
+  carCatalog.forEach((model) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    const ipva = model.price * 0.05;
+    card.innerHTML = `
+      <div class="title">${escapeHtml(model.nome)}</div>
+      <div class="meta">Preco de referencia: ${formatMoney(model.price)}</div>
+      <div class="meta">IPVA anual estimado (5%): ${formatMoney(ipva)}</div>
+      <button class="btn" ${state.money < model.price ? "disabled" : ""}>Comprar carro</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => buyCar(model.id));
+    el.carShopList.appendChild(card);
+  });
+
+  const garageValue = garageTotalValue();
+  const ipva = garageAnnualIpva();
+  el.garageSummary.textContent = `${state.garage.length} carro(s) | Valor ${formatMoney(garageValue)} | IPVA anual ${formatMoney(ipva)}`;
+  el.garageList.innerHTML = "";
+
+  if (!state.garage.length) {
+    el.garageList.innerHTML = `<div class="mini">Sem carros na garagem.</div>`;
+    return;
+  }
+
+  state.garage
+    .slice()
+    .sort((a, b) => b.currentValue - a.currentValue)
+    .forEach((car) => {
+      const risk = carBreakRisk(car);
+      const riskPct = Math.round(risk * 100);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${escapeHtml(car.nome)}</div>
+        <div class="meta">Valor atual: ${formatMoney(car.currentValue)} | Valor original: ${formatMoney(car.originalPrice)}</div>
+        <div class="meta">Km: ${Math.floor(car.km).toLocaleString("pt-BR")} | Uso: ${car.monthsOwned} mes(es)</div>
+        <div class="meta">Risco de quebra mensal: ${riskPct}% ${riskPct >= 65 ? "(muito alto)" : ""}</div>
+        <button class="btn alt">Vender carro</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => sellCar(car.id));
+      el.garageList.appendChild(card);
+    });
+}
+
+function buyAircraft(modelId) {
+  const model = aircraftCatalog.find((x) => x.id === modelId);
+  if (!model) return;
+  const priceUsd = model.priceUsd;
+  if (state.forex.usd.balance < priceUsd) {
+    setStatus("Saldo USD insuficiente para comprar esse aviao.", "bad");
+    return;
+  }
+  state.forex.usd.balance -= priceUsd;
+  state.aviation.fleet.push({
+    id: state.aviation.nextAircraftId++,
+    modelId: model.id,
+    nome: model.nome,
+    originalPriceUsd: model.priceUsd,
+    currentValueUsd: model.priceUsd,
+    cruiseKmh: model.cruiseKmh,
+    opCostUsdPerHour: model.opCostUsdPerHour,
+    flightHours: 0,
+    totalKm: 0,
+    monthsOwned: 0
+  });
+  if (!state.aviation.selectedAircraftId) state.aviation.selectedAircraftId = state.aviation.fleet[0].id;
+  logEvent(`Aviao comprado: ${model.nome} por ${formatUsd(priceUsd)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function sellAircraft(aircraftId) {
+  const idx = state.aviation.fleet.findIndex((a) => a.id === aircraftId);
+  if (idx < 0) return;
+  const aircraft = state.aviation.fleet[idx];
+  state.forex.usd.balance += aircraft.currentValueUsd;
+  state.monthRevenue += aircraft.currentValueUsd * state.forex.usd.rate;
+  state.aviation.fleet.splice(idx, 1);
+  if (state.aviation.selectedAircraftId === aircraftId) {
+    state.aviation.selectedAircraftId = state.aviation.fleet.length ? state.aviation.fleet[0].id : 0;
+  }
+  logEvent(`Aviao vendido: ${aircraft.nome} por ${formatUsd(aircraft.currentValueUsd)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function processAviationMonth() {
+  if (state.aviation.fleet.length > 0) {
+    const monthlyFixedUsd = state.aviation.fleet.length * (aircraftMonthlyHangarUsd() + aircraftMonthlyCrewUsd());
+    state.aviation.accruedUsd += monthlyFixedUsd;
+  }
+  state.aviation.fleet.forEach((a) => {
+    a.monthsOwned += 1;
+    const ageWear = 0.0012;
+    a.currentValueUsd = Math.max(a.originalPriceUsd * 0.25, a.currentValueUsd * (1 - ageWear));
+  });
+}
+
+function settleAviationYearlyCharges() {
+  const previousDebt = Math.max(0, state.aviation.debtUsd);
+  const debtInterest = previousDebt * state.economy.interest;
+  const taxDue = state.aviation.fleet.reduce((sum, a) => sum + aircraftTaxUsd(a), 0);
+  const accruedDue = Math.max(0, state.aviation.accruedUsd);
+  const hangarDue = accruedDue * 0.5;
+  const crewDue = accruedDue * 0.5;
+  const totalDueUsd = previousDebt + debtInterest + taxDue + accruedDue;
+
+  const paidUsd = Math.min(state.forex.usd.balance, totalDueUsd);
+  state.forex.usd.balance -= paidUsd;
+  state.aviation.debtUsd = Math.max(0, totalDueUsd - paidUsd);
+  state.aviation.accruedUsd = 0;
+
+  let alloc = paidUsd;
+  const paidOldDebt = Math.min(alloc, previousDebt);
+  alloc -= paidOldDebt;
+  const paidDebtInterest = Math.min(alloc, debtInterest);
+  alloc -= paidDebtInterest;
+  const paidTax = Math.min(alloc, taxDue);
+  alloc -= paidTax;
+  const paidHangar = Math.min(alloc, hangarDue);
+  alloc -= paidHangar;
+  const paidCrew = Math.min(alloc, crewDue);
+
+  state.stats.aircraftDebtInterestPaidUsd += paidDebtInterest;
+  state.stats.aircraftTaxPaidUsd += paidTax;
+  state.stats.aircraftHangarPaidUsd += paidHangar;
+  state.stats.aircraftCrewPaidUsd += paidCrew;
+
+  if (totalDueUsd > 0) {
+    logEvent(
+      `Aviacao anual: imposto ${formatUsd(taxDue)} | hangar ${formatUsd(hangarDue)} | tripulacao ${formatUsd(crewDue)} | pago ${formatUsd(paidUsd)} | pendente ${formatUsd(state.aviation.debtUsd)}.`,
+      state.aviation.debtUsd > 0 ? "warn" : "ok"
+    );
+  }
+}
+
+function tripCostBrl(aircraft, route) {
+  const distance = route.km;
+  const cruiseHours = distance / aircraft.cruiseKmh;
+  const flightHours = cruiseHours * 1.08;
+  const baseOp = flightHours * aircraft.opCostUsdPerHour;
+  const luxuryFactor = clamp(aircraft.originalPriceUsd / 15000000, 0.8, 4);
+  const routeFee = route.airportFeeUsd + (route.pais === "Brasil" ? 350 : 1500);
+  const totalUsd = (baseOp + routeFee) * luxuryFactor;
+  return {
+    flightHours,
+    totalUsd,
+    totalBrl: totalUsd * state.forex.usd.rate
+  };
+}
+
+function travelRoute(routeId) {
+  const route = travelRoutes.find((r) => r.id === routeId);
+  const aircraftId = safeInt(el.travelAircraftSelect.value, 0);
+  const aircraft = state.aviation.fleet.find((a) => a.id === aircraftId);
+  if (!route || !aircraft) {
+    setStatus("Selecione um aviao valido para viajar.", "warn");
+    return;
+  }
+  const trip = tripCostBrl(aircraft, route);
+  if (state.money < trip.totalBrl) {
+    setStatus("Saldo em BRL insuficiente para essa viagem.", "bad");
+    return;
+  }
+
+  state.money -= trip.totalBrl;
+  state.stats.travelSpendBrl += trip.totalBrl;
+  state.stats.totalFlightKm += route.km;
+  state.stats.totalFlightHours += trip.flightHours;
+
+  aircraft.flightHours += trip.flightHours;
+  aircraft.totalKm += route.km;
+  const tripWear = clamp(0.002 + trip.flightHours * 0.00045, 0.002, 0.03);
+  aircraft.currentValueUsd = Math.max(aircraft.originalPriceUsd * 0.25, aircraft.currentValueUsd * (1 - tripWear));
+
+  state.passport.totalTrips += 1;
+  const key = route.pais;
+  if (!state.passport.countries[key]) {
+    state.passport.countries[key] = { name: route.pais, visits: 0, firstYear: state.year, firstMonth: state.month };
+  }
+  state.passport.countries[key].visits += 1;
+  state.aviation.selectedAircraftId = aircraft.id;
+
+  logEvent(
+    `Viagem privada: Sao Paulo -> ${route.destino} (${route.km} km) com ${aircraft.nome}. Custo ${formatMoney(trip.totalBrl)}.`,
+    "warn"
+  );
+  render();
+}
+
+function renderAircraftShop() {
+  const fleetUsd = state.aviation.fleet.reduce((sum, a) => sum + a.currentValueUsd, 0);
+  const annualDue = aviationAnnualDueUsdPreview();
+  el.aircraftSummary.textContent = `${state.aviation.fleet.length} aviao(es) | Valor ${formatUsd(fleetUsd)}`;
+  el.aircraftAnnualDue.textContent = formatUsd(annualDue);
+  el.aircraftDebtUsd.textContent = formatUsd(state.aviation.debtUsd);
+
+  el.aircraftShopList.innerHTML = "";
+  aircraftCatalog.forEach((model) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${escapeHtml(model.nome)}</div>
+      <div class="meta">Preco: ${formatUsd(model.priceUsd)} | Cruzeiro: ${model.cruiseKmh} km/h</div>
+      <div class="meta">Custo operacional medio: ${formatUsd(model.opCostUsdPerHour)}/h</div>
+      <button class="btn" ${state.forex.usd.balance < model.priceUsd ? "disabled" : ""}>Comprar em USD</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => buyAircraft(model.id));
+    el.aircraftShopList.appendChild(card);
+  });
+
+  el.aircraftFleetList.innerHTML = "";
+  if (!state.aviation.fleet.length) {
+    el.aircraftFleetList.innerHTML = `<div class="mini">Sem avioes na frota.</div>`;
+  } else {
+    state.aviation.fleet
+      .slice()
+      .sort((a, b) => b.currentValueUsd - a.currentValueUsd)
+      .forEach((aircraft) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="title">${escapeHtml(aircraft.nome)}</div>
+          <div class="meta">Valor atual: ${formatUsd(aircraft.currentValueUsd)} | Original: ${formatUsd(aircraft.originalPriceUsd)}</div>
+          <div class="meta">Horas voo: ${aircraft.flightHours.toFixed(1)}h | Distancia: ${Math.floor(aircraft.totalKm).toLocaleString("pt-BR")} km</div>
+          <div class="meta">IPVA anual (5%): ${formatUsd(aircraftTaxUsd(aircraft))}</div>
+          <button class="btn alt">Vender aviao</button>
+        `;
+        card.querySelector("button").addEventListener("click", () => sellAircraft(aircraft.id));
+        el.aircraftFleetList.appendChild(card);
+      });
+  }
+}
+
+function renderTravel() {
+  el.travelAircraftSelect.innerHTML = "";
+  if (!state.aviation.fleet.length) {
+    el.travelAircraftInfo.textContent = "Sem aviao";
+    el.travelStats.textContent = "Compre um aviao para liberar viagens privadas.";
+    el.routeList.innerHTML = `<div class="mini">Sem rotas disponiveis sem aviao.</div>`;
+    return;
+  }
+
+  if (!state.aviation.fleet.find((a) => a.id === state.aviation.selectedAircraftId)) {
+    state.aviation.selectedAircraftId = state.aviation.fleet[0].id;
+  }
+
+  state.aviation.fleet.forEach((a) => {
+    const opt = document.createElement("option");
+    opt.value = String(a.id);
+    opt.textContent = `${a.nome} (${formatUsd(a.currentValueUsd)})`;
+    if (a.id === state.aviation.selectedAircraftId) opt.selected = true;
+    el.travelAircraftSelect.appendChild(opt);
+  });
+
+  const selected = state.aviation.fleet.find((a) => a.id === safeInt(el.travelAircraftSelect.value, 0)) || state.aviation.fleet[0];
+  if (selected) state.aviation.selectedAircraftId = selected.id;
+  el.travelAircraftInfo.textContent = selected ? `${selected.nome} • ${selected.flightHours.toFixed(1)}h voo` : "Sem aviao";
+  el.travelStats.textContent = `Gasto total em viagens: ${formatMoney(state.stats.travelSpendBrl)} | Distancia: ${Math.floor(state.stats.totalFlightKm).toLocaleString("pt-BR")} km`;
+
+  el.routeList.innerHTML = "";
+  travelRoutes.forEach((route) => {
+    const trip = selected ? tripCostBrl(selected, route) : { totalBrl: 0 };
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${escapeHtml(route.origem)} -> ${escapeHtml(route.destino)} (${escapeHtml(route.pais)})</div>
+      <div class="meta">Distancia: ${route.km.toLocaleString("pt-BR")} km</div>
+      <div class="meta">Estimativa de custo: ${formatMoney(trip.totalBrl)} (debita BRL da conta pessoal)</div>
+      <button class="btn" ${state.money < trip.totalBrl ? "disabled" : ""}>Viajar nesta rota</button>
+    `;
+    card.querySelector("button").addEventListener("click", () => travelRoute(route.id));
+    el.routeList.appendChild(card);
+  });
+}
+
+function renderPassport() {
+  const entries = Object.values(state.passport.countries || {});
+  const countriesCount = entries.filter((x) => x.name !== "Brasil").length;
+  el.passportSummary.textContent = `Viagens: ${state.passport.totalTrips} | Paises internacionais visitados: ${countriesCount}`;
+  el.passportList.innerHTML = "";
+  if (!entries.length) {
+    el.passportList.innerHTML = `<div class="mini">Nenhum registro de viagem ainda.</div>`;
+    return;
+  }
+  entries
+    .slice()
+    .sort((a, b) => b.visits - a.visits)
+    .forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${escapeHtml(p.name)}</div>
+        <div class="meta">Visitas: ${p.visits}</div>
+        <div class="meta">Primeira viagem: Ano ${p.firstYear}, Mes ${p.firstMonth}</div>
+      `;
+      el.passportList.appendChild(card);
+    });
+}
+
+function profileText() {
+  const p = state.player;
+  if (!p.nome) return "Personagem ainda nao criado.";
+  return `${p.nome}, ${p.idade} anos, tel ${p.telefone || "nao vinculado"}`;
+}
+
+function resetCharacter() {
+  const ok = confirm("Resetar personagem?\nIsso apaga nome, idade e telefone, sem afetar seu progresso financeiro.");
+  if (!ok) return;
+  state.player = { nome: "", idade: "", telefone: "" };
+  el.nameInput.value = "";
+  el.ageInput.value = "";
+  el.phoneInput.value = "";
+  logEvent("Dados do personagem foram resetados.", "warn");
+  setStatus("Personagem resetado.", "ok");
+  render();
+}
+
+function canPrestige() {
+  return getPatrimonio() >= 300000;
+}
+
+function doPrestige() {
+  if (!canPrestige()) {
+    setStatus("Precisa de patrimonio minimo de R$ 300.000 para prestigio.", "warn");
+    return;
+  }
+  const ganho = Math.max(1, Math.floor(Math.sqrt(getPatrimonio() / 300000)));
+  const ok = confirm(`Confirmar prestigio?\nVoce ganhara +${ganho} ponto(s) de prestigio e resetara economia atual.`);
+  if (!ok) return;
+
+  state.prestigePoints += ganho;
+  state.money = 0;
+  state.clickValue = 10;
+  state.monthRevenue = 0;
+  state.year = 1;
+  state.month = 1;
+  state.secondsToMonth = MONTH_SECONDS;
+  state.yearlyRevenues = [];
+  upgrades.forEach((u) => {
+    u.level = 0;
+  });
+  companies.forEach((c) => {
+    c.owned = 0;
+    c.level = 0;
+    c.employees = 0;
+    c.salaryTier = 1;
+    c.marketFactor = 1;
+    c.lastIncome = 0;
+  });
+  state.participations = { holdings: {}, market: {} };
+  initParticipationMarket();
+  state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
+  state.tax = { debt: 0, pendingYearClose: null };
+  state.garage = [];
+  state.nextCarId = 1;
+  state.aviation = { fleet: [], nextAircraftId: 1, accruedUsd: 0, debtUsd: 0, selectedAircraftId: 0 };
+  state.passport = { countries: {}, totalTrips: 0 };
+  state.forex.usd.balance = 0;
+  state.forex.eur.balance = 0;
+  state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
+  state.reputation = clamp(state.reputation + 4, 0, 100);
+  generateDailyMissions();
+
+  logEvent(`Prestigio realizado: +${ganho} ponto(s). Bônus permanente aumentado.`, "warn");
+  setStatus("Prestigio realizado com sucesso.", "ok");
+  sfxAchievement();
+  render();
+}
+
+function render() {
+  ensureDailyMissionsFresh();
+  ensureContractOffers();
+  checkAchievements();
+
+  const clickGain = effectiveClickValue();
+  const companyIncome = effectiveCompanyIncome();
+  const participationIncome = totalParticipationIncome();
+  const opsCost = monthlyOperationalCost();
+  const payrollCost = monthlyPayrollCost();
+  const installment = totalMonthlyInstallment();
+  const mult = getIncomeMultiplier();
+
+  el.money.textContent = formatMoney(state.money);
+  el.dateLine.textContent = `Ano ${state.year} • Mes ${state.month}`;
+  el.countdown.textContent = hasPendingTaxDecision() ? "Aguardando decisao de imposto anual" : `Prox. mes em ${state.secondsToMonth}s`;
+  el.clickLine.textContent = `Valor por clique: ${formatMoney(clickGain)} (base ${formatMoney(state.clickValue)})`;
+  el.incomeLine.textContent = `Renda mensal empresas/participacoes: ${formatMoney(companyIncome)} (participacoes ${formatMoney(participationIncome)})`;
+  el.econLine.textContent = `Economia: inflacao ${(state.economy.inflation * 100).toFixed(1)}% | juros ${(state.economy.interest * 100).toFixed(1)}% | confianca ${(state.economy.confidence * 100).toFixed(0)}%`;
+  el.expenseLine.textContent = `Custos: ops ${formatMoney(opsCost)} + folha ${formatMoney(payrollCost)} + banco ${formatMoney(installment)}`;
+  el.monthRevenue.textContent = formatMoney(state.monthRevenue);
+  el.clickBtn.textContent = `CLICAR (+${formatMoney(clickGain)})`;
+  el.profilePreview.textContent = profileText();
+
+  const pct = ((MONTH_SECONDS - state.secondsToMonth) / MONTH_SECONDS) * 100;
+  el.monthBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  el.skipMonthBtn.disabled = hasPendingTaxDecision();
+  updateTaxOverlay();
+
+  const patrimonio = getPatrimonio();
+  el.statLevel.textContent = String(state.level);
+  el.statXp.textContent = `${state.xp} / ${xpToNext(state.level)}`;
+  el.statMultiplier.textContent = `x${mult.toFixed(2)}`;
+  el.statPrestige.textContent = String(state.prestigePoints);
+  el.statReputation.textContent = `${Math.round(state.reputation)}`;
+  el.statWealth.textContent = formatMoney(patrimonio);
+  el.statClicks.textContent = String(state.stats.totalClicks);
+  el.statClickIncome.textContent = formatMoney(state.stats.clickRevenue);
+  el.statCompanyIncome.textContent = formatMoney(state.stats.companyRevenue);
+  el.statTaxPaid.textContent = formatMoney(state.stats.taxesPaid);
+  el.statInterestPaid.textContent = formatMoney(state.stats.interestPaid);
+  el.statPayrollPaid.textContent = formatMoney(state.stats.payrollPaid);
+  el.statContractRevenue.textContent = formatMoney(state.stats.contractRevenue);
+  el.statOpsCost.textContent = formatMoney(state.stats.operationalCosts);
+  el.statPeak.textContent = formatMoney(state.stats.peakMoney);
+
+  const usdBrl = forexValueBrl("USD");
+  const eurBrl = forexValueBrl("EUR");
+  const fxTotal = usdBrl + eurBrl;
+
+  el.bankCash.textContent = formatMoney(state.money);
+  el.bankTaxDebt.textContent = formatMoney(state.tax.debt);
+  el.usdRate.textContent = `${formatMoney(state.forex.usd.rate)} por USD`;
+  el.eurRate.textContent = `${formatMoney(state.forex.eur.rate)} por EUR`;
+  el.usdWallet.textContent = formatUsd(state.forex.usd.balance);
+  el.eurWallet.textContent = formatEur(state.forex.eur.balance);
+  el.usdWalletBrl.textContent = formatMoney(usdBrl);
+  el.eurWalletBrl.textContent = formatMoney(eurBrl);
+  el.fxTotalBrl.textContent = formatMoney(fxTotal);
+
+  el.workforceLine.textContent = `Funcionarios: ${totalEmployees()} | Folha: ${formatMoney(payrollCost)}/mes`;
+  if (state.loan.monthsLeft > 0) {
+    el.loanStatus.textContent = `${state.loan.label}: saldo ${formatMoney(state.loan.principalRemaining)} | parcela ${formatMoney(state.loan.installment)} | ${state.loan.monthsLeft} mes(es) restantes`;
+  } else {
+    el.loanStatus.textContent = "Sem emprestimo ativo.";
+  }
+  const loanActive = state.loan.monthsLeft > 0 || state.loan.principalRemaining > 0;
+  el.loanSmallBtn.disabled = loanActive;
+  el.loanMediumBtn.disabled = loanActive;
+  el.loanLargeBtn.disabled = loanActive;
+  el.usdBuyBtn.disabled = state.money < 1;
+  el.eurBuyBtn.disabled = state.money < 1;
+  el.usdSellAllBtn.disabled = state.forex.usd.balance <= 0;
+  el.eurSellAllBtn.disabled = state.forex.eur.balance <= 0;
+
+  el.researchAutomation.textContent = `Nv. ${state.research.automation}`;
+  el.researchHr.textContent = `Nv. ${state.research.hr}`;
+  el.researchBranding.textContent = `Nv. ${state.research.branding}`;
+  el.researchAutomationBtn.textContent = `Investir em automacao (${formatMoney(researchCost("automation"))})`;
+  el.researchHrBtn.textContent = `Investir em RH (${formatMoney(researchCost("hr"))})`;
+  el.researchBrandingBtn.textContent = `Investir em marca (${formatMoney(researchCost("branding"))})`;
+  el.researchAutomationBtn.disabled = state.money < researchCost("automation");
+  el.researchHrBtn.disabled = state.money < researchCost("hr");
+  el.researchBrandingBtn.disabled = state.money < researchCost("branding");
+
+  el.prestigeBonusText.textContent = `x${(1 + state.prestigePoints * 0.1).toFixed(2)}`;
+  el.prestigeBtn.disabled = !canPrestige();
+
+  renderContracts();
+  renderUpgrades();
+  renderCompanies();
+  renderParticipations();
+  renderCarShop();
+  renderAircraftShop();
+  renderTravel();
+  renderPassport();
+  renderAchievements();
+  renderDailyMissions();
+  renderRanking();
+  renderWorldRanking();
+  el.eventLog.innerHTML = state.logs.join("");
+}
+
+function serializeState() {
+  return {
+    version: 12,
+    player: state.player,
+    money: state.money,
+    clickValue: state.clickValue,
+    monthRevenue: state.monthRevenue,
+    year: state.year,
+    month: state.month,
+    secondsToMonth: state.secondsToMonth,
+    yearlyRevenues: state.yearlyRevenues,
+    level: state.level,
+    xp: state.xp,
+    reputation: state.reputation,
+    prestigePoints: state.prestigePoints,
+    research: state.research,
+    contracts: state.contracts,
+    dailyMissions: state.dailyMissions,
+    economy: state.economy,
+    loan: state.loan,
+    tax: state.tax,
+    participations: state.participations,
+    aviation: state.aviation,
+    passport: state.passport,
+    worldWealth: state.worldWealth,
+    garage: state.garage,
+    nextCarId: state.nextCarId,
+    forex: state.forex,
+    stats: state.stats,
+    achievementsUnlocked: state.achievementsUnlocked,
+    upgrades: upgrades.map((u) => ({ id: u.id, level: u.level })),
+    companies: companies.map((c) => ({ id: c.id, owned: c.owned, level: c.level, employees: c.employees, salaryTier: c.salaryTier, marketFactor: c.marketFactor, lastIncome: c.lastIncome })),
+    logs: state.logs
+  };
+}
+
+function applySave(data) {
+  if (!data || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(safeInt(data.version, 0))) throw new Error("Save invalido");
+
+  if (data.player && typeof data.player === "object") {
+    state.player = {
+      nome: String(data.player.nome || "").trim().slice(0, 28),
+      idade: String(data.player.idade || "").trim().slice(0, 3),
+      telefone: String(data.player.telefone || "").replace(/\D/g, "").slice(0, 20)
+    };
+  } else {
+    state.player = { nome: "", idade: "", telefone: "" };
+  }
+
+  state.money = Math.max(0, safeNumber(data.money, 0));
+  state.clickValue = Math.max(1, safeNumber(data.clickValue, 10));
+  state.monthRevenue = safeNumber(data.monthRevenue, 0);
+  state.year = Math.max(1, safeInt(data.year, 1));
+  state.month = clamp(safeInt(data.month, 1), 1, 12);
+  state.secondsToMonth = clamp(safeInt(data.secondsToMonth, MONTH_SECONDS), 1, MONTH_SECONDS);
+  state.yearlyRevenues = Array.isArray(data.yearlyRevenues)
+    ? data.yearlyRevenues.map((v) => safeNumber(v, 0)).filter(Number.isFinite)
+    : [];
+  state.level = Math.max(1, safeInt(data.level, 1));
+  state.xp = Math.max(0, safeInt(data.xp, 0));
+  state.reputation = clamp(safeNumber(data.reputation, 50), 0, 100);
+  state.prestigePoints = Math.max(0, safeInt(data.prestigePoints, 0));
+
+  const savedStats = data.stats && typeof data.stats === "object" ? data.stats : {};
+  state.stats = {
+    totalClicks: Math.max(0, safeInt(savedStats.totalClicks, 0)),
+    clickRevenue: Math.max(0, safeNumber(savedStats.clickRevenue, 0)),
+    companyRevenue: Math.max(0, safeNumber(savedStats.companyRevenue, 0)),
+    operationalCosts: Math.max(0, safeNumber(savedStats.operationalCosts, 0)),
+    payrollPaid: Math.max(0, safeNumber(savedStats.payrollPaid, 0)),
+    taxesPaid: Math.max(0, safeNumber(savedStats.taxesPaid, 0)),
+    interestPaid: Math.max(0, safeNumber(savedStats.interestPaid, 0)),
+    contractRevenue: Math.max(0, safeNumber(savedStats.contractRevenue, 0)),
+    dailyRevenue: Math.max(0, safeNumber(savedStats.dailyRevenue, 0)),
+    achievementRevenue: Math.max(0, safeNumber(savedStats.achievementRevenue, 0)),
+    loanReceived: Math.max(0, safeNumber(savedStats.loanReceived, 0)),
+    fxRevenue: Math.max(0, safeNumber(savedStats.fxRevenue, 0)),
+    taxDebtInterestPaid: Math.max(0, safeNumber(savedStats.taxDebtInterestPaid, 0)),
+    ipvaPaid: Math.max(0, safeNumber(savedStats.ipvaPaid, 0)),
+    carSalesRevenue: Math.max(0, safeNumber(savedStats.carSalesRevenue, 0)),
+    carsBroken: Math.max(0, safeInt(savedStats.carsBroken, 0)),
+    travelSpendBrl: Math.max(0, safeNumber(savedStats.travelSpendBrl, 0)),
+    totalFlightKm: Math.max(0, safeNumber(savedStats.totalFlightKm, 0)),
+    totalFlightHours: Math.max(0, safeNumber(savedStats.totalFlightHours, 0)),
+    aircraftTaxPaidUsd: Math.max(0, safeNumber(savedStats.aircraftTaxPaidUsd, 0)),
+    aircraftHangarPaidUsd: Math.max(0, safeNumber(savedStats.aircraftHangarPaidUsd, 0)),
+    aircraftCrewPaidUsd: Math.max(0, safeNumber(savedStats.aircraftCrewPaidUsd, 0)),
+    aircraftDebtInterestPaidUsd: Math.max(0, safeNumber(savedStats.aircraftDebtInterestPaidUsd, 0)),
+    researchSpent: Math.max(0, safeNumber(savedStats.researchSpent, 0)),
+    spentUpgrades: Math.max(0, safeNumber(savedStats.spentUpgrades, 0)),
+    spentCompanies: Math.max(0, safeNumber(savedStats.spentCompanies, 0)),
+    peakMoney: Math.max(0, safeNumber(savedStats.peakMoney, 0))
+  };
+
+  state.logs = [];
+  state.achievementsUnlocked = Array.isArray(data.achievementsUnlocked)
+    ? data.achievementsUnlocked.filter((x) => typeof x === "string").slice(0, 200)
+    : [];
+
+  if (data.dailyMissions && typeof data.dailyMissions === "object") {
+    state.dailyMissions = {
+      dateKey: String(data.dailyMissions.dateKey || ""),
+      list: Array.isArray(data.dailyMissions.list)
+        ? data.dailyMissions.list
+          .map((m) => ({
+            id: String(m?.id || ""),
+            title: String(m?.title || "Missao diaria"),
+            desc: String(m?.desc || ""),
+            metric: String(m?.metric || "totalClicks"),
+            start: Math.max(0, safeNumber(m?.start, 0)),
+            target: Math.max(1, safeInt(m?.target, 1)),
+            rewardMoney: Math.max(0, safeNumber(m?.rewardMoney, 0)),
+            rewardXp: Math.max(0, safeInt(m?.rewardXp, 0)),
+            claimed: Boolean(m?.claimed)
+          }))
+          .filter((m) => ["totalClicks", "clickRevenue", "companyRevenue"].includes(m.metric) && m.id)
+          .slice(0, 10)
+        : []
+    };
+  } else {
+    state.dailyMissions = { dateKey: "", list: [] };
+  }
+
+  if (data.research && typeof data.research === "object") {
+    state.research = {
+      automation: Math.max(0, safeInt(data.research.automation, 0)),
+      hr: Math.max(0, safeInt(data.research.hr, 0)),
+      branding: Math.max(0, safeInt(data.research.branding, 0))
+    };
+  } else {
+    state.research = { automation: 0, hr: 0, branding: 0 };
+  }
+
+  if (data.contracts && typeof data.contracts === "object") {
+    state.contracts = {
+      lastOfferMonthStamp: Math.max(0, safeInt(data.contracts.lastOfferMonthStamp, 0)),
+      offers: Array.isArray(data.contracts.offers)
+        ? data.contracts.offers.map((c) => ({
+          offerId: String(c?.offerId || ""),
+          title: String(c?.title || "Contrato"),
+          months: Math.max(1, safeInt(c?.months, 1)),
+          baseReward: Math.max(0, safeNumber(c?.baseReward, 0)),
+          repGain: Math.max(0, safeInt(c?.repGain, 0)),
+          xp: Math.max(0, safeInt(c?.xp, 0))
+        })).filter((c) => c.offerId).slice(0, 12)
+        : [],
+      active: Array.isArray(data.contracts.active)
+        ? data.contracts.active.map((c) => ({
+          id: String(c?.id || ""),
+          title: String(c?.title || "Contrato"),
+          monthsLeft: Math.max(0, safeInt(c?.monthsLeft, 0)),
+          reward: Math.max(0, safeNumber(c?.reward, 0)),
+          repGain: Math.max(0, safeInt(c?.repGain, 0)),
+          xp: Math.max(0, safeInt(c?.xp, 0))
+        })).filter((c) => c.id).slice(0, 4)
+        : []
+    };
+  } else {
+    state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
+  }
+
+  if (data.economy && typeof data.economy === "object") {
+    state.economy = {
+      inflation: clamp(safeNumber(data.economy.inflation, 0.04), 0.01, 0.14),
+      interest: clamp(safeNumber(data.economy.interest, 0.09), 0.02, 0.22),
+      confidence: clamp(safeNumber(data.economy.confidence, 1), 0.75, 1.35),
+      sectorBoosts: typeof data.economy.sectorBoosts === "object" && data.economy.sectorBoosts
+        ? data.economy.sectorBoosts
+        : {}
+    };
+  } else {
+    state.economy = { inflation: 0.04, interest: 0.09, confidence: 1, sectorBoosts: {} };
+  }
+
+  if (data.loan && typeof data.loan === "object") {
+    state.loan = {
+      principalRemaining: Math.max(0, safeNumber(data.loan.principalRemaining, 0)),
+      installment: Math.max(0, safeNumber(data.loan.installment, 0)),
+      monthsLeft: Math.max(0, safeInt(data.loan.monthsLeft, 0)),
+      annualRate: clamp(safeNumber(data.loan.annualRate, 0), 0, 1),
+      label: String(data.loan.label || "")
+    };
+  } else {
+    state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
+  }
+
+  if (data.tax && typeof data.tax === "object") {
+    const pending = data.tax.pendingYearClose && typeof data.tax.pendingYearClose === "object"
+      ? {
+        closeYear: Math.max(1, safeInt(data.tax.pendingYearClose.closeYear, state.year)),
+        avg: Math.max(0, safeNumber(data.tax.pendingYearClose.avg, 0)),
+        rate: clamp(safeNumber(data.tax.pendingYearClose.rate, 0), 0, 1),
+        yearlyTax: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyTax, 0)),
+        yearlyIpva: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyIpva, 0)),
+        previousDebt: Math.max(0, safeNumber(data.tax.pendingYearClose.previousDebt, 0)),
+        debtInterest: Math.max(0, safeNumber(data.tax.pendingYearClose.debtInterest, 0)),
+        debtDue: Math.max(0, safeNumber(data.tax.pendingYearClose.debtDue, 0)),
+        totalDue: Math.max(0, safeNumber(data.tax.pendingYearClose.totalDue, 0))
+      }
+      : null;
+    state.tax = {
+      debt: Math.max(0, safeNumber(data.tax.debt, 0)),
+      pendingYearClose: pending
+    };
+  } else {
+    state.tax = { debt: 0, pendingYearClose: null };
+  }
+
+  if (data.participations && typeof data.participations === "object") {
+    state.participations = {
+      holdings: data.participations.holdings && typeof data.participations.holdings === "object" ? data.participations.holdings : {},
+      market: data.participations.market && typeof data.participations.market === "object" ? data.participations.market : {}
+    };
+  } else {
+    state.participations = { holdings: {}, market: {} };
+  }
+  initParticipationMarket();
+
+  if (data.worldWealth && typeof data.worldWealth === "object") {
+    state.worldWealth = {};
+    worldBillionaires.forEach((p) => {
+      state.worldWealth[p.id] = Math.max(1, safeNumber(data.worldWealth[p.id], p.usdBillion));
+    });
+  } else {
+    state.worldWealth = {};
+  }
+  ensureWorldWealthInitialized();
+
+  if (data.aviation && typeof data.aviation === "object") {
+    state.aviation = {
+      fleet: Array.isArray(data.aviation.fleet)
+        ? data.aviation.fleet.map((a) => ({
+          id: Math.max(1, safeInt(a?.id, 1)),
+          modelId: String(a?.modelId || ""),
+          nome: String(a?.nome || "Aviao"),
+          originalPriceUsd: Math.max(100000, safeNumber(a?.originalPriceUsd, 100000)),
+          currentValueUsd: Math.max(0, safeNumber(a?.currentValueUsd, 0)),
+          cruiseKmh: Math.max(500, safeNumber(a?.cruiseKmh, 800)),
+          opCostUsdPerHour: Math.max(500, safeNumber(a?.opCostUsdPerHour, 3000)),
+          flightHours: Math.max(0, safeNumber(a?.flightHours, 0)),
+          totalKm: Math.max(0, safeNumber(a?.totalKm, 0)),
+          monthsOwned: Math.max(0, safeInt(a?.monthsOwned, 0))
+        })).filter((a) => a.modelId && a.currentValueUsd > 0).slice(0, 30)
+        : [],
+      nextAircraftId: Math.max(1, safeInt(data.aviation.nextAircraftId, 1)),
+      accruedUsd: Math.max(0, safeNumber(data.aviation.accruedUsd, 0)),
+      debtUsd: Math.max(0, safeNumber(data.aviation.debtUsd, 0)),
+      selectedAircraftId: Math.max(0, safeInt(data.aviation.selectedAircraftId, 0))
+    };
+  } else {
+    state.aviation = { fleet: [], nextAircraftId: 1, accruedUsd: 0, debtUsd: 0, selectedAircraftId: 0 };
+  }
+  const maxAircraftId = state.aviation.fleet.reduce((max, a) => Math.max(max, a.id), 0);
+  state.aviation.nextAircraftId = Math.max(maxAircraftId + 1, state.aviation.nextAircraftId);
+  if (!state.aviation.fleet.find((a) => a.id === state.aviation.selectedAircraftId)) {
+    state.aviation.selectedAircraftId = state.aviation.fleet.length ? state.aviation.fleet[0].id : 0;
+  }
+
+  if (data.passport && typeof data.passport === "object") {
+    const countries = typeof data.passport.countries === "object" && data.passport.countries ? data.passport.countries : {};
+    state.passport = {
+      countries: {},
+      totalTrips: Math.max(0, safeInt(data.passport.totalTrips, 0))
+    };
+    Object.keys(countries).forEach((k) => {
+      const c = countries[k] || {};
+      state.passport.countries[k] = {
+        name: String(c.name || k),
+        visits: Math.max(0, safeInt(c.visits, 0)),
+        firstYear: Math.max(1, safeInt(c.firstYear, 1)),
+        firstMonth: clamp(safeInt(c.firstMonth, 1), 1, 12)
+      };
+    });
+  } else {
+    state.passport = { countries: {}, totalTrips: 0 };
+  }
+
+  if (Array.isArray(data.garage)) {
+    state.garage = data.garage
+      .map((car) => ({
+        id: Math.max(1, safeInt(car?.id, 1)),
+        modelId: String(car?.modelId || ""),
+        nome: String(car?.nome || "Carro"),
+        originalPrice: Math.max(1000, safeNumber(car?.originalPrice, 1000)),
+        currentValue: Math.max(0, safeNumber(car?.currentValue, 0)),
+        km: Math.max(0, safeNumber(car?.km, 0)),
+        monthsOwned: Math.max(0, safeInt(car?.monthsOwned, 0))
+      }))
+      .filter((car) => car.modelId && car.currentValue > 0)
+      .slice(0, 80);
+  } else {
+    state.garage = [];
+  }
+  const maxGarageId = state.garage.reduce((max, car) => Math.max(max, car.id), 0);
+  state.nextCarId = Math.max(maxGarageId + 1, safeInt(data.nextCarId, state.garage.length + 1));
+
+  if (data.forex && typeof data.forex === "object") {
+    const usd = data.forex.usd && typeof data.forex.usd === "object" ? data.forex.usd : {};
+    const eur = data.forex.eur && typeof data.forex.eur === "object" ? data.forex.eur : {};
+    state.forex = {
+      usd: {
+        balance: Math.max(0, safeNumber(usd.balance, 0)),
+        rate: clamp(safeNumber(usd.rate, 5.45), 4.9, 7.1),
+        min: 4.9,
+        max: 7.1
+      },
+      eur: {
+        balance: Math.max(0, safeNumber(eur.balance, 0)),
+        rate: clamp(safeNumber(eur.rate, 7.15), 6.7, 7.8),
+        min: 6.7,
+        max: 7.8
+      }
+    };
+  } else {
+    state.forex = {
+      usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
+      eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
+    };
+  }
+
+  const savedUpgrades = Array.isArray(data.upgrades) ? data.upgrades : [];
+  const upMap = new Map(savedUpgrades.map((x) => [x.id, safeInt(x.level, 0)]));
+  upgrades.forEach((u) => {
+    u.level = Math.max(0, safeInt(upMap.get(u.id), 0));
+  });
+
+  const savedCompanies = Array.isArray(data.companies) ? data.companies : [];
+  const coMap = new Map(
+    savedCompanies.map((x) => [
+      x.id,
+      {
+        owned: Math.max(0, safeInt(x.owned, 0)),
+        level: Math.max(0, safeInt(x.level, 0)),
+        employees: Math.max(0, safeInt(x.employees, 0)),
+        salaryTier: safeInt(x.salaryTier, 1),
+        marketFactor: clamp(safeNumber(x.marketFactor, 1), 0.65, 3.8),
+        lastIncome: Math.max(0, safeNumber(x.lastIncome, 0))
+      }
+    ])
+  );
+  companies.forEach((c) => {
+    const saved = coMap.get(c.id) || { owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 };
+    c.owned = saved.owned;
+    c.level = saved.level;
+    c.employees = Math.max(0, saved.employees);
+    c.salaryTier = Math.round(clamp(saved.salaryTier, 0, 2));
+    c.marketFactor = clamp(safeNumber(saved.marketFactor, 1), 0.65, 3.8);
+    c.lastIncome = Math.max(0, safeNumber(saved.lastIncome, 0));
+  });
+
+  el.nameInput.value = state.player.nome || "";
+  el.ageInput.value = state.player.idade || "";
+  el.phoneInput.value = state.player.telefone || "";
+}
+
+function localKey(phone) {
+  return `imperio_clicker_save_${String(phone).replace(/\D/g, "")}`;
+}
+
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+  });
+});
+
+el.clickBtn.addEventListener("click", () => {
+  ensureAudio();
+  const gain = effectiveClickValue();
+  state.money += gain;
+  state.monthRevenue += gain;
+  state.stats.totalClicks += 1;
+  state.stats.clickRevenue += gain;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  addXp(1 + state.prestigePoints);
+  animateClickFx(gain);
+  sfxClick();
+  render();
+});
+el.skipMonthBtn.addEventListener("click", () => {
+  if (hasPendingTaxDecision()) {
+    setStatus("Resolva a decisao de imposto anual antes de pular mes.", "warn");
+    render();
+    return;
+  }
+  processMonth();
+  setStatus("Mes pulado manualmente.", "ok");
+});
+
+el.saveProfileBtn.addEventListener("click", () => {
+  const nome = el.nameInput.value.trim();
+  const idade = Number(el.ageInput.value);
+  const telefone = el.phoneInput.value.replace(/\s+/g, "").trim();
+
+  if (!nome || !idade || idade < 8 || idade > 120) {
+    setStatus("Preencha nome e idade valida.", "bad");
+    return;
+  }
+
+  state.player = { nome, idade, telefone };
+  setStatus("Personagem salvo.", "ok");
+  render();
+});
+
+el.saveLocalBtn.addEventListener("click", () => {
+  const phone = (state.player.telefone || el.phoneInput.value || "").replace(/\D/g, "");
+  if (!phone) {
+    setStatus("Informe telefone para salvar local.", "bad");
+    return;
+  }
+  state.player.telefone = phone;
+  localStorage.setItem(localKey(phone), JSON.stringify(serializeState()));
+  upsertRankingEntry();
+  setStatus(`Jogo salvo no telefone ${phone}.`, "ok");
+  render();
+});
+
+el.loadLocalBtn.addEventListener("click", () => {
+  const phone = (el.phoneInput.value || state.player.telefone || "").replace(/\D/g, "");
+  if (!phone) {
+    setStatus("Informe telefone para recuperar.", "bad");
+    return;
+  }
+  const raw = localStorage.getItem(localKey(phone));
+  if (!raw) {
+    setStatus("Nenhum save local encontrado para esse telefone.", "warn");
+    return;
+  }
+  try {
+    applySave(JSON.parse(raw));
+    upsertRankingEntry();
+    setStatus("Save local carregado.", "ok");
+    logEvent("Save local recuperado por telefone.");
+    render();
+  } catch {
+    setStatus("Falha ao carregar save local.", "bad");
+  }
+});
+
+el.exportBtn.addEventListener("click", async () => {
+  const phone = (state.player.telefone || el.phoneInput.value || "").replace(/\D/g, "");
+  if (!phone) {
+    setStatus("Vincule um telefone antes de exportar.", "bad");
+    return;
+  }
+  state.player.telefone = phone;
+  const code = toBase64Utf8(JSON.stringify(serializeState()));
+  el.backupCode.value = code;
+  try {
+    await navigator.clipboard.writeText(code);
+    setStatus("Codigo de backup gerado e copiado.", "ok");
+  } catch {
+    setStatus("Codigo gerado. Copie manualmente.", "warn");
+  }
+  render();
+});
+
+el.importBtn.addEventListener("click", () => {
+  const code = el.backupCode.value.trim();
+  if (!code) {
+    setStatus("Cole um codigo valido para importar.", "bad");
+    return;
+  }
+  try {
+    const json = fromBase64Utf8(code);
+    const data = JSON.parse(json);
+    applySave(data);
+    upsertRankingEntry();
+    setStatus("Backup importado com sucesso.", "ok");
+    logEvent("Backup importado em outro dispositivo.", "ok");
+    render();
+  } catch {
+    setStatus("Codigo invalido ou corrompido.", "bad");
+  }
+});
+
+el.refreshRankingBtn.addEventListener("click", () => {
+  renderRanking();
+  setStatus("Ranking atualizado.", "ok");
+});
+
+el.resetCharacterBtn.addEventListener("click", resetCharacter);
+el.travelAircraftSelect.addEventListener("change", () => {
+  state.aviation.selectedAircraftId = safeInt(el.travelAircraftSelect.value, 0);
+  render();
+});
+
+el.refreshContractsBtn.addEventListener("click", () => {
+  generateContractOffers();
+  setStatus("Ofertas de contratos atualizadas.", "ok");
+  render();
+});
+
+el.loanSmallBtn.addEventListener("click", () => requestLoan(25000, 12, 0.14, "Emprestimo pequeno"));
+el.loanMediumBtn.addEventListener("click", () => requestLoan(90000, 18, 0.18, "Emprestimo medio"));
+el.loanLargeBtn.addEventListener("click", () => requestLoan(260000, 24, 0.22, "Emprestimo grande"));
+el.usdBuyBtn.addEventListener("click", () => buyForex("USD"));
+el.usdSellAllBtn.addEventListener("click", () => sellAllForex("USD"));
+el.eurBuyBtn.addEventListener("click", () => buyForex("EUR"));
+el.eurSellAllBtn.addEventListener("click", () => sellAllForex("EUR"));
+el.researchAutomationBtn.addEventListener("click", () => investResearch("automation"));
+el.researchHrBtn.addEventListener("click", () => investResearch("hr"));
+el.researchBrandingBtn.addEventListener("click", () => investResearch("branding"));
+
+el.prestigeBtn.addEventListener("click", doPrestige);
+el.taxPayNowBtn.addEventListener("click", () => {
+  if (!hasPendingTaxDecision()) return;
+  closeYear(true);
+  setStatus("Imposto anual pago.", "ok");
+  render();
+});
+el.taxPayLaterBtn.addEventListener("click", () => {
+  if (!hasPendingTaxDecision()) return;
+  closeYear(false);
+  setStatus("Imposto anual adiado para o proximo mes.", "warn");
+  render();
+});
+
+setInterval(() => {
+  if (hasPendingTaxDecision()) {
+    render();
+    return;
+  }
+  state.secondsToMonth -= 1;
+  if (state.secondsToMonth <= 0) {
+    processMonth();
+  }
+  render();
+}, 1000);
+
+document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });
+document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+document.body.addEventListener("pointerdown", ensureAudio, { once: true });
+
+ensureDailyMissionsFresh();
+ensureWorldWealthInitialized();
+initParticipationMarket();
+logEvent("Jogo iniciado. Clique para ganhar dinheiro.", "ok");
+render();
