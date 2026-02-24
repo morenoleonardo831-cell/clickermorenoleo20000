@@ -41,6 +41,7 @@
       <button class="tab-btn" data-tab="perfil">Perfil</button>
       <button class="tab-btn" data-tab="banco">Banco</button>
       <button class="tab-btn" data-tab="ranking">Ranking</button>
+      <button class="tab-btn" data-tab="admin">Admin</button>
       <button class="tab-btn" data-tab="reset">Reset</button>
       <button class="tab-btn" data-tab="dados">Dados</button>
     </section>
@@ -70,8 +71,8 @@
 
     <section class="panel glass" id="tab-empresas">
       <div class="title">Mercado de empresas</div>
-      <div class="mini">Compre unidades e faca upgrade de cada empresa para aumentar a renda mensal.</div>
-      <div class="mini" id="workforceLine">Funcionarios: 0 | Folha: R$ 0,00/mes</div>
+      <div class="mini">Compre unidades, ajuste margem de lucro e invista em upgrade para aumentar a renda mensal.</div>
+      <div class="mini" id="workforceLine">Modelo simplificado: lucro por valuation + margem.</div>
       <div class="list" id="companyList"></div>
     </section>
 
@@ -206,10 +207,47 @@
       <button class="btn" id="researchBrandingBtn">Investir em marca</button>
     </section>
 
+    <section class="panel glass" id="tab-admin">
+      <div class="title">Painel admin</div>
+      <div class="mini">Acesso restrito por login e senha.</div>
+
+      <div id="adminLoginBox">
+        <input id="adminAccessInput" maxlength="32" placeholder="Acesso admin" />
+        <input id="adminPasswordInput" type="password" maxlength="64" placeholder="Senha admin" />
+        <button class="btn" id="adminLoginBtn">Entrar no painel</button>
+        <div class="mini" id="adminLoginMsg">Nao autenticado.</div>
+      </div>
+
+      <div id="adminActionsBox">
+        <div class="row"><span>Status:</span><strong id="adminSessionText">Bloqueado</strong></div>
+        <input id="adminMoneyInput" type="number" min="1" step="1" placeholder="Valor em R$ para adicionar/remover" />
+        <div class="btn-row">
+          <button class="btn" id="adminAddMoneyBtn">Adicionar dinheiro</button>
+          <button class="btn alt" id="adminRemoveMoneyBtn">Remover dinheiro</button>
+        </div>
+        <input id="adminSetMoneyInput" type="number" min="0" step="1" placeholder="Definir saldo exato em R$" />
+        <button class="btn" id="adminSetMoneyBtn">Definir saldo</button>
+
+        <input id="adminClickInput" type="number" min="1" step="1" placeholder="Adicionar valor base por clique" />
+        <button class="btn" id="adminAddClickBtn">Aumentar clique base</button>
+
+        <input id="adminPrestigeInput" type="number" min="1" step="1" placeholder="Adicionar pontos de prestigio" />
+        <button class="btn" id="adminAddPrestigeBtn">Adicionar prestigio</button>
+
+        <input id="adminMonthInput" type="number" min="1" max="120" step="1" placeholder="Avancar meses (1 a 120)" />
+        <button class="btn" id="adminAdvanceMonthBtn">Avancar tempo</button>
+
+        <button class="btn" id="adminBoostBtn">Aplicar boost economico</button>
+        <button class="btn" id="adminUnlockBtn">Desbloquear tudo</button>
+        <button class="btn alt" id="adminClearDebtsBtn">Quitar dividas</button>
+        <button class="btn alt" id="adminLogoutBtn">Sair do painel admin</button>
+      </div>
+    </section>
+
     <section class="panel glass" id="tab-reset">
-      <div class="title">Resetar personagem</div>
-      <div class="mini">Apaga apenas nome, idade e telefone. Seu progresso financeiro e empresas continuam.</div>
-      <button class="btn alt" id="resetCharacterBtn">Resetar dados do personagem</button>
+      <div class="title">Reset total do jogo</div>
+      <div class="mini">Apaga tudo: dinheiro, empresas, upgrades, ranking local e personagem.</div>
+      <button class="btn alt" id="resetCharacterBtn">Resetar tudo</button>
     </section>
 
     <section class="panel glass" id="tab-ranking">

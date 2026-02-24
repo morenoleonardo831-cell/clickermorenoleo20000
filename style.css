@@ -385,3 +385,9 @@ textarea {
   font-weight: 800;
   font-size: 1.02rem;
 }
+
+#adminLoginBox,
+#adminActionsBox {
+  display: grid;
+  gap: 8px;
+}

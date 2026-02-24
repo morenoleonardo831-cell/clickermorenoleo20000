@@ -1,5 +1,15 @@
-﻿const MONTH_SECONDS = 30;
+const MONTH_SECONDS = 30;
 const RANKING_KEY = "imperio_clicker_ranking_v1";
+const DEVICE_AUTOSAVE_KEY = "imperio_clicker_device_autosave_v1";
+const ADMIN_ACCESS = "admin";
+const ADMIN_PASSWORD = "Nub@2026";
+const ADMIN_MAX_ADVANCE_MONTHS = 120;
+const COMPANY_MARGIN_OPTIONS = [
+  { label: "Conservador", pct: 0.008 },
+  { label: "Equilibrado", pct: 0.012 },
+  { label: "Agressivo", pct: 0.017 },
+  { label: "Premium", pct: 0.024 }
+];
 
 const upgrades = [
   { id: "mouse", nome: "Mouse turbo", baseCost: 120, add: 8, level: 0 },
@@ -22,10 +32,13 @@ const companies = [
   { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 1800000, baseIncome: 390000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
 ];
 
+const initialUpgradeBase = upgrades.map((u) => ({ id: u.id, baseCost: u.baseCost }));
+const initialCompanyBase = companies.map((c) => ({ id: c.id, baseCost: c.baseCost, baseIncome: c.baseIncome }));
+
 const participationCatalog = [
   { id: "petrobras", nome: "Petrobras", ticker: "PETR4", setor: "Energia", baseValuation: 7800000, growthAnnual: 0.1, volatility: 0.028, payoutAnnual: 0.09 },
   { id: "vale", nome: "Vale", ticker: "VALE3", setor: "Mineracao", baseValuation: 5600000, growthAnnual: 0.08, volatility: 0.024, payoutAnnual: 0.08 },
-  { id: "itau", nome: "Itaú Unibanco", ticker: "ITUB4", setor: "Financeiro", baseValuation: 6100000, growthAnnual: 0.085, volatility: 0.018, payoutAnnual: 0.07 },
+  { id: "itau", nome: "ItaÃº Unibanco", ticker: "ITUB4", setor: "Financeiro", baseValuation: 6100000, growthAnnual: 0.085, volatility: 0.018, payoutAnnual: 0.07 },
   { id: "ambev", nome: "Ambev", ticker: "ABEV3", setor: "Bebidas", baseValuation: 4200000, growthAnnual: 0.07, volatility: 0.017, payoutAnnual: 0.06 },
   { id: "weg", nome: "WEG", ticker: "WEGE3", setor: "Industria", baseValuation: 3900000, growthAnnual: 0.12, volatility: 0.022, payoutAnnual: 0.035 },
   { id: "magalu", nome: "Magazine Luiza", ticker: "MGLU3", setor: "Varejo", baseValuation: 1100000, growthAnnual: 0.13, volatility: 0.035, payoutAnnual: 0.015 },
@@ -322,13 +335,36 @@ const el = {
   taxOverlay: document.getElementById("taxOverlay"),
   taxDueText: document.getElementById("taxDueText"),
   taxPayNowBtn: document.getElementById("taxPayNowBtn"),
-  taxPayLaterBtn: document.getElementById("taxPayLaterBtn")
+  taxPayLaterBtn: document.getElementById("taxPayLaterBtn"),
+  adminLoginBox: document.getElementById("adminLoginBox"),
+  adminActionsBox: document.getElementById("adminActionsBox"),
+  adminAccessInput: document.getElementById("adminAccessInput"),
+  adminPasswordInput: document.getElementById("adminPasswordInput"),
+  adminLoginBtn: document.getElementById("adminLoginBtn"),
+  adminLoginMsg: document.getElementById("adminLoginMsg"),
+  adminSessionText: document.getElementById("adminSessionText"),
+  adminMoneyInput: document.getElementById("adminMoneyInput"),
+  adminAddMoneyBtn: document.getElementById("adminAddMoneyBtn"),
+  adminRemoveMoneyBtn: document.getElementById("adminRemoveMoneyBtn"),
+  adminSetMoneyInput: document.getElementById("adminSetMoneyInput"),
+  adminSetMoneyBtn: document.getElementById("adminSetMoneyBtn"),
+  adminClickInput: document.getElementById("adminClickInput"),
+  adminAddClickBtn: document.getElementById("adminAddClickBtn"),
+  adminPrestigeInput: document.getElementById("adminPrestigeInput"),
+  adminAddPrestigeBtn: document.getElementById("adminAddPrestigeBtn"),
+  adminMonthInput: document.getElementById("adminMonthInput"),
+  adminAdvanceMonthBtn: document.getElementById("adminAdvanceMonthBtn"),
+  adminBoostBtn: document.getElementById("adminBoostBtn"),
+  adminUnlockBtn: document.getElementById("adminUnlockBtn"),
+  adminClearDebtsBtn: document.getElementById("adminClearDebtsBtn"),
+  adminLogoutBtn: document.getElementById("adminLogoutBtn")
 };
 
 const moneyFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const usdFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "USD" });
 const eurFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "EUR" });
 let audioCtx;
+const adminSession = { loggedIn: false };
 
 function ensureAudio() {
   if (!audioCtx) {
@@ -559,7 +595,13 @@ function companyProductivity(c) {
 }
 
 function companyIncomePerUnit(c) {
-  return Math.floor(c.baseIncome * companyLevelMultiplier(c) * companyProductivity(c) * getSectorMultiplier(c.setor));
+  const tier = clamp(safeInt(c.salaryTier, 1), 0, COMPANY_MARGIN_OPTIONS.length - 1);
+  const margin = COMPANY_MARGIN_OPTIONS[tier].pct;
+  const valuationPerUnit = Math.max(
+    c.baseCost * companyLevelMultiplier(c) * Math.max(1, safeNumber(c.marketFactor, 1)),
+    c.baseCost * (1 + c.level * 0.5)
+  );
+  return Math.floor(valuationPerUnit * margin * getSectorMultiplier(c.setor));
 }
 
 function companyTotalIncome(c) {
@@ -756,17 +798,16 @@ function companySellOfferPerUnit(c) {
 }
 
 function companyPayroll(c) {
-  const monthly = baseSalaryBySector(c.setor) * salaryTierMultiplier(c.salaryTier);
-  return Math.floor(c.employees * monthly);
+  return 0;
 }
 
 function monthlyPayrollCost() {
-  return companies.reduce((sum, c) => sum + companyPayroll(c), 0);
+  return 0;
 }
 
 function monthlyOperationalCost() {
-  const fixed = totalCompanyUnits() * 90;
-  const variable = Math.floor(totalCompanyIncome() * (0.18 + state.economy.interest * 0.15));
+  const fixed = totalCompanyUnits() * 75;
+  const variable = Math.floor(totalCompanyIncome() * (0.08 + state.economy.interest * 0.06));
   return Math.floor((fixed + variable) * automationCostFactor());
 }
 
@@ -912,20 +953,7 @@ function processLoanPayment() {
 }
 
 function processTurnover() {
-  companies.forEach((c) => {
-    if (c.employees <= 0) return;
-    const salaryMul = salaryTierMultiplier(c.salaryTier);
-    const staffPressure = Math.max(0, requiredEmployees(c) - c.employees);
-    const pressureFactor = staffPressure > 0 ? clamp(1 + staffPressure / Math.max(1, requiredEmployees(c)), 1, 1.6) : 1;
-    const reputationRelief = (state.reputation - 50) / 1000;
-    const baseRate = 0.01 + state.economy.interest * 0.04 + (1 - state.economy.confidence) * 0.02 + (1 - salaryMul) * 0.06 - reputationRelief;
-    const rate = clamp(baseRate * pressureFactor * hrTurnoverFactor(), 0, 0.22);
-    const lost = Math.floor(c.employees * rate);
-    if (lost > 0) {
-      c.employees = Math.max(0, c.employees - lost);
-      logEvent(`Turnover em ${c.nome}: ${lost} funcionario(s) sairam.`, "warn");
-    }
-  });
+  // Employee turnover removed in simplified company model.
 }
 
 function effectiveCompanyIncome() {
@@ -977,6 +1005,221 @@ function logEvent(text, type = "") {
 function setStatus(msg, type = "") {
   el.statusMsg.className = `mini ${type}`.trim();
   el.statusMsg.textContent = msg;
+}
+
+function renderAdminPanel() {
+  if (!el.adminLoginBox || !el.adminActionsBox) return;
+  const locked = !adminSession.loggedIn;
+  el.adminLoginBox.style.display = locked ? "grid" : "none";
+  el.adminActionsBox.style.display = locked ? "none" : "grid";
+  if (el.adminSessionText) el.adminSessionText.textContent = locked ? "Bloqueado" : "Autenticado";
+  if (el.adminLoginMsg) {
+    el.adminLoginMsg.className = `mini ${locked ? "warn" : "ok"}`.trim();
+    el.adminLoginMsg.textContent = locked ? "Nao autenticado." : "Acesso admin liberado.";
+  }
+}
+
+function adminNeedAuth() {
+  if (adminSession.loggedIn) return true;
+  setStatus("Painel admin bloqueado. FaÃ§a login para usar.", "warn");
+  renderAdminPanel();
+  return false;
+}
+
+function readAdminInt(inputEl, min = 1, max = Number.MAX_SAFE_INTEGER) {
+  const raw = inputEl?.value ?? "";
+  const value = Math.floor(safeNumber(raw, NaN));
+  if (!Number.isFinite(value) || value < min || value > max) return null;
+  return value;
+}
+
+function adminLogin() {
+  const access = String(el.adminAccessInput?.value || "").trim();
+  const pass = String(el.adminPasswordInput?.value || "");
+  if (access === ADMIN_ACCESS && pass === ADMIN_PASSWORD) {
+    adminSession.loggedIn = true;
+    if (el.adminPasswordInput) el.adminPasswordInput.value = "";
+    if (el.adminAccessInput) el.adminAccessInput.value = "";
+    logEvent("Painel admin autenticado.", "warn");
+    setStatus("Login admin realizado.", "ok");
+    render();
+    return;
+  }
+  adminSession.loggedIn = false;
+  if (el.adminPasswordInput) el.adminPasswordInput.value = "";
+  if (el.adminLoginMsg) {
+    el.adminLoginMsg.className = "mini bad";
+    el.adminLoginMsg.textContent = "Acesso ou senha invalidos.";
+  }
+  setStatus("Falha no login admin.", "bad");
+}
+
+function adminLogout() {
+  adminSession.loggedIn = false;
+  if (el.adminPasswordInput) el.adminPasswordInput.value = "";
+  if (el.adminAccessInput) el.adminAccessInput.value = "";
+  logEvent("Sessao admin encerrada.", "warn");
+  setStatus("Logout admin concluido.", "ok");
+  render();
+}
+
+function adminAddMoney() {
+  if (!adminNeedAuth()) return;
+  const amount = readAdminInt(el.adminMoneyInput, 1);
+  if (!amount) {
+    setStatus("Informe um valor valido para adicionar.", "bad");
+    return;
+  }
+  state.money += amount;
+  state.monthRevenue += amount;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  logEvent(`Admin adicionou ${formatMoney(amount)} ao saldo.`, "warn");
+  setStatus(`+${formatMoney(amount)} aplicado via admin.`, "ok");
+  render();
+}
+
+function adminRemoveMoney() {
+  if (!adminNeedAuth()) return;
+  const amount = readAdminInt(el.adminMoneyInput, 1);
+  if (!amount) {
+    setStatus("Informe um valor valido para remover.", "bad");
+    return;
+  }
+  const removed = Math.min(state.money, amount);
+  state.money = Math.max(0, state.money - amount);
+  logEvent(`Admin removeu ${formatMoney(removed)} do saldo.`, "warn");
+  setStatus(`-${formatMoney(removed)} removido via admin.`, "warn");
+  render();
+}
+
+function adminSetMoney() {
+  if (!adminNeedAuth()) return;
+  const amount = readAdminInt(el.adminSetMoneyInput, 0);
+  if (amount === null) {
+    setStatus("Informe um saldo valido.", "bad");
+    return;
+  }
+  state.money = amount;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  logEvent(`Admin definiu saldo para ${formatMoney(amount)}.`, "warn");
+  setStatus(`Saldo definido para ${formatMoney(amount)}.`, "ok");
+  render();
+}
+
+function adminAddClickBase() {
+  if (!adminNeedAuth()) return;
+  const add = readAdminInt(el.adminClickInput, 1);
+  if (!add) {
+    setStatus("Informe um valor valido para clique.", "bad");
+    return;
+  }
+  state.clickValue += add;
+  logEvent(`Admin aumentou clique base em ${formatMoney(add)}.`, "warn");
+  setStatus(`Clique base aumentado em ${formatMoney(add)}.`, "ok");
+  render();
+}
+
+function adminAddPrestige() {
+  if (!adminNeedAuth()) return;
+  const add = readAdminInt(el.adminPrestigeInput, 1);
+  if (!add) {
+    setStatus("Informe pontos de prestigio validos.", "bad");
+    return;
+  }
+  state.prestigePoints += add;
+  logEvent(`Admin adicionou ${add} ponto(s) de prestigio.`, "warn");
+  setStatus(`Prestigio +${add}.`, "ok");
+  render();
+}
+
+function adminAdvanceMonths() {
+  if (!adminNeedAuth()) return;
+  const months = readAdminInt(el.adminMonthInput, 1, ADMIN_MAX_ADVANCE_MONTHS);
+  if (!months) {
+    setStatus(`Informe de 1 a ${ADMIN_MAX_ADVANCE_MONTHS} meses.`, "bad");
+    return;
+  }
+  for (let i = 0; i < months; i += 1) {
+    if (hasPendingTaxDecision()) closeYear(true);
+    processMonth();
+    if (hasPendingTaxDecision()) closeYear(true);
+  }
+  logEvent(`Admin avancou ${months} mes(es).`, "warn");
+  setStatus(`Tempo avancado em ${months} mes(es).`, "ok");
+  render();
+}
+
+function adminBoostEconomy() {
+  if (!adminNeedAuth()) return;
+  state.economy.inflation = 0.015;
+  state.economy.interest = 0.03;
+  state.economy.confidence = 1.35;
+  state.economy.sectorBoosts = {
+    Varejo: 1.18,
+    Alimentos: 1.18,
+    Servicos: 1.18,
+    Digital: 1.18,
+    Tecnologia: 1.18,
+    Industria: 1.18,
+    Turismo: 1.18,
+    Financeiro: 1.18,
+    Conglomerado: 1.18
+  };
+  logEvent("Admin aplicou boost economico global.", "warn");
+  setStatus("Boost economico aplicado.", "ok");
+  render();
+}
+
+function adminUnlockEverything() {
+  if (!adminNeedAuth()) return;
+
+  upgrades.forEach((u) => {
+    const targetLevel = Math.max(10, u.level);
+    const diff = targetLevel - u.level;
+    if (diff > 0) state.clickValue += diff * u.add;
+    u.level = targetLevel;
+  });
+
+  companies.forEach((c) => {
+    c.owned = Math.max(c.owned, 8);
+    c.level = Math.max(c.level, 6);
+    c.salaryTier = Math.max(c.salaryTier, 1);
+    c.employees = Math.max(c.employees, requiredEmployees(c));
+    c.marketFactor = clamp(c.marketFactor, 0.65, 3.8);
+  });
+
+  state.research.automation = Math.max(state.research.automation, 10);
+  state.research.hr = Math.max(state.research.hr, 10);
+  state.research.branding = Math.max(state.research.branding, 10);
+  state.level = Math.max(state.level, 35);
+  state.reputation = 100;
+  state.prestigePoints = Math.max(state.prestigePoints, 20);
+
+  initParticipationMarket();
+  participationCatalog.forEach((c) => {
+    state.participations.holdings[c.id] = 100;
+  });
+
+  state.forex.usd.balance = Math.max(state.forex.usd.balance, 250000);
+  state.forex.eur.balance = Math.max(state.forex.eur.balance, 150000);
+  state.money = Math.max(state.money, 50000000);
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+
+  logEvent("Admin executou desbloqueio total de progresso.", "warn");
+  setStatus("Desbloqueio total aplicado.", "ok");
+  render();
+}
+
+function adminClearDebts() {
+  if (!adminNeedAuth()) return;
+  state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
+  state.tax.debt = 0;
+  state.tax.pendingYearClose = null;
+  state.aviation.debtUsd = 0;
+  state.aviation.accruedUsd = 0;
+  logEvent("Admin quitou todas as dividas do jogador.", "warn");
+  setStatus("Dividas quitadas via admin.", "ok");
+  render();
 }
 
 function taxRateFor(avgMonthly) {
@@ -1172,7 +1415,7 @@ function generateDailyMissions() {
       {
         id: "d_clicks",
         title: "Cliqueiro do dia",
-        desc: `Faça ${clicksTarget} cliques hoje`,
+        desc: `FaÃ§a ${clicksTarget} cliques hoje`,
         metric: "totalClicks",
         start: state.stats.totalClicks,
         target: clicksTarget,
@@ -1362,7 +1605,7 @@ function renderWorldRanking() {
   const playerRank = roster.findIndex((x) => x.isPlayer) + 1;
   const top5 = roster.slice(0, 5);
 
-  el.worldRankingInfo.textContent = `Base Forbes 2025 • Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
+  el.worldRankingInfo.textContent = `Base Forbes 2025 â€¢ Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
   el.worldRankingList.innerHTML = "";
   top5.forEach((r, i) => {
     const row = document.createElement("div");
@@ -1588,36 +1831,30 @@ function renderCompanies() {
   companies.forEach((c) => {
     const buyCost = calcCompanyCost(c);
     const upgradeCost = calcCompanyUpgradeCost(c);
-    const hireCost = recruitmentCost(c);
     const perUnit = companyIncomePerUnit(c);
     const total = companyTotalIncome(c);
     const sectorMult = getSectorMultiplier(c.setor);
-    const req = requiredEmployees(c);
-    const prod = companyProductivity(c);
-    const payroll = companyPayroll(c);
     const valuation = companyFairValuation(c);
     const offer = c.owned > 0 ? companySellOfferPerUnit(c) : 0;
-    const salaryLabel = c.salaryTier === 0 ? "Baixo" : c.salaryTier === 1 ? "Mercado" : "Alto";
+    const marginIdx = clamp(safeInt(c.salaryTier, 1), 0, COMPANY_MARGIN_OPTIONS.length - 1);
+    const marginCfg = COMPANY_MARGIN_OPTIONS[marginIdx];
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
       <div class="title">${c.nome}</div>
       <div class="meta">Setor: ${c.setor} (x${sectorMult.toFixed(2)}) | Unidades: ${c.owned} | Nivel: ${c.level}</div>
-      <div class="meta">Funcionarios: ${c.employees}/${req} | Salario: ${salaryLabel} | Produtividade: x${prod.toFixed(2)}</div>
+      <div class="meta">Valuation estimado: ${formatMoney(valuation)} | Margem: ${marginCfg.label} (${(marginCfg.pct * 100).toFixed(2)}% ao mes)</div>
       <div class="meta">Renda por unidade: ${formatMoney(perUnit)}/mes | Total: ${formatMoney(total)}/mes</div>
-      <div class="meta">Valuation estimado: ${formatMoney(valuation)} | Oferta justa por unidade: ${formatMoney(offer)}</div>
-      <div class="meta">Folha: ${formatMoney(payroll)}/mes | Contratacao: ${formatMoney(hireCost)}</div>
+      <div class="meta">Oferta justa por unidade: ${formatMoney(offer)}</div>
       <div class="meta">Compra: ${formatMoney(buyCost)} | Upgrade: ${formatMoney(upgradeCost)}</div>
       <div class="btn-row">
         <button class="btn" data-act="buy" ${state.money < buyCost ? "disabled" : ""}>Comprar unidade</button>
         <button class="btn alt" data-act="upg" ${state.money < upgradeCost || c.owned === 0 ? "disabled" : ""}>Upgrade empresa</button>
       </div>
       <div class="btn-row">
-        <button class="btn" data-act="hire" ${state.money < hireCost || c.owned === 0 ? "disabled" : ""}>Contratar</button>
-        <button class="btn alt" data-act="fire" ${c.employees <= 0 ? "disabled" : ""}>Demitir</button>
+        <button class="btn" data-act="margin">Ajustar margem (${marginCfg.label})</button>
+        <button class="btn alt" data-act="sell" ${c.owned <= 0 ? "disabled" : ""}>Vender 1 unidade</button>
       </div>
-      <button class="btn alt" data-act="sell" ${c.owned <= 0 ? "disabled" : ""}>Vender 1 unidade (proposta)</button>
-      <button class="btn" data-act="salary">Ajustar salario (${salaryLabel})</button>
     `;
     card.querySelector('[data-act="buy"]').addEventListener("click", () => {
       if (state.money < buyCost) return;
@@ -1641,40 +1878,20 @@ function renderCompanies() {
       sfxBuy();
       render();
     });
-    card.querySelector('[data-act="hire"]').addEventListener("click", () => {
-      if (c.owned === 0 || state.money < hireCost) return;
-      ensureAudio();
-      state.money -= hireCost;
-      c.employees += 1;
-      logEvent(`Contratacao em ${c.nome}. Total de funcionarios: ${c.employees}.`);
-      sfxBuy();
-      render();
-    });
-    card.querySelector('[data-act="fire"]').addEventListener("click", () => {
-      if (c.employees <= 0) return;
-      c.employees -= 1;
-      logEvent(`Demissao em ${c.nome}. Funcionarios restantes: ${c.employees}.`, "warn");
-      render();
-    });
     card.querySelector('[data-act="sell"]').addEventListener("click", () => {
       if (c.owned <= 0) return;
       const sale = companySellOfferPerUnit(c);
       c.owned = Math.max(0, c.owned - 1);
-      if (c.employees > requiredEmployees(c)) {
-        const cut = c.employees - requiredEmployees(c);
-        c.employees = requiredEmployees(c);
-        if (cut > 0) logEvent(`Ajuste de equipe em ${c.nome}: ${cut} desligamento(s) apos venda de unidade.`, "warn");
-      }
       state.money += sale;
       state.monthRevenue += sale;
       logEvent(`Unidade vendida em ${c.nome} por proposta de ${formatMoney(sale)}.`, "ok");
       sfxBuy();
       render();
     });
-    card.querySelector('[data-act="salary"]').addEventListener("click", () => {
-      c.salaryTier = (c.salaryTier + 1) % 3;
-      const nextLabel = c.salaryTier === 0 ? "Baixo" : c.salaryTier === 1 ? "Mercado" : "Alto";
-      logEvent(`Politica salarial de ${c.nome} alterada para ${nextLabel}.`);
+    card.querySelector('[data-act="margin"]').addEventListener("click", () => {
+      c.salaryTier = (marginIdx + 1) % COMPANY_MARGIN_OPTIONS.length;
+      const next = COMPANY_MARGIN_OPTIONS[c.salaryTier];
+      logEvent(`Margem da ${c.nome} ajustada para ${next.label} (${(next.pct * 100).toFixed(2)}% ao mes).`);
       render();
     });
     el.companyList.appendChild(card);
@@ -2051,7 +2268,7 @@ function renderTravel() {
 
   const selected = state.aviation.fleet.find((a) => a.id === safeInt(el.travelAircraftSelect.value, 0)) || state.aviation.fleet[0];
   if (selected) state.aviation.selectedAircraftId = selected.id;
-  el.travelAircraftInfo.textContent = selected ? `${selected.nome} • ${selected.flightHours.toFixed(1)}h voo` : "Sem aviao";
+  el.travelAircraftInfo.textContent = selected ? `${selected.nome} â€¢ ${selected.flightHours.toFixed(1)}h voo` : "Sem aviao";
   el.travelStats.textContent = `Gasto total em viagens: ${formatMoney(state.stats.travelSpendBrl)} | Distancia: ${Math.floor(state.stats.totalFlightKm).toLocaleString("pt-BR")} km`;
 
   el.routeList.innerHTML = "";
@@ -2101,14 +2318,108 @@ function profileText() {
 }
 
 function resetCharacter() {
-  const ok = confirm("Resetar personagem?\nIsso apaga nome, idade e telefone, sem afetar seu progresso financeiro.");
+  const ok = confirm("Reset total?\nIsso vai apagar TODO o progresso do jogo (dinheiro, empresas, upgrades, ranking e personagem).");
   if (!ok) return;
+
   state.player = { nome: "", idade: "", telefone: "" };
+  state.money = 0;
+  state.clickValue = 10;
+  state.monthRevenue = 0;
+  state.year = 1;
+  state.month = 1;
+  state.secondsToMonth = MONTH_SECONDS;
+  state.yearlyRevenues = [];
+  state.level = 1;
+  state.xp = 0;
+  state.reputation = 50;
+  state.prestigePoints = 0;
+  state.research = { automation: 0, hr: 0, branding: 0 };
+  state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
+  state.dailyMissions = { dateKey: "", list: [] };
+  state.economy = { inflation: 0.04, interest: 0.09, confidence: 1, sectorBoosts: {} };
+  state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
+  state.tax = { debt: 0, pendingYearClose: null };
+  state.participations = { holdings: {}, market: {} };
+  state.aviation = { fleet: [], nextAircraftId: 1, accruedUsd: 0, debtUsd: 0, selectedAircraftId: 0 };
+  state.passport = { countries: {}, totalTrips: 0 };
+  state.worldWealth = {};
+  state.garage = [];
+  state.nextCarId = 1;
+  state.forex = {
+    usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
+    eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
+  };
+  state.stats = {
+    totalClicks: 0,
+    clickRevenue: 0,
+    companyRevenue: 0,
+    operationalCosts: 0,
+    payrollPaid: 0,
+    taxesPaid: 0,
+    interestPaid: 0,
+    contractRevenue: 0,
+    dailyRevenue: 0,
+    achievementRevenue: 0,
+    loanReceived: 0,
+    fxRevenue: 0,
+    taxDebtInterestPaid: 0,
+    ipvaPaid: 0,
+    carSalesRevenue: 0,
+    carsBroken: 0,
+    travelSpendBrl: 0,
+    totalFlightKm: 0,
+    totalFlightHours: 0,
+    aircraftTaxPaidUsd: 0,
+    aircraftHangarPaidUsd: 0,
+    aircraftCrewPaidUsd: 0,
+    aircraftDebtInterestPaidUsd: 0,
+    researchSpent: 0,
+    spentUpgrades: 0,
+    spentCompanies: 0,
+    peakMoney: 0
+  };
+  state.logs = [];
+  state.achievementsUnlocked = [];
+
+  initialUpgradeBase.forEach((base) => {
+    const u = upgrades.find((x) => x.id === base.id);
+    if (!u) return;
+    u.level = 0;
+    u.baseCost = base.baseCost;
+  });
+  initialCompanyBase.forEach((base) => {
+    const c = companies.find((x) => x.id === base.id);
+    if (!c) return;
+    c.baseCost = base.baseCost;
+    c.baseIncome = base.baseIncome;
+    c.owned = 0;
+    c.level = 0;
+    c.employees = 0;
+    c.salaryTier = 1;
+    c.marketFactor = 1;
+    c.lastIncome = 0;
+  });
+
+  localStorage.removeItem(RANKING_KEY);
+  initParticipationMarket();
+  ensureWorldWealthInitialized();
+  generateDailyMissions();
+  adminSession.loggedIn = false;
+  if (el.adminAccessInput) el.adminAccessInput.value = "";
+  if (el.adminPasswordInput) el.adminPasswordInput.value = "";
+  if (el.backupCode) el.backupCode.value = "";
+  if (el.adminMoneyInput) el.adminMoneyInput.value = "";
+  if (el.adminSetMoneyInput) el.adminSetMoneyInput.value = "";
+  if (el.adminClickInput) el.adminClickInput.value = "";
+  if (el.adminPrestigeInput) el.adminPrestigeInput.value = "";
+  if (el.adminMonthInput) el.adminMonthInput.value = "";
   el.nameInput.value = "";
   el.ageInput.value = "";
   el.phoneInput.value = "";
-  logEvent("Dados do personagem foram resetados.", "warn");
-  setStatus("Personagem resetado.", "ok");
+
+  logEvent("Reset total executado. Novo jogo iniciado do zero.", "warn");
+  setStatus("Reset total concluido.", "ok");
+  saveDeviceProgress();
   render();
 }
 
@@ -2158,7 +2469,7 @@ function doPrestige() {
   state.reputation = clamp(state.reputation + 4, 0, 100);
   generateDailyMissions();
 
-  logEvent(`Prestigio realizado: +${ganho} ponto(s). Bônus permanente aumentado.`, "warn");
+  logEvent(`Prestigio realizado: +${ganho} ponto(s). BÃ´nus permanente aumentado.`, "warn");
   setStatus("Prestigio realizado com sucesso.", "ok");
   sfxAchievement();
   render();
@@ -2178,7 +2489,7 @@ function render() {
   const mult = getIncomeMultiplier();
 
   el.money.textContent = formatMoney(state.money);
-  el.dateLine.textContent = `Ano ${state.year} • Mes ${state.month}`;
+  el.dateLine.textContent = `Ano ${state.year} â€¢ Mes ${state.month}`;
   el.countdown.textContent = hasPendingTaxDecision() ? "Aguardando decisao de imposto anual" : `Prox. mes em ${state.secondsToMonth}s`;
   el.clickLine.textContent = `Valor por clique: ${formatMoney(clickGain)} (base ${formatMoney(state.clickValue)})`;
   el.incomeLine.textContent = `Renda mensal empresas/participacoes: ${formatMoney(companyIncome)} (participacoes ${formatMoney(participationIncome)})`;
@@ -2224,7 +2535,7 @@ function render() {
   el.eurWalletBrl.textContent = formatMoney(eurBrl);
   el.fxTotalBrl.textContent = formatMoney(fxTotal);
 
-  el.workforceLine.textContent = `Funcionarios: ${totalEmployees()} | Folha: ${formatMoney(payrollCost)}/mes`;
+  el.workforceLine.textContent = `Modelo simplificado: lucro por valuation + margem | Custos fixos: ${formatMoney(opsCost)}/mes`;
   if (state.loan.monthsLeft > 0) {
     el.loanStatus.textContent = `${state.loan.label}: saldo ${formatMoney(state.loan.principalRemaining)} | parcela ${formatMoney(state.loan.installment)} | ${state.loan.monthsLeft} mes(es) restantes`;
   } else {
@@ -2251,6 +2562,7 @@ function render() {
 
   el.prestigeBonusText.textContent = `x${(1 + state.prestigePoints * 0.1).toFixed(2)}`;
   el.prestigeBtn.disabled = !canPrestige();
+  renderAdminPanel();
 
   renderContracts();
   renderUpgrades();
@@ -2612,7 +2924,7 @@ function applySave(data) {
     c.owned = saved.owned;
     c.level = saved.level;
     c.employees = Math.max(0, saved.employees);
-    c.salaryTier = Math.round(clamp(saved.salaryTier, 0, 2));
+    c.salaryTier = Math.round(clamp(saved.salaryTier, 0, COMPANY_MARGIN_OPTIONS.length - 1));
     c.marketFactor = clamp(safeNumber(saved.marketFactor, 1), 0.65, 3.8);
     c.lastIncome = Math.max(0, safeNumber(saved.lastIncome, 0));
   });
@@ -2624,6 +2936,25 @@ function applySave(data) {
 
 function localKey(phone) {
   return `imperio_clicker_save_${String(phone).replace(/\D/g, "")}`;
+}
+
+function saveDeviceProgress() {
+  try {
+    localStorage.setItem(DEVICE_AUTOSAVE_KEY, JSON.stringify(serializeState()));
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function loadDeviceProgress() {
+  try {
+    const raw = localStorage.getItem(DEVICE_AUTOSAVE_KEY);
+    if (!raw) return false;
+    applySave(JSON.parse(raw));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 document.querySelectorAll(".tab-btn").forEach((btn) => {
@@ -2787,6 +3118,23 @@ el.taxPayLaterBtn.addEventListener("click", () => {
   render();
 });
 
+if (el.adminLoginBtn) el.adminLoginBtn.addEventListener("click", adminLogin);
+if (el.adminLogoutBtn) el.adminLogoutBtn.addEventListener("click", adminLogout);
+if (el.adminAddMoneyBtn) el.adminAddMoneyBtn.addEventListener("click", adminAddMoney);
+if (el.adminRemoveMoneyBtn) el.adminRemoveMoneyBtn.addEventListener("click", adminRemoveMoney);
+if (el.adminSetMoneyBtn) el.adminSetMoneyBtn.addEventListener("click", adminSetMoney);
+if (el.adminAddClickBtn) el.adminAddClickBtn.addEventListener("click", adminAddClickBase);
+if (el.adminAddPrestigeBtn) el.adminAddPrestigeBtn.addEventListener("click", adminAddPrestige);
+if (el.adminAdvanceMonthBtn) el.adminAdvanceMonthBtn.addEventListener("click", adminAdvanceMonths);
+if (el.adminBoostBtn) el.adminBoostBtn.addEventListener("click", adminBoostEconomy);
+if (el.adminUnlockBtn) el.adminUnlockBtn.addEventListener("click", adminUnlockEverything);
+if (el.adminClearDebtsBtn) el.adminClearDebtsBtn.addEventListener("click", adminClearDebts);
+if (el.adminPasswordInput) {
+  el.adminPasswordInput.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") adminLogin();
+  });
+}
+
 setInterval(() => {
   if (hasPendingTaxDecision()) {
     render();
@@ -2799,12 +3147,27 @@ setInterval(() => {
   render();
 }, 1000);
 
+setInterval(() => {
+  saveDeviceProgress();
+}, 3000);
+
+window.addEventListener("beforeunload", saveDeviceProgress);
+window.addEventListener("pagehide", saveDeviceProgress);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") saveDeviceProgress();
+});
+
 document.addEventListener("dblclick", (e) => e.preventDefault(), { passive: false });
 document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
 document.body.addEventListener("pointerdown", ensureAudio, { once: true });
 
+const loadedDeviceSave = loadDeviceProgress();
 ensureDailyMissionsFresh();
 ensureWorldWealthInitialized();
 initParticipationMarket();
-logEvent("Jogo iniciado. Clique para ganhar dinheiro.", "ok");
+if (loadedDeviceSave) {
+  logEvent("Progresso local do dispositivo carregado automaticamente.", "ok");
+} else {
+  logEvent("Jogo iniciado. Clique para ganhar dinheiro.", "ok");
+}
 render();
