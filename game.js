@@ -17,6 +17,12 @@ const FRANCHISE_SALE_PRICE = 200000;
 const FRANCHISE_ANNUAL_REVENUE = 250000;
 const FRANCHISE_ROYALTY_RATE = 0.08;
 const FRANCHISE_MONTHLY_ROYALTY = (FRANCHISE_ANNUAL_REVENUE * FRANCHISE_ROYALTY_RATE) / 12;
+const CLICK_VALUE_BASE = 10;
+const CLICK_VALUE_MAX = 1000;
+const CLICK_UPGRADE_STEP = 10;
+const CLICK_UPGRADE_BASE_COST = 4000;
+const CLICK_UPGRADE_GROWTH = 1.45;
+const CLICK_UPGRADE_LEVEL_BASE = 2;
 
 const franchiseSegments = [
   { id: "alimentacao", nome: "Alimentacao", setupCost: 350000, minSales: 1, maxSales: 4, annualGrowth: 0.11 },
@@ -389,7 +395,7 @@ function defaultFranchiseState() {
 const state = {
   player: { nome: "", idade: "", telefone: "" },
   money: 0,
-  clickValue: 10,
+  clickValue: CLICK_VALUE_BASE,
   monthRevenue: 0,
   year: 1,
   month: 1,
@@ -431,9 +437,9 @@ const state = {
     list: []
   },
   economy: {
-    inflation: 0.04,
-    interest: 0.09,
-    confidence: 1,
+    inflation: 0.06,
+    interest: 0.12,
+    confidence: 0.95,
     sectorBoosts: {}
   },
   loan: {
@@ -590,7 +596,9 @@ const el = {
   monthBar: document.getElementById("monthBar"),
   contractList: document.getElementById("contractList"),
   refreshContractsBtn: document.getElementById("refreshContractsBtn"),
-  upgradeList: document.getElementById("upgradeList"),
+  clickUpgradeLevelReq: document.getElementById("clickUpgradeLevelReq"),
+  clickUpgradeCost: document.getElementById("clickUpgradeCost"),
+  clickUpgradeBtn: document.getElementById("clickUpgradeBtn"),
   companyList: document.getElementById("companyList"),
   realEstateSummary: document.getElementById("realEstateSummary"),
   realEstateList: document.getElementById("realEstateList"),
@@ -911,11 +919,11 @@ function currentDateKey() {
 }
 
 function getIncomeMultiplier() {
-  const levelBonus = (state.level - 1) * 0.02;
-  const prestigeBonus = state.prestigePoints * 0.1;
-  const confidenceBonus = (state.economy.confidence - 1) * 0.3;
-  const reputationBonus = (state.reputation - 50) / 500;
-  const brandingBonus = state.research.branding * 0.015;
+  const levelBonus = (state.level - 1) * 0.01;
+  const prestigeBonus = state.prestigePoints * 0.06;
+  const confidenceBonus = (state.economy.confidence - 1) * 0.2;
+  const reputationBonus = (state.reputation - 50) / 700;
+  const brandingBonus = state.research.branding * 0.01;
   return 1 + levelBonus + prestigeBonus + confidenceBonus + reputationBonus + brandingBonus;
 }
 
@@ -1220,7 +1228,7 @@ function evolveWorldWealthMonthly() {
   worldBillionaires.forEach((p) => {
     const base = p.usdBillion;
     const current = safeNumber(state.worldWealth[p.id], base);
-    const macro = (state.economy.confidence - 1) * 0.0025 - (state.economy.interest - 0.09) * 0.002;
+    const macro = (state.economy.confidence - 1) * 0.0025 - (state.economy.interest - 0.12) * 0.002;
     const noise = Math.random() * 0.0075 - 0.00375;
     const meanReversion = (base - current) / base * 0.015;
     const monthlyPct = clamp(macro + noise + meanReversion, -0.009, 0.009);
@@ -1260,7 +1268,8 @@ function hrTurnoverFactor() {
 
 function effectiveClickValue() {
   const combo = currentClickComboMultiplier();
-  return Math.floor(state.clickValue * getIncomeMultiplier() * combo);
+  const raw = Math.floor(state.clickValue * getIncomeMultiplier() * combo);
+  return Math.min(CLICK_VALUE_MAX, raw);
 }
 
 function currentClickComboMultiplier() {
@@ -1446,7 +1455,7 @@ function updateParticipationMarketMonthly() {
   participationCatalog.forEach((c) => {
     const row = state.participations.market[c.id];
     const current = Math.max(100000, safeNumber(row.valuation, c.baseValuation));
-    const macro = (state.economy.confidence - 1) * 0.015 - (state.economy.interest - 0.09) * 0.02;
+    const macro = (state.economy.confidence - 1) * 0.015 - (state.economy.interest - 0.12) * 0.02;
     const drift = c.growthAnnual / 12;
     const noise = (Math.random() * 2 - 1) * c.volatility;
     const monthlyPct = clamp(drift + macro + noise, -0.11, 0.14);
@@ -1474,7 +1483,7 @@ function companyValuationMultiple(c) {
 function companyFairValuation(c) {
   if (c.owned <= 0) {
     const annualBase = Math.max(0, safeNumber(c.baseIncome, 0)) * 12;
-    const economyAdj = clamp(0.92 + (state.economy.confidence - 1) * 0.35 - (state.economy.interest - 0.09) * 0.25, 0.75, 1.35);
+    const economyAdj = clamp(0.92 + (state.economy.confidence - 1) * 0.35 - (state.economy.interest - 0.12) * 0.25, 0.75, 1.35);
     const reputationAdj = 1 + Math.max(0, state.reputation - 50) / 500;
     const entryValuation = annualBase * companyValuationMultiple(c) * economyAdj * reputationAdj;
     return Math.floor(Math.max(c.baseCost * 0.9, entryValuation));
@@ -1493,7 +1502,7 @@ function updateCompanyValuationsMonthly() {
     const currentIncome = Math.max(0, companyTotalIncome(c));
     const prev = Math.max(0, safeNumber(c.lastIncome, 0));
     const growth = prev > 0 ? (currentIncome - prev) / prev : 0;
-    const macro = (state.economy.confidence - 1) * 0.02 - (state.economy.interest - 0.09) * 0.015;
+    const macro = (state.economy.confidence - 1) * 0.02 - (state.economy.interest - 0.12) * 0.015;
     const drift = 0.004 + clamp(growth * 0.2, -0.02, 0.035) + macro;
     const noise = Math.random() * 0.018 - 0.009;
     c.marketFactor = clamp(safeNumber(c.marketFactor, 1) * (1 + drift + noise), 0.65, 3.8);
@@ -1510,11 +1519,16 @@ function companySellOfferPerUnit(c) {
 }
 
 function companyPayroll(c) {
-  return 0;
+  if (c.owned <= 0) return 0;
+  const tierMult = salaryTierMultiplier(c.salaryTier);
+  const levelPressure = 1 + c.level * 0.05;
+  const base = companyTotalIncome(c) * 0.18;
+  return Math.floor(base * tierMult * levelPressure);
 }
 
 function monthlyPayrollCost() {
-  return 0;
+  const total = companies.reduce((sum, c) => sum + companyPayroll(c), 0);
+  return Math.floor(total * hrTurnoverFactor());
 }
 
 function ownsRealEstate(defId) {
@@ -1545,7 +1559,7 @@ function ownedRealEstateCount() {
 }
 
 function monthlyOperationalCost() {
-  const variable = Math.floor(totalCompanyIncome() * 0.05);
+  const variable = Math.floor(totalCompanyIncome() * 0.12);
   return Math.floor(variable * automationCostFactor());
 }
 
@@ -1732,8 +1746,8 @@ function requestLoan(amount, months, annualRate, label) {
 }
 
 function updateForexRates() {
-  const usdPressure = (state.economy.interest - 0.09) * 0.25 + (1 - state.economy.confidence) * 0.2;
-  const eurPressure = (state.economy.interest - 0.09) * 0.2 + (1 - state.economy.confidence) * 0.15;
+  const usdPressure = (state.economy.interest - 0.12) * 0.25 + (1 - state.economy.confidence) * 0.2;
+  const eurPressure = (state.economy.interest - 0.12) * 0.2 + (1 - state.economy.confidence) * 0.15;
   const usdNoise = Math.random() * 0.24 - 0.12;
   const eurNoise = Math.random() * 0.2 - 0.1;
   state.forex.usd.rate = clamp(state.forex.usd.rate + usdNoise + usdPressure, state.forex.usd.min, state.forex.usd.max);
@@ -1884,7 +1898,7 @@ function processLoanPayment() {
 
   const penalty = Math.floor(state.loan.principalRemaining * 0.03) + 500;
   state.loan.principalRemaining += penalty;
-  state.economy.confidence = clamp(state.economy.confidence - 0.05, 0.75, 1.35);
+  state.economy.confidence = clamp(state.economy.confidence - 0.05, 0.6, 1.25);
   logEvent(`Atraso de parcela! Multa de ${formatMoney(penalty)} aplicada ao saldo do emprestimo.`, "warn");
   return 0;
 }
@@ -2786,6 +2800,48 @@ function addXp(amount) {
   }
 }
 
+function clickUpgradeSteps() {
+  return Math.max(0, Math.floor((state.clickValue - CLICK_VALUE_BASE) / CLICK_UPGRADE_STEP));
+}
+
+function nextClickUpgradeCost() {
+  const steps = clickUpgradeSteps();
+  return Math.floor(CLICK_UPGRADE_BASE_COST * Math.pow(CLICK_UPGRADE_GROWTH, steps));
+}
+
+function nextClickUpgradeLevelReq() {
+  return CLICK_UPGRADE_LEVEL_BASE + clickUpgradeSteps();
+}
+
+function canBuyClickUpgrade() {
+  const cost = nextClickUpgradeCost();
+  const levelReq = nextClickUpgradeLevelReq();
+  return state.clickValue < CLICK_VALUE_MAX && state.level >= levelReq && state.money >= cost;
+}
+
+function buyClickUpgrade() {
+  if (state.clickValue >= CLICK_VALUE_MAX) {
+    setStatus("Clique base ja esta no maximo.", "warn");
+    return;
+  }
+  const cost = nextClickUpgradeCost();
+  const levelReq = nextClickUpgradeLevelReq();
+  if (state.level < levelReq) {
+    setStatus(`Nivel ${levelReq} necessario para comprar melhoria.`, "warn");
+    return;
+  }
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para melhoria.", "bad");
+    return;
+  }
+  state.money -= cost;
+  state.clickValue = Math.min(CLICK_VALUE_MAX, state.clickValue + CLICK_UPGRADE_STEP);
+  state.stats.spentUpgrades += cost;
+  logEvent(`Melhoria comprada: +${formatMoney(CLICK_UPGRADE_STEP)} no clique base.`, "ok");
+  sfxBuy();
+  render();
+}
+
 function calcUpgradeCost(u) {
   return Math.floor(u.baseCost * Math.pow(1.7, u.level) * clickUpgradeCostMultiplier());
 }
@@ -2926,9 +2982,11 @@ function adminAddClickBase() {
     setStatus("Informe um valor valido para clique.", "bad");
     return;
   }
-  state.clickValue += add;
-  logEvent(`Admin aumentou clique base em ${formatMoney(add)}.`, "warn");
-  setStatus(`Clique base aumentado em ${formatMoney(add)}.`, "ok");
+  const before = state.clickValue;
+  state.clickValue = Math.min(CLICK_VALUE_MAX, state.clickValue + add);
+  const diff = state.clickValue - before;
+  logEvent(`Admin aumentou clique base em ${formatMoney(diff)}.`, "warn");
+  setStatus(`Clique base aumentado em ${formatMoney(diff)}.`, "ok");
   render();
 }
 
@@ -2986,13 +3044,6 @@ function adminBoostEconomy() {
 function adminUnlockEverything() {
   if (!adminNeedAuth()) return;
 
-  upgrades.forEach((u) => {
-    const targetLevel = Math.max(10, u.level);
-    const diff = targetLevel - u.level;
-    if (diff > 0) state.clickValue += diff * u.add;
-    u.level = targetLevel;
-  });
-
   companies.forEach((c) => {
     c.owned = Math.max(c.owned, 8);
     c.level = Math.max(c.level, 6);
@@ -3037,12 +3088,12 @@ function adminClearDebts() {
 
 function taxRateFor(avgMonthly) {
   const income = Math.max(0, safeNumber(avgMonthly, 0));
-  if (income <= 10000) return 0.07;
-  if (income <= 50000) return 0.12;
-  if (income <= 150000) return 0.18;
-  if (income <= 400000) return 0.24;
-  if (income <= 900000) return 0.3;
-  return 0.35;
+  if (income <= 10000) return 0.1;
+  if (income <= 50000) return 0.16;
+  if (income <= 150000) return 0.23;
+  if (income <= 400000) return 0.3;
+  if (income <= 900000) return 0.38;
+  return 0.44;
 }
 
 function applyYearlyInflation() {
@@ -3057,9 +3108,9 @@ function applyYearlyInflation() {
 }
 
 function evolveEconomyYearly() {
-  state.economy.inflation = clamp(state.economy.inflation + (Math.random() * 0.03 - 0.015), 0.01, 0.14);
-  state.economy.interest = clamp(state.economy.interest + (Math.random() * 0.04 - 0.02), 0.02, 0.22);
-  state.economy.confidence = clamp(state.economy.confidence + (Math.random() * 0.12 - 0.06), 0.75, 1.35);
+  state.economy.inflation = clamp(state.economy.inflation + (Math.random() * 0.04 - 0.02), 0.03, 0.18);
+  state.economy.interest = clamp(state.economy.interest + (Math.random() * 0.06 - 0.03), 0.05, 0.28);
+  state.economy.confidence = clamp(state.economy.confidence + (Math.random() * 0.14 - 0.07), 0.6, 1.25);
 }
 
 function maybeMarketEvent() {
@@ -4447,7 +4498,7 @@ function resetCharacter() {
 
   state.player = { nome: "", idade: "", telefone: "" };
   state.money = 0;
-  state.clickValue = 10;
+  state.clickValue = CLICK_VALUE_BASE;
   state.monthRevenue = 0;
   state.year = 1;
   state.month = 1;
@@ -4467,7 +4518,7 @@ function resetCharacter() {
   state.research = { automation: 0, hr: 0, branding: 0 };
   state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
   state.dailyMissions = { dateKey: "", list: [] };
-  state.economy = { inflation: 0.04, interest: 0.09, confidence: 1, sectorBoosts: {} };
+  state.economy = { inflation: 0.06, interest: 0.12, confidence: 0.95, sectorBoosts: {} };
   state.loan = { principalRemaining: 0, installment: 0, monthsLeft: 0, annualRate: 0, label: "" };
   state.tax = { debt: 0, pendingYearClose: null };
   state.participations = { holdings: {}, market: {} };
@@ -4574,7 +4625,7 @@ function doPrestige() {
 
   state.prestigePoints += ganho;
   state.money = 0;
-  state.clickValue = 10;
+  state.clickValue = CLICK_VALUE_BASE;
   state.clickCombo = { streak: 0, best: 0, lastTs: 0 };
   state.monthRevenue = 0;
   state.year = 1;
@@ -4660,6 +4711,18 @@ function render() {
   }
   el.monthRevenue.textContent = formatMoney(state.monthRevenue);
   el.clickBtn.textContent = `CLICAR (+${formatMoney(clickGain)})`;
+  const clickUpgradeCost = nextClickUpgradeCost();
+  const clickUpgradeLevelReq = nextClickUpgradeLevelReq();
+  if (el.clickUpgradeLevelReq) {
+    el.clickUpgradeLevelReq.textContent = state.clickValue >= CLICK_VALUE_MAX ? "Maximo" : String(clickUpgradeLevelReq);
+  }
+  if (el.clickUpgradeCost) {
+    el.clickUpgradeCost.textContent = state.clickValue >= CLICK_VALUE_MAX ? "Maximo atingido" : formatMoney(clickUpgradeCost);
+  }
+  if (el.clickUpgradeBtn) {
+    el.clickUpgradeBtn.disabled = !canBuyClickUpgrade();
+    el.clickUpgradeBtn.textContent = state.clickValue >= CLICK_VALUE_MAX ? "Clique base no maximo" : `Comprar melhoria (+${formatMoney(CLICK_UPGRADE_STEP)})`;
+  }
   el.profilePreview.textContent = profileText();
 
   const pct = ((MONTH_SECONDS - state.secondsToMonth) / MONTH_SECONDS) * 100;
@@ -4702,7 +4765,7 @@ function render() {
   el.eurWalletBrl.textContent = formatMoney(eurBrl);
   el.fxTotalBrl.textContent = formatMoney(fxTotal);
 
-  el.workforceLine.textContent = `Modelo simples: renda base + nivel + margem | Custos operacionais baixos: ${formatMoney(opsCost)}/mes`;
+  el.workforceLine.textContent = `Modelo simples: renda base + nivel + margem | Custos operacionais: ${formatMoney(opsCost)}/mes`;
   if (state.loan.monthsLeft > 0) {
     el.loanStatus.textContent = `${state.loan.label}: saldo ${formatMoney(state.loan.principalRemaining)} | parcela ${formatMoney(state.loan.installment)} | ${state.loan.monthsLeft} mes(es) restantes`;
   } else {
@@ -4734,7 +4797,7 @@ function render() {
   renderAdminPanel();
 
   renderContracts();
-  renderUpgrades();
+  // Loja de upgrades removida; melhorias de clique ficam no painel principal.
   renderCompanies();
   renderRealEstate();
   renderParticipations();
@@ -4818,7 +4881,7 @@ function applySave(data) {
   }
 
   state.money = Math.max(0, safeNumber(data.money, 0));
-  state.clickValue = Math.max(1, safeNumber(data.clickValue, 10));
+  state.clickValue = clamp(safeNumber(data.clickValue, CLICK_VALUE_BASE), CLICK_VALUE_BASE, CLICK_VALUE_MAX);
   state.monthRevenue = safeNumber(data.monthRevenue, 0);
   state.year = Math.max(1, safeInt(data.year, 1));
   state.month = clamp(safeInt(data.month, 1), 1, 12);
@@ -4988,15 +5051,15 @@ function applySave(data) {
 
   if (data.economy && typeof data.economy === "object") {
     state.economy = {
-      inflation: clamp(safeNumber(data.economy.inflation, 0.04), 0.01, 0.14),
-      interest: clamp(safeNumber(data.economy.interest, 0.09), 0.02, 0.22),
-      confidence: clamp(safeNumber(data.economy.confidence, 1), 0.75, 1.35),
+      inflation: clamp(safeNumber(data.economy.inflation, 0.06), 0.03, 0.18),
+      interest: clamp(safeNumber(data.economy.interest, 0.12), 0.05, 0.28),
+      confidence: clamp(safeNumber(data.economy.confidence, 0.95), 0.6, 1.25),
       sectorBoosts: typeof data.economy.sectorBoosts === "object" && data.economy.sectorBoosts
         ? data.economy.sectorBoosts
         : {}
     };
   } else {
-    state.economy = { inflation: 0.04, interest: 0.09, confidence: 1, sectorBoosts: {} };
+    state.economy = { inflation: 0.06, interest: 0.12, confidence: 0.95, sectorBoosts: {} };
   }
 
   if (data.loan && typeof data.loan === "object") {
@@ -5414,6 +5477,9 @@ el.clickBtn.addEventListener("click", () => {
   sfxClick();
   render();
 });
+if (el.clickUpgradeBtn) {
+  el.clickUpgradeBtn.addEventListener("click", buyClickUpgrade);
+}
 el.skipMonthBtn.addEventListener("click", () => {
   if (hasPendingTaxDecision()) {
     setStatus("Resolva a decisao de imposto anual antes de pular mes.", "warn");
