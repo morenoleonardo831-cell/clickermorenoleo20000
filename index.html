@@ -54,6 +54,7 @@
       <button class="tab-btn" data-tab="perfil">Perfil</button>
       <button class="tab-btn" data-tab="saf">SAF</button>
       <button class="tab-btn" data-tab="banco">Banco</button>
+      <button class="tab-btn" data-tab="franquia">Franquia</button>
       <button class="tab-btn" data-tab="criptomoedas">Criptomoedas</button>
       <button class="tab-btn" data-tab="ranking">Ranking</button>
       <button class="tab-btn" data-tab="admin">Admin</button>
@@ -257,6 +258,33 @@
       <button class="btn" id="researchHrBtn">Investir em RH</button>
       <div class="row"><span>Marca e reputacao:</span><strong id="researchBranding">Nv. 0</strong></div>
       <button class="btn" id="researchBrandingBtn">Investir em marca</button>
+    </section>
+
+    <section class="panel glass" id="tab-franquia">
+      <div class="title">Central de franquias</div>
+      <div class="mini">Uma franquia por vez. Crie sua marca, venda unidades e receba royalties em conta separada.</div>
+      <div class="mini">Cada unidade vendida rende R$ 200.000. Royalties fixos: 8% sobre faturamento medio de R$ 250.000/ano por unidade.</div>
+
+      <div class="row"><span>Conta franquias:</span><strong id="franchiseBankBalance">R$ 0,00</strong></div>
+      <div class="row"><span>Status:</span><strong id="franchiseStatus">Nenhuma franquia ativa.</strong></div>
+      <div class="row"><span>Valuation atual:</span><strong id="franchiseValuation">R$ 0,00</strong></div>
+      <div class="row"><span>Unidades vendidas:</span><strong id="franchiseUnitsSold">0</strong></div>
+      <div class="row"><span>Royalties no mes:</span><strong id="franchiseRoyaltyLine">R$ 0,00</strong></div>
+
+      <div class="title">Criar nova franquia</div>
+      <input id="franchiseNameInput" maxlength="36" placeholder="Nome da rede (ex: Cafe do Leo)" />
+      <select id="franchiseSegmentSelect"></select>
+      <div class="mini" id="franchiseSegmentInfo">Selecione um segmento para ver custo e potencial.</div>
+      <button class="btn" id="franchiseCreateBtn">Criar franquia</button>
+
+      <div class="title">Gestao</div>
+      <div class="btn-row">
+        <button class="btn" id="franchiseTransferBtn">Transferir para conta principal</button>
+        <button class="btn alt" id="franchiseSellBtn">Vender franquia atual</button>
+      </div>
+
+      <div class="title">Ultimo fechamento mensal</div>
+      <div class="mini" id="franchiseLastMonth">Sem dados ainda.</div>
     </section>
 
     <section class="panel glass" id="tab-criptomoedas">

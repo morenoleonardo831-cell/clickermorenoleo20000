@@ -13,6 +13,18 @@ const COMPANY_MARGIN_OPTIONS = [
   { label: "Premium", mult: 1.25 }
 ];
 const GPU_CAPACITY_PER_UNIT = 20;
+const FRANCHISE_SALE_PRICE = 200000;
+const FRANCHISE_ANNUAL_REVENUE = 250000;
+const FRANCHISE_ROYALTY_RATE = 0.08;
+const FRANCHISE_MONTHLY_ROYALTY = (FRANCHISE_ANNUAL_REVENUE * FRANCHISE_ROYALTY_RATE) / 12;
+
+const franchiseSegments = [
+  { id: "alimentacao", nome: "Alimentacao", setupCost: 350000, minSales: 1, maxSales: 4, annualGrowth: 0.11 },
+  { id: "beleza", nome: "Beleza e estetica", setupCost: 500000, minSales: 1, maxSales: 3, annualGrowth: 0.12 },
+  { id: "educacao", nome: "Educacao", setupCost: 650000, minSales: 1, maxSales: 3, annualGrowth: 0.13 },
+  { id: "tecnologia", nome: "Tecnologia", setupCost: 900000, minSales: 0, maxSales: 2, annualGrowth: 0.16 },
+  { id: "saude", nome: "Saude", setupCost: 1200000, minSales: 0, maxSales: 2, annualGrowth: 0.14 }
+];
 
 const cryptoCoinsCatalog = [
   { id: "BTC", nome: "Bitcoin", priceUsd: 68000, min: 42000, max: 120000, yieldPerMhSecond: 0.00000018 },
@@ -366,6 +378,14 @@ function defaultCryptoState() {
   };
 }
 
+function defaultFranchiseState() {
+  return {
+    bankBalance: 0,
+    active: null,
+    history: []
+  };
+}
+
 const state = {
   player: { nome: "", idade: "", telefone: "" },
   money: 0,
@@ -451,6 +471,7 @@ const state = {
     eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
   },
   crypto: defaultCryptoState(),
+  franchise: defaultFranchiseState(),
   savings: {
     balance: 0,
     monthlyRate: 0.01,
@@ -680,6 +701,18 @@ const el = {
   eurBuyBtn: document.getElementById("eurBuyBtn"),
   eurSellAllBtn: document.getElementById("eurSellAllBtn"),
   fxTotalBrl: document.getElementById("fxTotalBrl"),
+  franchiseBankBalance: document.getElementById("franchiseBankBalance"),
+  franchiseStatus: document.getElementById("franchiseStatus"),
+  franchiseValuation: document.getElementById("franchiseValuation"),
+  franchiseUnitsSold: document.getElementById("franchiseUnitsSold"),
+  franchiseRoyaltyLine: document.getElementById("franchiseRoyaltyLine"),
+  franchiseNameInput: document.getElementById("franchiseNameInput"),
+  franchiseSegmentSelect: document.getElementById("franchiseSegmentSelect"),
+  franchiseSegmentInfo: document.getElementById("franchiseSegmentInfo"),
+  franchiseCreateBtn: document.getElementById("franchiseCreateBtn"),
+  franchiseTransferBtn: document.getElementById("franchiseTransferBtn"),
+  franchiseSellBtn: document.getElementById("franchiseSellBtn"),
+  franchiseLastMonth: document.getElementById("franchiseLastMonth"),
   cryptoSummary: document.getElementById("cryptoSummary"),
   cryptoCoinPrice: document.getElementById("cryptoCoinPrice"),
   cryptoCoinSelect: document.getElementById("cryptoCoinSelect"),
@@ -888,6 +921,164 @@ function getIncomeMultiplier() {
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
+}
+
+function franchiseSegmentById(id) {
+  return franchiseSegments.find((s) => s.id === id) || franchiseSegments[0];
+}
+
+function franchiseMonthlyRoyaltyValue(unitsSold) {
+  return Math.floor(Math.max(0, safeInt(unitsSold, 0)) * FRANCHISE_MONTHLY_ROYALTY);
+}
+
+function createFranchise() {
+  if (state.franchise?.active) {
+    setStatus("Regra de negocio: apenas 1 franquia ativa por vez.", "warn");
+    return;
+  }
+  const name = String(el.franchiseNameInput?.value || "").trim();
+  if (!name) {
+    setStatus("Informe o nome da franquia.", "bad");
+    return;
+  }
+  const segment = franchiseSegmentById(el.franchiseSegmentSelect?.value || "");
+  const setupCost = Math.max(0, safeNumber(segment.setupCost, 0));
+  if (state.money < setupCost) {
+    setStatus(`Saldo insuficiente. Custo para abrir: ${formatMoney(setupCost)}.`, "bad");
+    return;
+  }
+  state.money -= setupCost;
+  const initialValuation = Math.floor(setupCost * 1.35);
+  state.franchise.active = {
+    name: name.slice(0, 36),
+    segmentId: segment.id,
+    createdYear: state.year,
+    createdMonth: state.month,
+    setupCost,
+    soldUnits: 0,
+    totalFranchiseFees: 0,
+    totalRoyalties: 0,
+    valuation: initialValuation,
+    lastMonthSales: 0,
+    lastMonthFranchiseFees: 0,
+    lastMonthRoyalties: 0,
+    lastMonthNet: 0
+  };
+  if (el.franchiseNameInput) el.franchiseNameInput.value = "";
+  setStatus(`Franquia ${name.slice(0, 36)} criada no segmento ${segment.nome}.`, "ok");
+  logEvent(`Nova franquia criada: ${name.slice(0, 36)} (${segment.nome}). Investimento inicial ${formatMoney(setupCost)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function transferFranchiseBalance() {
+  const available = Math.floor(Math.max(0, safeNumber(state.franchise?.bankBalance, 0)));
+  if (available <= 0) {
+    setStatus("Nao ha saldo na conta de franquias para transferir.", "warn");
+    return;
+  }
+  state.franchise.bankBalance -= available;
+  state.money += available;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  setStatus(`Transferencia concluida: ${formatMoney(available)} para conta principal.`, "ok");
+  logEvent(`Transferencia da conta franquias: +${formatMoney(available)} na conta principal.`, "ok");
+  render();
+}
+
+function sellCurrentFranchise() {
+  const active = state.franchise?.active;
+  if (!active) {
+    setStatus("Nao existe franquia ativa para vender.", "warn");
+    return;
+  }
+  const saleValue = Math.floor(Math.max(0, safeNumber(active.valuation, 0)));
+  state.franchise.bankBalance += saleValue;
+  const segment = franchiseSegmentById(active.segmentId);
+  state.franchise.history.unshift({
+    name: active.name,
+    segmentId: active.segmentId,
+    segmentName: segment.nome,
+    soldUnits: Math.max(0, safeInt(active.soldUnits, 0)),
+    soldAtYear: state.year,
+    soldAtMonth: state.month,
+    saleValue
+  });
+  state.franchise.history = state.franchise.history.slice(0, 8);
+  state.franchise.active = null;
+  setStatus(`Franquia vendida por ${formatMoney(saleValue)} (valor foi para conta franquias).`, "ok");
+  logEvent(`Venda da franqueadora concluida por ${formatMoney(saleValue)}. Agora voce pode abrir uma nova franquia.`, "warn");
+  render();
+}
+
+function processFranchiseMonth() {
+  if (!state.franchise || !state.franchise.active) {
+    return { sales: 0, feeRevenue: 0, royalties: 0, total: 0, valuation: 0 };
+  }
+  const active = state.franchise.active;
+  const segment = franchiseSegmentById(active.segmentId);
+  const confidenceFactor = clamp(safeNumber(state.economy?.confidence, 1), 0.8, 1.3);
+  const repFactor = clamp(safeNumber(state.reputation, 50) / 60, 0.75, 1.65);
+  const salesMin = Math.max(0, Math.floor(segment.minSales * confidenceFactor * repFactor));
+  const salesMax = Math.max(salesMin, Math.ceil(segment.maxSales * confidenceFactor * repFactor));
+  const sales = Math.floor(salesMin + Math.random() * (salesMax - salesMin + 1));
+  const feeRevenue = sales * FRANCHISE_SALE_PRICE;
+  active.soldUnits += sales;
+  const royalties = franchiseMonthlyRoyaltyValue(active.soldUnits);
+  const total = feeRevenue + royalties;
+  state.franchise.bankBalance += total;
+  active.totalFranchiseFees += feeRevenue;
+  active.totalRoyalties += royalties;
+  const baseGrowth = segment.annualGrowth / 12;
+  const confidenceGrowth = (confidenceFactor - 1) * 0.015;
+  const growthPct = clamp(baseGrowth + confidenceGrowth + (Math.random() - 0.5) * 0.03, -0.04, 0.08);
+  const floorValuation = Math.floor(active.setupCost * 0.75 + active.soldUnits * 25000);
+  active.valuation = Math.max(floorValuation, Math.floor(active.valuation * (1 + growthPct) + feeRevenue * 0.08));
+  active.lastMonthSales = sales;
+  active.lastMonthFranchiseFees = feeRevenue;
+  active.lastMonthRoyalties = royalties;
+  active.lastMonthNet = total;
+  return { sales, feeRevenue, royalties, total, valuation: active.valuation };
+}
+
+function updateFranchiseSegmentInfo() {
+  if (!el.franchiseSegmentInfo) return;
+  const segment = franchiseSegmentById(el.franchiseSegmentSelect?.value || "");
+  el.franchiseSegmentInfo.textContent = `${segment.nome}: custo inicial ${formatMoney(segment.setupCost)} | vendas/mes ${segment.minSales}-${segment.maxSales} | crescimento anual medio ${(segment.annualGrowth * 100).toFixed(1)}%.`;
+}
+
+function renderFranchise() {
+  if (!el.franchiseSegmentSelect) return;
+  if (el.franchiseSegmentSelect.options.length === 0) {
+    el.franchiseSegmentSelect.innerHTML = franchiseSegments
+      .map((s) => `<option value="${s.id}">${escapeHtml(s.nome)} (${formatMoney(s.setupCost)})</option>`)
+      .join("");
+  }
+  updateFranchiseSegmentInfo();
+
+  const bankBalance = Math.max(0, safeNumber(state.franchise?.bankBalance, 0));
+  const active = state.franchise?.active || null;
+  if (el.franchiseBankBalance) el.franchiseBankBalance.textContent = formatMoney(bankBalance);
+  if (!active) {
+    if (el.franchiseStatus) el.franchiseStatus.textContent = "Nenhuma franquia ativa.";
+    if (el.franchiseValuation) el.franchiseValuation.textContent = formatMoney(0);
+    if (el.franchiseUnitsSold) el.franchiseUnitsSold.textContent = "0";
+    if (el.franchiseRoyaltyLine) el.franchiseRoyaltyLine.textContent = formatMoney(0);
+    if (el.franchiseLastMonth) el.franchiseLastMonth.textContent = "Sem dados ainda.";
+    if (el.franchiseCreateBtn) el.franchiseCreateBtn.disabled = state.money < franchiseSegmentById(el.franchiseSegmentSelect.value).setupCost;
+    if (el.franchiseSellBtn) el.franchiseSellBtn.disabled = true;
+  } else {
+    const segment = franchiseSegmentById(active.segmentId);
+    if (el.franchiseStatus) el.franchiseStatus.textContent = `${active.name} (${segment.nome}) ativa desde Ano ${active.createdYear}, Mes ${active.createdMonth}.`;
+    if (el.franchiseValuation) el.franchiseValuation.textContent = formatMoney(Math.max(0, safeNumber(active.valuation, 0)));
+    if (el.franchiseUnitsSold) el.franchiseUnitsSold.textContent = String(Math.max(0, safeInt(active.soldUnits, 0)));
+    if (el.franchiseRoyaltyLine) el.franchiseRoyaltyLine.textContent = `${formatMoney(Math.max(0, safeNumber(active.lastMonthRoyalties, 0)))} (fixo mensal por unidade vendida)`;
+    if (el.franchiseLastMonth) {
+      el.franchiseLastMonth.textContent = `Vendas no mes: ${active.lastMonthSales} franquia(s) | Taxa de franquia: ${formatMoney(active.lastMonthFranchiseFees)} | Royalties: ${formatMoney(active.lastMonthRoyalties)} | Total na conta franquias: +${formatMoney(active.lastMonthNet)}.`;
+    }
+    if (el.franchiseCreateBtn) el.franchiseCreateBtn.disabled = true;
+    if (el.franchiseSellBtn) el.franchiseSellBtn.disabled = false;
+  }
+  if (el.franchiseTransferBtn) el.franchiseTransferBtn.disabled = bankBalance < 1;
 }
 
 function getSectorMultiplier(setor) {
@@ -2575,7 +2766,9 @@ function getPatrimonio() {
   const cryptoBrl = cryptoTotalUsdValue() * state.forex.usd.rate;
   const realEstateIncome = realEstateMonthlyIncome();
   const realEstateValue = realEstatePortfolioValue();
-  return state.money + savingsBalance + cryptoBrl + (effectiveCompanyIncome() + farmMonthlyIncome() + realEstateIncome) * 6 + realEstateValue + totalParticipationValue() + garageTotalValue() + aircraftBrl + forexValueBrl("USD") + forexValueBrl("EUR") + safNetWorth() - state.tax.debt - aviationDebtBrl;
+  const franchiseBank = Math.max(0, safeNumber(state.franchise?.bankBalance, 0));
+  const franchiseValuation = Math.max(0, safeNumber(state.franchise?.active?.valuation, 0));
+  return state.money + savingsBalance + cryptoBrl + franchiseBank + franchiseValuation + (effectiveCompanyIncome() + farmMonthlyIncome() + realEstateIncome) * 6 + realEstateValue + totalParticipationValue() + garageTotalValue() + aircraftBrl + forexValueBrl("USD") + forexValueBrl("EUR") + safNetWorth() - state.tax.debt - aviationDebtBrl;
 }
 
 function xpToNext(level) {
@@ -3416,6 +3609,7 @@ function processMonth() {
   updateCompanyValuationsMonthly();
   updateCryptoMarketMonthly();
   const safMonthly = processSafMonth();
+  const franchiseMonthly = processFranchiseMonth();
   const savingsYield = processSavingsMonth();
   const farmIncome = farmMonthlyIncome();
   const realEstateIncome = realEstateMonthlyIncome();
@@ -3445,6 +3639,12 @@ function processMonth() {
   logEvent(
     `Mes fechado: bruto ${formatMoney(passive)} | agro ${formatMoney(farmIncome)} | imoveis ${formatMoney(realEstateIncome)} | contratos ${formatMoney(contractPayout)} | SAF ${formatMoney(safMonthly.net)} | custos ${formatMoney(totalCosts)} (ops ${formatMoney(opsCost)}, mineracao ${formatMoney(cryptoOps)}, folha ${formatMoney(payroll)}, banco ${formatMoney(loanPaid)}) | liquido ${formatMoney(netPassive)}.`
   );
+  if (franchiseMonthly.total > 0) {
+    logEvent(
+      `Franquia: ${franchiseMonthly.sales} venda(s) no mes | taxa de franquia ${formatMoney(franchiseMonthly.feeRevenue)} | royalties ${formatMoney(franchiseMonthly.royalties)} | conta franquias +${formatMoney(franchiseMonthly.total)}.`,
+      "ok"
+    );
+  }
   if (savingsYield > 0) {
     logEvent(`Poupanca: rendimento de ${formatMoney(savingsYield)} no mes (juros compostos).`, "ok");
   }
@@ -4282,6 +4482,7 @@ function resetCharacter() {
     eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
   };
   state.crypto = defaultCryptoState();
+  state.franchise = defaultFranchiseState();
   state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   state.stats = {
     totalClicks: 0,
@@ -4403,6 +4604,7 @@ function doPrestige() {
   state.forex.usd.balance = 0;
   state.forex.eur.balance = 0;
   state.crypto = defaultCryptoState();
+  state.franchise = defaultFranchiseState();
   state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
   state.reputation = clamp(state.reputation + 4, 0, 100);
@@ -4541,6 +4743,7 @@ function render() {
   renderAircraftShop();
   renderTravel();
   renderCrypto();
+  renderFranchise();
   renderPassport();
   renderSaf();
   renderAchievements();
@@ -4559,7 +4762,7 @@ function render() {
 
 function serializeState() {
   return {
-    version: 18,
+    version: 19,
     player: state.player,
     money: state.money,
     clickValue: state.clickValue,
@@ -4589,6 +4792,7 @@ function serializeState() {
     nextCarId: state.nextCarId,
     forex: state.forex,
     crypto: state.crypto,
+    franchise: state.franchise,
     savings: state.savings,
     farm: state.farm,
     realEstate: state.realEstate,
@@ -4601,7 +4805,7 @@ function serializeState() {
 }
 
 function applySave(data) {
-  if (!data || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(safeInt(data.version, 0))) throw new Error("Save invalido");
+  if (!data || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19].includes(safeInt(data.version, 0))) throw new Error("Save invalido");
 
   if (data.player && typeof data.player === "object") {
     state.player = {
@@ -5078,6 +5282,45 @@ function applySave(data) {
     state.crypto = defaultCryptoState();
   }
 
+  if (data.franchise && typeof data.franchise === "object") {
+    const saved = data.franchise;
+    const active = saved.active && typeof saved.active === "object" ? saved.active : null;
+    state.franchise = {
+      bankBalance: Math.max(0, safeNumber(saved.bankBalance, 0)),
+      active: active
+        ? {
+          name: String(active.name || "").trim().slice(0, 36),
+          segmentId: franchiseSegmentById(String(active.segmentId || "")).id,
+          createdYear: Math.max(1, safeInt(active.createdYear, state.year)),
+          createdMonth: clamp(safeInt(active.createdMonth, state.month), 1, 12),
+          setupCost: Math.max(0, safeNumber(active.setupCost, 0)),
+          soldUnits: Math.max(0, safeInt(active.soldUnits, 0)),
+          totalFranchiseFees: Math.max(0, safeNumber(active.totalFranchiseFees, 0)),
+          totalRoyalties: Math.max(0, safeNumber(active.totalRoyalties, 0)),
+          valuation: Math.max(0, safeNumber(active.valuation, 0)),
+          lastMonthSales: Math.max(0, safeInt(active.lastMonthSales, 0)),
+          lastMonthFranchiseFees: Math.max(0, safeNumber(active.lastMonthFranchiseFees, 0)),
+          lastMonthRoyalties: Math.max(0, safeNumber(active.lastMonthRoyalties, 0)),
+          lastMonthNet: Math.max(0, safeNumber(active.lastMonthNet, 0))
+        }
+        : null,
+      history: Array.isArray(saved.history)
+        ? saved.history.map((h) => ({
+          name: String(h?.name || "").trim().slice(0, 36),
+          segmentId: franchiseSegmentById(String(h?.segmentId || "")).id,
+          segmentName: String(h?.segmentName || "").trim().slice(0, 40),
+          soldUnits: Math.max(0, safeInt(h?.soldUnits, 0)),
+          soldAtYear: Math.max(1, safeInt(h?.soldAtYear, 1)),
+          soldAtMonth: clamp(safeInt(h?.soldAtMonth, 1), 1, 12),
+          saleValue: Math.max(0, safeNumber(h?.saleValue, 0))
+        })).slice(0, 8)
+        : []
+    };
+    if (state.franchise.active && !state.franchise.active.name) state.franchise.active = null;
+  } else {
+    state.franchise = defaultFranchiseState();
+  }
+
   if (data.savings && typeof data.savings === "object") {
     state.savings = {
       balance: Math.max(0, safeNumber(data.savings.balance, 0)),
@@ -5213,6 +5456,15 @@ if (el.farmNameBtn) {
 if (el.farmBuyHectaresBtn) {
   el.farmBuyHectaresBtn.addEventListener("click", () => buyHectares());
 }
+if (el.franchiseSegmentSelect) {
+  el.franchiseSegmentSelect.addEventListener("change", () => {
+    updateFranchiseSegmentInfo();
+    renderFranchise();
+  });
+}
+if (el.franchiseCreateBtn) el.franchiseCreateBtn.addEventListener("click", createFranchise);
+if (el.franchiseTransferBtn) el.franchiseTransferBtn.addEventListener("click", transferFranchiseBalance);
+if (el.franchiseSellBtn) el.franchiseSellBtn.addEventListener("click", sellCurrentFranchise);
 
 el.saveLocalBtn.addEventListener("click", () => {
   const phone = (state.player.telefone || el.phoneInput.value || "").replace(/\D/g, "");
