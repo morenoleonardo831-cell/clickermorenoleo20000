@@ -200,6 +200,35 @@ body {
   color: var(--muted);
 }
 
+.combo-wrap {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.combo-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.combo-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.combo-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff8a8a, #ff3b3b);
+  box-shadow: 0 0 12px rgba(255, 59, 59, 0.5);
+  transition: width 0.2s ease;
+}
+
 .list {
   display: grid;
   gap: 8px;
@@ -270,6 +299,10 @@ body {
   font-weight: 800;
 }
 
+.rank-value {
+  color: #ff4d4d;
+}
+
 .rank-meta {
   color: var(--muted);
   font-size: 0.78rem;
@@ -333,6 +366,11 @@ textarea {
   outline: none;
 }
 
+.input-mini {
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
 textarea {
   min-height: 90px;
   resize: vertical;
@@ -358,10 +396,63 @@ textarea {
 .bad { color: var(--danger); }
 .warn { color: var(--warn); }
 
+.saf-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.saf-cal-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  gap: 4px;
+}
+
+.saf-cal-card.base {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.saf-cal-card.league {
+  border-color: rgba(245, 194, 81, 0.65);
+}
+
+.saf-cal-card.cup {
+  border-color: rgba(70, 211, 125, 0.65);
+}
+
+.saf-cal-card.continental {
+  border-color: rgba(229, 9, 20, 0.75);
+}
+
+.saf-cal-card.current {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.saf-cal-month {
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.saf-cal-focus {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 420px) {
+  .saf-cal-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .tax-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.86);
   display: none;
   align-items: center;
   justify-content: center;
@@ -374,16 +465,84 @@ textarea {
 }
 
 .tax-dialog {
-  width: min(100%, 430px);
-  padding: 14px;
+  width: min(100%, 760px);
+  max-height: min(92dvh, 900px);
+  overflow: auto;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.tax-due {
+  color: #ffd3d3;
+  font-weight: 800;
+  font-size: 1.2rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(229, 9, 20, 0.24);
+  border: 1px solid rgba(255, 89, 89, 0.4);
+}
+
+#taxDetails {
   display: grid;
   gap: 10px;
 }
 
-.tax-due {
-  color: #fff;
+.tax-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.tax-block {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.tax-block-title {
+  font-size: 0.82rem;
   font-weight: 800;
-  font-size: 1.02rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.tax-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.87rem;
+}
+
+.tax-row strong {
+  color: #fff;
+}
+
+.tax-row.bad strong {
+  color: #ff8f8f;
+}
+
+.tax-row.ok strong {
+  color: #7df5a4;
+}
+
+@media (max-width: 560px) {
+  .tax-dialog {
+    width: min(100%, 460px);
+    padding: 12px;
+  }
+
+  .tax-due {
+    font-size: 1.05rem;
+    padding: 9px 10px;
+  }
 }
 
 #adminLoginBox,

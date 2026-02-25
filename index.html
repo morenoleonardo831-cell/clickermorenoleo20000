@@ -16,16 +16,27 @@
       <div class="money" id="money">R$ 0,00</div>
       <div class="progress-wrap"><div class="progress-bar" id="monthBar"></div></div>
       <div class="subline">
-        <span id="dateLine">Ano 1 • Mes 1</span>
+        <span id="dateLine">Ano 1 • Mês 1</span>
         <span id="countdown">Prox. mes em 30s</span>
       </div>
       <div class="subline">
         <span id="clickLine">Valor por clique: R$ 10,00</span>
         <span id="incomeLine">Renda mensal empresas: R$ 0,00</span>
       </div>
+      <div class="combo-wrap">
+        <div class="combo-head">
+          <span id="comboText">Combo x1.00</span>
+          <span id="comboStreak">0 cliques</span>
+        </div>
+        <div class="combo-bar-track"><div class="combo-bar" id="comboBar"></div></div>
+      </div>
       <div class="subline">
         <span id="econLine">Economia: inflacao 4.0% | juros 9.0% | confianca 100%</span>
         <span id="expenseLine">Custos operacionais: R$ 0,00/mes</span>
+      </div>
+      <div class="subline">
+        <span id="fixedCostLine">Gastos fixos anuais (IPVA): R$ 0,00</span>
+        <span></span>
       </div>
       <button class="btn alt skip-month-btn" id="skipMonthBtn">Pular para proximo mes</button>
     </section>
@@ -33,13 +44,17 @@
     <section class="tabs glass">
       <button class="tab-btn active" data-tab="jogo">Jogo</button>
       <button class="tab-btn" data-tab="empresas">Empresas</button>
+      <button class="tab-btn" data-tab="imoveis">Imoveis</button>
+      <button class="tab-btn" data-tab="agro">Agro</button>
       <button class="tab-btn" data-tab="participacoes">Participacoes</button>
       <button class="tab-btn" data-tab="loja">Loja</button>
       <button class="tab-btn" data-tab="avioes">Avioes</button>
       <button class="tab-btn" data-tab="viagens">Viagens</button>
       <button class="tab-btn" data-tab="passaporte">Passaporte</button>
       <button class="tab-btn" data-tab="perfil">Perfil</button>
+      <button class="tab-btn" data-tab="saf">SAF</button>
       <button class="tab-btn" data-tab="banco">Banco</button>
+      <button class="tab-btn" data-tab="criptomoedas">Criptomoedas</button>
       <button class="tab-btn" data-tab="ranking">Ranking</button>
       <button class="tab-btn" data-tab="admin">Admin</button>
       <button class="tab-btn" data-tab="reset">Reset</button>
@@ -72,8 +87,36 @@
     <section class="panel glass" id="tab-empresas">
       <div class="title">Mercado de empresas</div>
       <div class="mini">Compre unidades, ajuste margem de lucro e invista em upgrade para aumentar a renda mensal.</div>
-      <div class="mini" id="workforceLine">Modelo simplificado: lucro por valuation + margem.</div>
+      <div class="mini" id="workforceLine">Modelo simples: renda base + nivel + margem.</div>
       <div class="list" id="companyList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-imoveis">
+      <div class="title">Carteira de imoveis</div>
+      <div class="mini">Compre casas e predios para receber aluguel mensal. Casas podem ficar em uso pessoal (sem aluguel).</div>
+      <div class="row"><span>Resumo:</span><strong id="realEstateSummary">0 imoveis | Valor R$ 0,00 | Aluguel R$ 0,00/mes</strong></div>
+      <div class="list" id="realEstateList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-agro">
+      <div class="title">Magnata do agro</div>
+      <div class="mini">Compre hectares de terra e ganhe 1,2% do valor investido por mês.</div>
+      <div class="row"><span>Fazenda:</span><strong id="farmName">Sem nome</strong></div>
+      <input id="farmNameInput" maxlength="32" placeholder="Nome da fazenda" />
+      <button class="btn" id="farmNameBtn">Salvar nome da fazenda</button>
+      <div class="row"><span>Preco medio por hectare:</span><strong id="farmHectarePrice">R$ 0,00</strong></div>
+      <div class="row"><span>Area total:</span><strong id="farmHectares">0 ha</strong></div>
+      <div class="row"><span>Renda mensal agro:</span><strong id="farmIncome">R$ 0,00</strong></div>
+      <input id="farmHectaresInput" type="number" min="1" step="1" placeholder="Quantidade de hectares" />
+      <button class="btn" id="farmBuyHectaresBtn">Comprar hectares</button>
+
+      <div class="title">Gado</div>
+      <div class="mini">Compra e venda automatica: todo gado e vendido no fechamento do ano.</div>
+      <div class="list" id="cattleList"></div>
+
+      <div class="title">Investimentos na fazenda</div>
+      <div class="mini">Melhore a produtividade com upgrades permanentes.</div>
+      <div class="list" id="farmInvestList"></div>
     </section>
 
     <section class="panel glass" id="tab-participacoes">
@@ -171,6 +214,15 @@
       <div class="mini">Resumo financeiro essencial e conta global de cambio.</div>
       <div class="row"><span>Saldo BRL:</span><strong id="bankCash">R$ 0,00</strong></div>
       <div class="row"><span>Divida fiscal acumulada:</span><strong id="bankTaxDebt">R$ 0,00</strong></div>
+      <div class="title">Conta poupanca</div>
+      <div class="mini">Rende 1% ao mes com juros compostos.</div>
+      <div class="row"><span>Saldo poupanca:</span><strong id="savingsBalance">R$ 0,00</strong></div>
+      <div class="row"><span>Rendimento no mes:</span><strong id="savingsMonthlyYield">R$ 0,00</strong></div>
+      <input id="savingsAmountInput" type="number" min="1" step="1" placeholder="Valor em R$ para depositar/retirar" />
+      <div class="btn-row">
+        <button class="btn" id="savingsDepositBtn">Depositar na poupanca</button>
+        <button class="btn alt" id="savingsWithdrawBtn">Retirar da poupanca</button>
+      </div>
       <div class="title">Emprestimo</div>
       <div class="mini" id="loanStatus">Sem emprestimo ativo.</div>
       <div class="btn-row">
@@ -205,6 +257,75 @@
       <button class="btn" id="researchHrBtn">Investir em RH</button>
       <div class="row"><span>Marca e reputacao:</span><strong id="researchBranding">Nv. 0</strong></div>
       <button class="btn" id="researchBrandingBtn">Investir em marca</button>
+    </section>
+
+    <section class="panel glass" id="tab-criptomoedas">
+      <div class="title">Central de criptomoedas</div>
+      <div class="mini">Compre espacos, monte rigs com placas de video e minere BTC/ETH/SOL em tempo real.</div>
+      <div class="row"><span>Resumo mineracao:</span><strong id="cryptoSummary">0 placas | 0/0 vagas</strong></div>
+      <div class="row"><span>Cripto selecionada:</span><strong id="cryptoCoinPrice">BTC @ US$ 0,00</strong></div>
+      <select id="cryptoCoinSelect"></select>
+      <div class="row"><span>Poder total:</span><strong id="cryptoPowerLine">0 MH/s</strong></div>
+      <div class="row"><span>Mineracao atual:</span><strong id="cryptoMineRate">0 BTC/s</strong></div>
+      <div class="row"><span>Carteira total:</span><strong id="cryptoWalletSummary">US$ 0,00</strong></div>
+      <div class="row"><span>Custo mensal energia/operacao:</span><strong id="cryptoOpsCost">R$ 0,00</strong></div>
+
+      <div class="title">Espacos de mineracao</div>
+      <div class="mini">Cada 20 placas exige mais capacidade. Sem vaga, nao da para comprar novas GPUs.</div>
+      <div class="list" id="cryptoSpaceList"></div>
+
+      <div class="title">Mercado de placas de video</div>
+      <div class="mini">Compre e venda GPUs. Cada modelo entrega poder real de mineracao.</div>
+      <div class="list" id="cryptoGpuList"></div>
+
+      <div class="title">Carteira e conversao</div>
+      <div class="mini">Converta a cripto quando quiser. O valor cai na sua conta em dolar (USD).</div>
+      <button class="btn alt" id="cryptoSellAllBtn">Converter tudo para USD</button>
+      <div class="list" id="cryptoConvertList"></div>
+    </section>
+
+    <section class="panel glass" id="tab-saf">
+      <div class="title">Modo dono de clube (SAF)</div>
+      <div class="mini">Compre um clube, estruture a operacao, negocie atletas e construa um imperio global.</div>
+      <div class="row"><span>Status:</span><strong id="safStatus">Sem clube no momento.</strong></div>
+      <div class="row"><span>Resumo mensal:</span><strong id="safMonthLine">Receitas R$ 0,00 | Custos R$ 0,00 | Liquido R$ 0,00</strong></div>
+      <div class="row"><span>Valor da SAF:</span><strong id="safValuationLine">R$ 0,00</strong></div>
+
+      <div class="title">Compra da SAF</div>
+      <div class="mini">Escolha um perfil: clube pequeno, medio, gigante em crise, europeu promissor ou serie C raiz.</div>
+      <div class="list" id="safClubChoices"></div>
+
+      <div class="title">Estrutura do clube</div>
+      <div class="mini">CT, base, estadio, departamento medico e scout internacional.</div>
+      <div class="list" id="safStructureList"></div>
+
+      <div class="title">Mercado inteligente</div>
+      <div class="mini">Promessas, jogadores midiaticos, base e revenda por proposta.</div>
+      <div class="list" id="safMarketList"></div>
+
+      <div class="title">Financeiro e investidores</div>
+      <div class="mini">Receitas reais do clube, emprestimos, venda parcial da SAF e captacao de capital.</div>
+      <div class="list" id="safFinanceList"></div>
+
+      <div class="title">Expansao internacional</div>
+      <div class="mini">Crie filial na Europa e forme rede de clubes.</div>
+      <div class="list" id="safExpansionList"></div>
+
+      <div class="title">Competicoes</div>
+      <div class="mini">Dispute os campeonatos do seu pais. No Brasil: pontos corridos, Copa do Brasil e Libertadores.</div>
+      <div class="list" id="safCompetitionsList"></div>
+
+      <div class="title">Calendario da temporada</div>
+      <div class="list" id="safCalendarList"></div>
+
+      <div class="title">Titulos conquistados</div>
+      <div class="list" id="safTrophiesList"></div>
+
+      <div class="title">Eventos do futebol</div>
+      <div class="list" id="safEventList"></div>
+
+      <div class="title">Modo imperio do futebol</div>
+      <div class="mini" id="safGoalLine">Objetivo: 3 clubes, Libertadores, Champions e base de elite.</div>
     </section>
 
     <section class="panel glass" id="tab-admin">
@@ -259,9 +380,10 @@
 
   <div class="tax-overlay" id="taxOverlay">
     <div class="tax-dialog glass">
-      <div class="title">Fechamento anual</div>
-      <div class="mini">Fim do mes 12. Voce deseja quitar os impostos agora?</div>
+      <div class="title">Fechamento anual de impostos</div>
+      <div class="mini">Fim do mes 12: confira o resumo completo e escolha pagar agora ou adiar para o proximo mes.</div>
       <div class="tax-due" id="taxDueText">Total devido: R$ 0,00</div>
+      <div class="mini" id="taxDetails"></div>
       <div class="btn-row">
         <button class="btn" id="taxPayNowBtn">Pagar imposto agora</button>
         <button class="btn alt" id="taxPayLaterBtn">Deixar para o proximo mes</button>
@@ -269,6 +391,19 @@
     </div>
   </div>
 
+  <script>
+    window.__GAME_LOADED__ = false;
+    setTimeout(() => {
+      if (!window.__GAME_LOADED__) {
+        const msg = document.getElementById("statusMsg");
+        if (msg) {
+          msg.className = "mini bad";
+          msg.textContent = "JS nao carregou. Verifique se abriu via servidor local.";
+        }
+      }
+    }, 1200);
+  </script>
   <script src="./game.js"></script>
 </body>
 </html>
+

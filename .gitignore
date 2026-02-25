@@ -1,0 +1,3 @@
+.tmp-server.err.log
+.tmp-server.out.log
+*.log

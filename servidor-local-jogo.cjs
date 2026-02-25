@@ -27,7 +27,18 @@ function getFreePort(candidates) {
   return new Promise((resolve, reject) => {
     const tryNext = (i) => {
       if (i >= candidates.length) {
-        reject(new Error("Nenhuma porta livre encontrada."));
+        // Fallback: let the OS pick any ephemeral free port.
+        const ephemeral = net.createServer();
+        ephemeral.once("error", () => reject(new Error("Nenhuma porta livre encontrada.")));
+        ephemeral.once("listening", () => {
+          const addr = ephemeral.address();
+          const chosen = addr && typeof addr === "object" ? addr.port : 0;
+          ephemeral.close(() => {
+            if (chosen > 0) resolve(chosen);
+            else reject(new Error("Nenhuma porta livre encontrada."));
+          });
+        });
+        ephemeral.listen(0, "127.0.0.1");
         return;
       }
       const port = candidates[i];

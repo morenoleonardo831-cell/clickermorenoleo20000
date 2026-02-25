@@ -4,11 +4,32 @@ const DEVICE_AUTOSAVE_KEY = "imperio_clicker_device_autosave_v1";
 const ADMIN_ACCESS = "admin";
 const ADMIN_PASSWORD = "Nub@2026";
 const ADMIN_MAX_ADVANCE_MONTHS = 120;
+const FARM_HECTARE_PRICE = 90000;
+const FARM_YIELD_PCT = 0.012;
 const COMPANY_MARGIN_OPTIONS = [
-  { label: "Conservador", pct: 0.008 },
-  { label: "Equilibrado", pct: 0.012 },
-  { label: "Agressivo", pct: 0.017 },
-  { label: "Premium", pct: 0.024 }
+  { label: "Conservador", mult: 0.9 },
+  { label: "Equilibrado", mult: 1 },
+  { label: "Agressivo", mult: 1.12 },
+  { label: "Premium", mult: 1.25 }
+];
+const GPU_CAPACITY_PER_UNIT = 20;
+
+const cryptoCoinsCatalog = [
+  { id: "BTC", nome: "Bitcoin", priceUsd: 68000, min: 42000, max: 120000, yieldPerMhSecond: 0.00000018 },
+  { id: "ETH", nome: "Ethereum", priceUsd: 3200, min: 1400, max: 6500, yieldPerMhSecond: 0.0000032 },
+  { id: "SOL", nome: "Solana", priceUsd: 140, min: 55, max: 380, yieldPerMhSecond: 0.00008 }
+];
+
+const cryptoMiningSpacesCatalog = [
+  { id: "garage_rig", nome: "Garage adaptado", baseCost: 180000, capacityUnits: 1, powerFeeMonthly: 600 },
+  { id: "office_rig", nome: "Escritorio tecnico", baseCost: 750000, capacityUnits: 2, powerFeeMonthly: 1700 },
+  { id: "datacenter_rig", nome: "Mini datacenter", baseCost: 2300000, capacityUnits: 5, powerFeeMonthly: 3900 }
+];
+
+const cryptoGpuCatalog = [
+  { id: "rtx_4060", nome: "NVIDIA RTX 4060", price: 18900, hashMh: 32, watts: 115 },
+  { id: "rtx_4070_ti", nome: "NVIDIA RTX 4070 Ti Super", price: 48900, hashMh: 62, watts: 285 },
+  { id: "rtx_4090", nome: "NVIDIA RTX 4090", price: 94900, hashMh: 120, watts: 450 }
 ];
 
 const upgrades = [
@@ -20,25 +41,78 @@ const upgrades = [
 ];
 
 const companies = [
-  { id: "quiosque", nome: "Quiosque", setor: "Varejo", baseCost: 900, baseIncome: 140, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "cafeteria", nome: "Cafeteria", setor: "Alimentos", baseCost: 4200, baseIncome: 720, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "mercado", nome: "Mini mercado", setor: "Varejo", baseCost: 15000, baseIncome: 2800, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "academia", nome: "Academia", setor: "Servicos", baseCost: 26000, baseIncome: 4200, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "agencia_marketing", nome: "Agencia de marketing", setor: "Digital", baseCost: 44000, baseIncome: 7600, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "startup", nome: "Startup", setor: "Tecnologia", baseCost: 70000, baseIncome: 11800, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "fabrica", nome: "Fabrica", setor: "Industria", baseCost: 190000, baseIncome: 37000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "rede_hoteis", nome: "Rede de hoteis", setor: "Turismo", baseCost: 380000, baseIncome: 76000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "fintech", nome: "Fintech", setor: "Financeiro", baseCost: 760000, baseIncome: 155000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 1800000, baseIncome: 390000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
+  { id: "quiosque", nome: "Quiosque", setor: "Varejo", baseCost: 50000, baseIncome: 2500, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "cafeteria", nome: "Cafeteria", setor: "Alimentos", baseCost: 150000, baseIncome: 6500, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "mercado", nome: "Mini mercado", setor: "Varejo", baseCost: 350000, baseIncome: 14000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "academia", nome: "Academia", setor: "Servicos", baseCost: 600000, baseIncome: 23000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "agencia_marketing", nome: "Agencia de marketing", setor: "Digital", baseCost: 900000, baseIncome: 33000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "startup", nome: "Startup", setor: "Tecnologia", baseCost: 1400000, baseIncome: 50000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fabrica", nome: "Fabrica", setor: "Industria", baseCost: 3000000, baseIncome: 100000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "rede_hoteis", nome: "Rede de hoteis", setor: "Turismo", baseCost: 7000000, baseIncome: 210000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fintech", nome: "Fintech", setor: "Financeiro", baseCost: 15000000, baseIncome: 420000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 35000000, baseIncome: 900000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "ecommerce", nome: "E-commerce nacional", setor: "Digital", baseCost: 65000000, baseIncome: 1600000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "logistica", nome: "Operadora logistica", setor: "Industria", baseCost: 95000000, baseIncome: 2300000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "construtora", nome: "Construtora urbana", setor: "Industria", baseCost: 140000000, baseIncome: 3300000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "rede_hospitais", nome: "Rede de hospitais", setor: "Servicos", baseCost: 220000000, baseIncome: 5200000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "telecom", nome: "Operadora telecom", setor: "Tecnologia", baseCost: 320000000, baseIncome: 7600000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "energia", nome: "Geradora de energia", setor: "Industria", baseCost: 500000000, baseIncome: 12200000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "biotech", nome: "Biotech farmaceutica", setor: "Tecnologia", baseCost: 780000000, baseIncome: 19000000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "banco_investimentos", nome: "Banco de investimentos", setor: "Financeiro", baseCost: 1200000000, baseIncome: 30000000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
 ];
 
 const initialUpgradeBase = upgrades.map((u) => ({ id: u.id, baseCost: u.baseCost }));
 const initialCompanyBase = companies.map((c) => ({ id: c.id, baseCost: c.baseCost, baseIncome: c.baseIncome }));
 
+const realEstateCatalog = [
+  { id: "casa_campinas_swiss", tipo: "casa", nome: "Casa terrea em condominio", localizacao: "Campinas, SP", valor: 420000, aluguelMensal: 1900 },
+  { id: "casa_sjc_jardins", tipo: "casa", nome: "Casa 3 quartos", localizacao: "Sao Jose dos Campos, SP", valor: 510000, aluguelMensal: 2300 },
+  { id: "casa_curitiba_uberaba", tipo: "casa", nome: "Casa familiar com quintal", localizacao: "Curitiba, PR", valor: 560000, aluguelMensal: 2500 },
+  { id: "casa_bh_pampulha", tipo: "casa", nome: "Casa padrao alto", localizacao: "Belo Horizonte, MG", valor: 690000, aluguelMensal: 3100 },
+  { id: "casa_floripa_lagoa", tipo: "casa", nome: "Casa proxima a praia", localizacao: "Florianopolis, SC", valor: 840000, aluguelMensal: 3800 },
+  { id: "casa_niteroi_icarai", tipo: "casa", nome: "Casa duplex urbana", localizacao: "Niteroi, RJ", valor: 980000, aluguelMensal: 4500 },
+  { id: "casa_brasilia_lago", tipo: "casa", nome: "Casa de alto padrao", localizacao: "Brasilia, DF", valor: 1450000, aluguelMensal: 6500 },
+  { id: "casa_sp_morumbi", tipo: "casa", nome: "Casa condominio premium", localizacao: "Sao Paulo, SP", valor: 2300000, aluguelMensal: 9800 },
+  { id: "casa_rio_barra", tipo: "casa", nome: "Casa de luxo", localizacao: "Rio de Janeiro, RJ", valor: 3200000, aluguelMensal: 12800 },
+  { id: "casa_angra_marina", tipo: "casa", nome: "Casa de veraneio", localizacao: "Angra dos Reis, RJ", valor: 4800000, aluguelMensal: 18500 },
+  { id: "casa_trancoso_vila", tipo: "casa", nome: "Casa praia boutique", localizacao: "Trancoso, BA", valor: 6200000, aluguelMensal: 23500 },
+  { id: "casa_sp_jardins", tipo: "casa", nome: "Mansao urbana", localizacao: "Sao Paulo, SP", valor: 8900000, aluguelMensal: 33500 },
+  { id: "predio_campinas_6", tipo: "predio", nome: "Predio residencial 6 andares", localizacao: "Campinas, SP", valor: 11000000, aluguelMensal: 62000 },
+  { id: "predio_santoandre_8", tipo: "predio", nome: "Predio misto 8 andares", localizacao: "Santo Andre, SP", valor: 14500000, aluguelMensal: 81000 },
+  { id: "predio_curitiba_10", tipo: "predio", nome: "Predio corporativo", localizacao: "Curitiba, PR", valor: 18500000, aluguelMensal: 102000 },
+  { id: "predio_bh_savassi", tipo: "predio", nome: "Predio comercial prime", localizacao: "Belo Horizonte, MG", valor: 23000000, aluguelMensal: 125000 },
+  { id: "predio_recife_boaviagem", tipo: "predio", nome: "Predio residencial litoral", localizacao: "Recife, PE", valor: 28500000, aluguelMensal: 154000 },
+  { id: "predio_fortaleza_meireles", tipo: "predio", nome: "Predio de locacao longa", localizacao: "Fortaleza, CE", valor: 34000000, aluguelMensal: 184000 },
+  { id: "predio_portoalegre_moinhos", tipo: "predio", nome: "Predio classe A", localizacao: "Porto Alegre, RS", valor: 41000000, aluguelMensal: 221000 },
+  { id: "predio_goiania_setoroeste", tipo: "predio", nome: "Predio residencial premium", localizacao: "Goiania, GO", valor: 49000000, aluguelMensal: 264000 },
+  { id: "predio_salvador_orla", tipo: "predio", nome: "Predio vista mar", localizacao: "Salvador, BA", valor: 58000000, aluguelMensal: 312000 },
+  { id: "predio_brasilia_comercial", tipo: "predio", nome: "Predio comercial central", localizacao: "Brasilia, DF", valor: 69000000, aluguelMensal: 368000 },
+  { id: "predio_niteroi_centro", tipo: "predio", nome: "Predio multifuncional", localizacao: "Niteroi, RJ", valor: 81000000, aluguelMensal: 430000 },
+  { id: "predio_sp_marginal", tipo: "predio", nome: "Torre empresarial", localizacao: "Sao Paulo, SP", valor: 98000000, aluguelMensal: 515000 },
+  { id: "predio_rio_portomaravilha", tipo: "predio", nome: "Torre corporativa", localizacao: "Rio de Janeiro, RJ", valor: 118000000, aluguelMensal: 618000 },
+  { id: "predio_sp_faria_lima", tipo: "predio", nome: "Predio AAA", localizacao: "Sao Paulo, SP", valor: 145000000, aluguelMensal: 754000 },
+  { id: "predio_sp_berrini", tipo: "predio", nome: "Complexo comercial", localizacao: "Sao Paulo, SP", valor: 180000000, aluguelMensal: 936000 },
+  { id: "predio_sp_paulista", tipo: "predio", nome: "Edificio corporativo premium", localizacao: "Sao Paulo, SP", valor: 220000000, aluguelMensal: 1144000 },
+  { id: "predio_sp_pinheiros", tipo: "predio", nome: "Portifolio residencial", localizacao: "Sao Paulo, SP", valor: 270000000, aluguelMensal: 1404000 },
+  { id: "predio_sp_centrofinanceiro", tipo: "predio", nome: "Mega torre financeira", localizacao: "Sao Paulo, SP", valor: 340000000, aluguelMensal: 1768000 },
+  { id: "condominio_miami_luxo", tipo: "predio", nome: "Condominio luxuoso waterfront", localizacao: "Miami, EUA (valor convertido para BRL)", valor: 980000000, aluguelMensal: 5100000 }
+];
+
+const farmInvestments = [
+  { id: "irrigacao", nome: "Irrigacao inteligente", baseCost: 180000, bonus: 0.08 },
+  { id: "armazenagem", nome: "Armazenagem e silos", baseCost: 320000, bonus: 0.1 },
+  { id: "maquinario", nome: "Maquinario moderno", baseCost: 520000, bonus: 0.14 },
+  { id: "tecnologia", nome: "Agro 4.0 e sensores", baseCost: 760000, bonus: 0.18 }
+];
+
+const cattleCatalog = [
+  { id: "boi", nome: "Boi (padrao)", buy: 9000, sell: 13500 }
+];
+
 const participationCatalog = [
   { id: "petrobras", nome: "Petrobras", ticker: "PETR4", setor: "Energia", baseValuation: 7800000, growthAnnual: 0.1, volatility: 0.028, payoutAnnual: 0.09 },
   { id: "vale", nome: "Vale", ticker: "VALE3", setor: "Mineracao", baseValuation: 5600000, growthAnnual: 0.08, volatility: 0.024, payoutAnnual: 0.08 },
-  { id: "itau", nome: "ItaÃº Unibanco", ticker: "ITUB4", setor: "Financeiro", baseValuation: 6100000, growthAnnual: 0.085, volatility: 0.018, payoutAnnual: 0.07 },
+  { id: "itau", nome: "Itau Unibanco", ticker: "ITUB4", setor: "Financeiro", baseValuation: 6100000, growthAnnual: 0.085, volatility: 0.018, payoutAnnual: 0.07 },
   { id: "ambev", nome: "Ambev", ticker: "ABEV3", setor: "Bebidas", baseValuation: 4200000, growthAnnual: 0.07, volatility: 0.017, payoutAnnual: 0.06 },
   { id: "weg", nome: "WEG", ticker: "WEGE3", setor: "Industria", baseValuation: 3900000, growthAnnual: 0.12, volatility: 0.022, payoutAnnual: 0.035 },
   { id: "magalu", nome: "Magazine Luiza", ticker: "MGLU3", setor: "Varejo", baseValuation: 1100000, growthAnnual: 0.13, volatility: 0.035, payoutAnnual: 0.015 },
@@ -68,7 +142,17 @@ const carCatalog = [
   { id: "byd_dolphin_mini", nome: "BYD Dolphin Mini", price: 115800 },
   { id: "byd_song_pro", nome: "BYD Song Pro", price: 189800 },
   { id: "gwm_haval_h6", nome: "GWM Haval H6 HEV2", price: 219000 },
-  { id: "honda_civic", nome: "Honda Civic Advanced Hybrid", price: 265900 }
+  { id: "honda_civic", nome: "Honda Civic Advanced Hybrid", price: 265900 },
+  { id: "mercedes_amg_s63", nome: "Mercedes-AMG S63 E-Performance", price: 1600000 },
+  { id: "bmw_i7_xdrive60", nome: "BMW i7 xDrive60 M Sport", price: 1320000 },
+  { id: "bentley_continental_gt", nome: "Bentley Continental GT W12", price: 3000000 },
+  { id: "lamborghini_urus", nome: "Lamborghini Urus", price: 3950000 },
+  { id: "lamborghini_aventador_svj", nome: "Lamborghini Aventador SVJ R", price: 6800000 },
+  { id: "ferrari_purosangue", nome: "Ferrari Purosangue", price: 7700000 },
+  { id: "rolls_royce_ghost", nome: "Rolls-Royce Ghost", price: 6000000 },
+  { id: "rolls_royce_spectre", nome: "Rolls-Royce Spectre", price: 6500000 },
+  { id: "rolls_royce_cullinan", nome: "Rolls-Royce Cullinan", price: 7800000 },
+  { id: "rolls_royce_phantom", nome: "Rolls-Royce Phantom", price: 8500000 }
 ];
 
 const aircraftCatalog = [
@@ -92,6 +176,196 @@ const travelRoutes = [
   { id: "gru_dxb", origem: "Sao Paulo", destino: "Dubai", pais: "Emirados Arabes Unidos", km: 12100, airportFeeUsd: 6900 }
 ];
 
+const SAF_CLUB_PROFILES = [
+  // Serie A (Brasil)
+  { id: "flamengo", nome: "Flamengo", league: "Serie A", region: "Brasil", buyPrice: 2800000000, debt: 380000000, pressure: 92, reputation: 86, fanBase: 44000000, potential: 1.95 },
+  { id: "corinthians", nome: "Corinthians", league: "Serie A", region: "Brasil", buyPrice: 2300000000, debt: 1800000000, pressure: 95, reputation: 82, fanBase: 33000000, potential: 1.9 },
+  { id: "palmeiras", nome: "Palmeiras", league: "Serie A", region: "Brasil", buyPrice: 2400000000, debt: 300000000, pressure: 91, reputation: 85, fanBase: 23000000, potential: 1.92 },
+  { id: "sao_paulo", nome: "Sao Paulo", league: "Serie A", region: "Brasil", buyPrice: 1900000000, debt: 900000000, pressure: 88, reputation: 80, fanBase: 21000000, potential: 1.82 },
+  { id: "vasco", nome: "Vasco da Gama", league: "Serie A", region: "Brasil", buyPrice: 1700000000, debt: 1350000000, pressure: 93, reputation: 76, fanBase: 17000000, potential: 1.78 },
+  { id: "santos", nome: "Santos", league: "Serie A", region: "Brasil", buyPrice: 1600000000, debt: 650000000, pressure: 84, reputation: 77, fanBase: 12000000, potential: 1.75 },
+  { id: "gremio", nome: "Gremio", league: "Serie A", region: "Brasil", buyPrice: 1450000000, debt: 700000000, pressure: 82, reputation: 76, fanBase: 10000000, potential: 1.72 },
+  { id: "internacional", nome: "Internacional", league: "Serie A", region: "Brasil", buyPrice: 1420000000, debt: 620000000, pressure: 82, reputation: 75, fanBase: 10000000, potential: 1.72 },
+  { id: "cruzeiro", nome: "Cruzeiro", league: "Serie A", region: "Brasil", buyPrice: 1250000000, debt: 750000000, pressure: 86, reputation: 72, fanBase: 9000000, potential: 1.7 },
+  { id: "atletico_mg", nome: "Atletico Mineiro", league: "Serie A", region: "Brasil", buyPrice: 1350000000, debt: 1550000000, pressure: 89, reputation: 75, fanBase: 9000000, potential: 1.7 },
+  { id: "fluminense", nome: "Fluminense", league: "Serie A", region: "Brasil", buyPrice: 980000000, debt: 550000000, pressure: 78, reputation: 71, fanBase: 7000000, potential: 1.62 },
+  { id: "botafogo", nome: "Botafogo", league: "Serie A", region: "Brasil", buyPrice: 1050000000, debt: 600000000, pressure: 80, reputation: 73, fanBase: 7000000, potential: 1.64 },
+  { id: "bahia", nome: "Bahia", league: "Serie A", region: "Brasil", buyPrice: 950000000, debt: 420000000, pressure: 74, reputation: 70, fanBase: 6000000, potential: 1.6 },
+  { id: "fortaleza", nome: "Fortaleza", league: "Serie A", region: "Brasil", buyPrice: 860000000, debt: 300000000, pressure: 72, reputation: 69, fanBase: 5500000, potential: 1.58 },
+  { id: "ceara", nome: "Ceara", league: "Serie A", region: "Brasil", buyPrice: 720000000, debt: 280000000, pressure: 70, reputation: 66, fanBase: 5000000, potential: 1.54 },
+  { id: "sport", nome: "Sport", league: "Serie A", region: "Brasil", buyPrice: 760000000, debt: 340000000, pressure: 72, reputation: 67, fanBase: 5000000, potential: 1.55 },
+  { id: "vitoria", nome: "Vitoria", league: "Serie A", region: "Brasil", buyPrice: 640000000, debt: 260000000, pressure: 69, reputation: 64, fanBase: 4200000, potential: 1.5 },
+  { id: "juventude", nome: "Juventude", league: "Serie A", region: "Brasil", buyPrice: 610000000, debt: 220000000, pressure: 67, reputation: 62, fanBase: 1800000, potential: 1.46 },
+  { id: "mirassol", nome: "Mirassol", league: "Serie A", region: "Brasil", buyPrice: 620000000, debt: 180000000, pressure: 66, reputation: 63, fanBase: 900000, potential: 1.48 },
+  { id: "bragantino", nome: "Red Bull Bragantino", league: "Serie A", region: "Brasil", buyPrice: 820000000, debt: 150000000, pressure: 68, reputation: 68, fanBase: 1400000, potential: 1.57 },
+
+  // Serie B (Brasil)
+  { id: "athletico_pr", nome: "Athletico Paranaense", league: "Serie B", region: "Brasil", buyPrice: 980000000, debt: 380000000, pressure: 78, reputation: 71, fanBase: 6000000, potential: 1.62 },
+  { id: "atletico_go", nome: "Atletico Goianiense", league: "Serie B", region: "Brasil", buyPrice: 420000000, debt: 190000000, pressure: 63, reputation: 58, fanBase: 1200000, potential: 1.36 },
+  { id: "criciuma", nome: "Criciuma", league: "Serie B", region: "Brasil", buyPrice: 360000000, debt: 170000000, pressure: 60, reputation: 57, fanBase: 1000000, potential: 1.33 },
+  { id: "cuiaba", nome: "Cuiaba", league: "Serie B", region: "Brasil", buyPrice: 380000000, debt: 140000000, pressure: 58, reputation: 56, fanBase: 900000, potential: 1.34 },
+  { id: "america_mg", nome: "America-MG", league: "Serie B", region: "Brasil", buyPrice: 430000000, debt: 260000000, pressure: 62, reputation: 59, fanBase: 1400000, potential: 1.37 },
+  { id: "avai", nome: "Avai", league: "Serie B", region: "Brasil", buyPrice: 280000000, debt: 150000000, pressure: 58, reputation: 54, fanBase: 700000, potential: 1.28 },
+  { id: "botafogo_sp", nome: "Botafogo-SP", league: "Serie B", region: "Brasil", buyPrice: 250000000, debt: 120000000, pressure: 56, reputation: 53, fanBase: 500000, potential: 1.24 },
+  { id: "chapecoense", nome: "Chapecoense", league: "Serie B", region: "Brasil", buyPrice: 300000000, debt: 160000000, pressure: 57, reputation: 55, fanBase: 1200000, potential: 1.29 },
+  { id: "coritiba", nome: "Coritiba", league: "Serie B", region: "Brasil", buyPrice: 650000000, debt: 360000000, pressure: 68, reputation: 64, fanBase: 3500000, potential: 1.48 },
+  { id: "crb", nome: "CRB", league: "Serie B", region: "Brasil", buyPrice: 240000000, debt: 110000000, pressure: 55, reputation: 52, fanBase: 700000, potential: 1.22 },
+  { id: "ferroviaria", nome: "Ferroviaria", league: "Serie B", region: "Brasil", buyPrice: 220000000, debt: 90000000, pressure: 53, reputation: 51, fanBase: 350000, potential: 1.2 },
+  { id: "goias", nome: "Goias", league: "Serie B", region: "Brasil", buyPrice: 480000000, debt: 210000000, pressure: 62, reputation: 60, fanBase: 2500000, potential: 1.4 },
+  { id: "novorizontino", nome: "Novorizontino", league: "Serie B", region: "Brasil", buyPrice: 210000000, debt: 85000000, pressure: 52, reputation: 50, fanBase: 250000, potential: 1.18 },
+  { id: "operario_pr", nome: "Operario-PR", league: "Serie B", region: "Brasil", buyPrice: 230000000, debt: 100000000, pressure: 53, reputation: 51, fanBase: 300000, potential: 1.2 },
+  { id: "paysandu", nome: "Paysandu", league: "Serie B", region: "Brasil", buyPrice: 330000000, debt: 150000000, pressure: 58, reputation: 55, fanBase: 1500000, potential: 1.3 },
+  { id: "remo", nome: "Remo", league: "Serie B", region: "Brasil", buyPrice: 320000000, debt: 140000000, pressure: 58, reputation: 55, fanBase: 1400000, potential: 1.3 },
+  { id: "vila_nova", nome: "Vila Nova", league: "Serie B", region: "Brasil", buyPrice: 260000000, debt: 120000000, pressure: 56, reputation: 53, fanBase: 850000, potential: 1.24 },
+  { id: "volta_redonda", nome: "Volta Redonda", league: "Serie B", region: "Brasil", buyPrice: 180000000, debt: 70000000, pressure: 50, reputation: 48, fanBase: 250000, potential: 1.15 },
+  { id: "amazonas", nome: "Amazonas", league: "Serie B", region: "Brasil", buyPrice: 170000000, debt: 65000000, pressure: 49, reputation: 47, fanBase: 220000, potential: 1.14 },
+  { id: "athletic", nome: "Athletic Club", league: "Serie B", region: "Brasil", buyPrice: 190000000, debt: 75000000, pressure: 50, reputation: 48, fanBase: 250000, potential: 1.16 },
+
+  // Serie C (Brasil)
+  { id: "ponte_preta", nome: "Ponte Preta", league: "Serie C", region: "Brasil", buyPrice: 260000000, debt: 130000000, pressure: 58, reputation: 54, fanBase: 1000000, potential: 1.28 },
+  { id: "guarani", nome: "Guarani", league: "Serie C", region: "Brasil", buyPrice: 250000000, debt: 120000000, pressure: 57, reputation: 53, fanBase: 900000, potential: 1.27 },
+  { id: "nautico", nome: "Nautico", league: "Serie C", region: "Brasil", buyPrice: 230000000, debt: 115000000, pressure: 56, reputation: 52, fanBase: 1200000, potential: 1.24 },
+  { id: "figueirense", nome: "Figueirense", league: "Serie C", region: "Brasil", buyPrice: 220000000, debt: 110000000, pressure: 55, reputation: 52, fanBase: 1000000, potential: 1.23 },
+  { id: "ituano", nome: "Ituano", league: "Serie C", region: "Brasil", buyPrice: 170000000, debt: 85000000, pressure: 50, reputation: 48, fanBase: 250000, potential: 1.16 },
+  { id: "londrina", nome: "Londrina", league: "Serie C", region: "Brasil", buyPrice: 180000000, debt: 90000000, pressure: 51, reputation: 49, fanBase: 400000, potential: 1.17 },
+  { id: "abc", nome: "ABC", league: "Serie C", region: "Brasil", buyPrice: 160000000, debt: 80000000, pressure: 49, reputation: 47, fanBase: 450000, potential: 1.14 },
+  { id: "caxias", nome: "Caxias", league: "Serie C", region: "Brasil", buyPrice: 145000000, debt: 70000000, pressure: 47, reputation: 45, fanBase: 250000, potential: 1.12 },
+  { id: "confianca", nome: "Confianca", league: "Serie C", region: "Brasil", buyPrice: 130000000, debt: 65000000, pressure: 46, reputation: 44, fanBase: 180000, potential: 1.1 },
+  { id: "csa", nome: "CSA", league: "Serie C", region: "Brasil", buyPrice: 155000000, debt: 76000000, pressure: 48, reputation: 46, fanBase: 500000, potential: 1.13 },
+  { id: "floresta", nome: "Floresta", league: "Serie C", region: "Brasil", buyPrice: 90000000, debt: 42000000, pressure: 42, reputation: 40, fanBase: 90000, potential: 1.05 },
+  { id: "itabaiana", nome: "Itabaiana", league: "Serie C", region: "Brasil", buyPrice: 85000000, debt: 38000000, pressure: 41, reputation: 39, fanBase: 80000, potential: 1.04 },
+  { id: "maringa", nome: "Maringa", league: "Serie C", region: "Brasil", buyPrice: 100000000, debt: 46000000, pressure: 43, reputation: 41, fanBase: 120000, potential: 1.06 },
+  { id: "retro", nome: "Retro", league: "Serie C", region: "Brasil", buyPrice: 95000000, debt: 40000000, pressure: 42, reputation: 40, fanBase: 90000, potential: 1.05 },
+  { id: "sao_bernardo", nome: "Sao Bernardo", league: "Serie C", region: "Brasil", buyPrice: 120000000, debt: 55000000, pressure: 45, reputation: 43, fanBase: 140000, potential: 1.08 },
+  { id: "tombense", nome: "Tombense", league: "Serie C", region: "Brasil", buyPrice: 115000000, debt: 53000000, pressure: 44, reputation: 42, fanBase: 120000, potential: 1.07 },
+  { id: "ypiranga_rs", nome: "Ypiranga-RS", league: "Serie C", region: "Brasil", buyPrice: 90000000, debt: 42000000, pressure: 42, reputation: 40, fanBase: 100000, potential: 1.05 },
+  { id: "botafogo_pb", nome: "Botafogo-PB", league: "Serie C", region: "Brasil", buyPrice: 125000000, debt: 59000000, pressure: 45, reputation: 43, fanBase: 320000, potential: 1.09 },
+  { id: "anapolis", nome: "Anapolis", league: "Serie C", region: "Brasil", buyPrice: 80000000, debt: 35000000, pressure: 40, reputation: 38, fanBase: 70000, potential: 1.03 },
+  { id: "brusque", nome: "Brusque", league: "Serie C", region: "Brasil", buyPrice: 95000000, debt: 43000000, pressure: 42, reputation: 40, fanBase: 90000, potential: 1.05 },
+
+  // Europa (alguns clubes)
+  { id: "benfica", nome: "Benfica", league: "Europa", region: "Europa", buyPrice: 9500000000, debt: 3200000000, pressure: 86, reputation: 82, fanBase: 14000000, potential: 1.9 },
+  { id: "porto", nome: "Porto", league: "Europa", region: "Europa", buyPrice: 7800000000, debt: 2500000000, pressure: 84, reputation: 80, fanBase: 10000000, potential: 1.84 },
+  { id: "sporting", nome: "Sporting CP", league: "Europa", region: "Europa", buyPrice: 7200000000, debt: 2200000000, pressure: 82, reputation: 79, fanBase: 9500000, potential: 1.8 },
+  { id: "ajax", nome: "Ajax", league: "Europa", region: "Europa", buyPrice: 6800000000, debt: 1800000000, pressure: 80, reputation: 78, fanBase: 9000000, potential: 1.78 },
+  { id: "psv", nome: "PSV", league: "Europa", region: "Europa", buyPrice: 6100000000, debt: 1600000000, pressure: 78, reputation: 76, fanBase: 7000000, potential: 1.74 },
+  { id: "atalanta", nome: "Atalanta", league: "Europa", region: "Europa", buyPrice: 5600000000, debt: 1500000000, pressure: 76, reputation: 74, fanBase: 5000000, potential: 1.7 },
+  { id: "napoli", nome: "Napoli", league: "Europa", region: "Europa", buyPrice: 8800000000, debt: 2800000000, pressure: 84, reputation: 81, fanBase: 12000000, potential: 1.86 },
+  { id: "dortmund", nome: "Borussia Dortmund", league: "Europa", region: "Europa", buyPrice: 10500000000, debt: 3000000000, pressure: 88, reputation: 83, fanBase: 15000000, potential: 1.92 },
+  { id: "tottenham", nome: "Tottenham", league: "Europa", region: "Europa", buyPrice: 13500000000, debt: 4600000000, pressure: 90, reputation: 84, fanBase: 22000000, potential: 1.96 },
+  { id: "atletico_madrid", nome: "Atletico de Madrid", league: "Europa", region: "Europa", buyPrice: 14000000000, debt: 5200000000, pressure: 91, reputation: 85, fanBase: 23000000, potential: 1.98 }
+];
+
+const SAF_STRUCTURE_DEFS = [
+  { id: "ct", nome: "Centro de treinamento", baseCost: 50000000, revenueBoost: 0.035, repBoost: 1.3 },
+  { id: "base", nome: "Base sub-17/sub-20", baseCost: 60000000, revenueBoost: 0.04, repBoost: 1.6 },
+  { id: "estadio", nome: "Estadio", baseCost: 95000000, revenueBoost: 0.06, repBoost: 1.1 },
+  { id: "medico", nome: "Departamento medico", baseCost: 35000000, revenueBoost: 0.02, repBoost: 0.9 },
+  { id: "scout", nome: "Scout internacional", baseCost: 42000000, revenueBoost: 0.03, repBoost: 1.1 }
+];
+
+function createSafCompetitions() {
+  return {
+    seasonYear: 1,
+    lastActionMonthStamp: "",
+    league: {
+      tier: "A",
+      name: "Liga nacional",
+      roundsTotal: 38,
+      roundsPlayed: 0,
+      points: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      position: 20,
+      finished: false
+    },
+    copa: {
+      phase: 0,
+      phases: ["1a fase", "2a fase", "3a fase", "Oitavas", "Quartas", "Semi", "Final"],
+      alive: true,
+      finished: false
+    },
+    libertadores: {
+      qualified: false,
+      phase: 0,
+      phases: ["Grupos", "Oitavas", "Quartas", "Semi", "Final"],
+      alive: true,
+      finished: false
+    }
+  };
+}
+
+function safLeagueMetaByTier(tier, region) {
+  if (region !== "Brasil") {
+    return { tier: "EU", name: "Liga Europeia", roundsTotal: 34, teams: 20 };
+  }
+  if (tier === "A") return { tier: "A", name: "Brasileirao Serie A", roundsTotal: 38, teams: 20 };
+  if (tier === "B") return { tier: "B", name: "Brasileirao Serie B", roundsTotal: 38, teams: 20 };
+  return { tier: "C", name: "Brasileirao Serie C", roundsTotal: 34, teams: 20 };
+}
+
+function safLeaguePrizeByTier(tier, position) {
+  const pos = clamp(position, 1, 20);
+  if (tier === "A") return Math.floor(24000000 + (21 - pos) * 3200000);
+  if (tier === "B") return Math.floor(12000000 + (21 - pos) * 1700000);
+  if (tier === "C") return Math.floor(6500000 + (21 - pos) * 900000);
+  return Math.floor(18000000 + (21 - pos) * 2200000);
+}
+
+function defaultSafState() {
+  return {
+    owned: false,
+    profileId: "",
+    clubName: "",
+    league: "",
+    region: "",
+    purchasePrice: 0,
+    debt: 0,
+    reputation: 35,
+    fanMood: 60,
+    pressure: 50,
+    valuation: 0,
+    safSoldPct: 0,
+    sponsorsLevel: 0,
+    tvLevel: 0,
+    structures: { ct: 0, base: 0, estadio: 0, medico: 0, scout: 0 },
+    europeBranch: false,
+    networkClubs: 0,
+    roster: [],
+    youthPool: [],
+    investors: { arab: false, us: false, ipo: false },
+    titles: 0,
+    libertadores: 0,
+    champions: 0,
+    trophies: { brasileirao: 0, copaDoBrasil: 0, libertadores: 0, champions: 0 },
+    trophyHistory: [],
+    competitions: createSafCompetitions(),
+    lastMonthly: { revenue: 0, costs: 0, net: 0 },
+    eventFeed: []
+  };
+}
+
+function defaultCryptoState() {
+  return {
+    selectedCoinId: "BTC",
+    coins: {
+      BTC: 0,
+      ETH: 0,
+      SOL: 0
+    },
+    market: {
+      BTC: 68000,
+      ETH: 3200,
+      SOL: 140
+    },
+    spaces: {},
+    gpus: {}
+  };
+}
+
 const state = {
   player: { nome: "", idade: "", telefone: "" },
   money: 0,
@@ -101,10 +375,27 @@ const state = {
   month: 1,
   secondsToMonth: MONTH_SECONDS,
   yearlyRevenues: [],
+  yearlyClickRevenue: 0,
   level: 1,
   xp: 0,
   reputation: 50,
   prestigePoints: 0,
+  clickCombo: {
+    streak: 0,
+    best: 0,
+    lastTs: 0
+  },
+  farm: {
+    name: "",
+    hectares: 0,
+    investments: {},
+    cattle: [],
+    nextCattleId: 1
+  },
+  realEstate: {
+    owned: {},
+    personalUse: {}
+  },
   research: {
     automation: 0,
     hr: 0,
@@ -152,11 +443,19 @@ const state = {
     totalTrips: 0
   },
   worldWealth: {},
+  saf: defaultSafState(),
   garage: [],
   nextCarId: 1,
   forex: {
     usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
     eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
+  },
+  crypto: defaultCryptoState(),
+  savings: {
+    balance: 0,
+    monthlyRate: 0.01,
+    lastYield: 0,
+    totalYield: 0
   },
   stats: {
     totalClicks: 0,
@@ -167,6 +466,7 @@ const state = {
     taxesPaid: 0,
     interestPaid: 0,
     contractRevenue: 0,
+    realEstateRevenue: 0,
     dailyRevenue: 0,
     achievementRevenue: 0,
     loanReceived: 0,
@@ -233,6 +533,20 @@ const achievements = [
     desc: "Chegue a R$ 500.000 de patrimonio.",
     check: () => getPatrimonio() >= 500000,
     progress: () => `${formatMoney(getPatrimonio())} / ${formatMoney(500000)}`
+  },
+  {
+    id: "saf_primeira_compra",
+    title: "Dono de clube",
+    desc: "Compre sua primeira SAF.",
+    check: () => Boolean(state.saf?.owned),
+    progress: () => (state.saf?.owned ? "Concluido" : "0/1")
+  },
+  {
+    id: "saf_bilionaria",
+    title: "SAF bilionaria",
+    desc: "Leve o valor da SAF para R$ 1 bilhao.",
+    check: () => safeNumber(state.saf?.valuation, 0) >= 1000000000,
+    progress: () => `${formatMoney(safeNumber(state.saf?.valuation, 0))} / ${formatMoney(1000000000)}`
   }
 ];
 
@@ -241,9 +555,13 @@ const el = {
   dateLine: document.getElementById("dateLine"),
   countdown: document.getElementById("countdown"),
   clickLine: document.getElementById("clickLine"),
+  comboText: document.getElementById("comboText"),
+  comboStreak: document.getElementById("comboStreak"),
+  comboBar: document.getElementById("comboBar"),
   incomeLine: document.getElementById("incomeLine"),
   econLine: document.getElementById("econLine"),
   expenseLine: document.getElementById("expenseLine"),
+  fixedCostLine: document.getElementById("fixedCostLine"),
   skipMonthBtn: document.getElementById("skipMonthBtn"),
   monthRevenue: document.getElementById("monthRevenue"),
   clickBtn: document.getElementById("clickBtn"),
@@ -253,11 +571,23 @@ const el = {
   refreshContractsBtn: document.getElementById("refreshContractsBtn"),
   upgradeList: document.getElementById("upgradeList"),
   companyList: document.getElementById("companyList"),
+  realEstateSummary: document.getElementById("realEstateSummary"),
+  realEstateList: document.getElementById("realEstateList"),
   participationSummary: document.getElementById("participationSummary"),
   participationList: document.getElementById("participationList"),
   garageSummary: document.getElementById("garageSummary"),
   carShopList: document.getElementById("carShopList"),
   garageList: document.getElementById("garageList"),
+  farmName: document.getElementById("farmName"),
+  farmNameInput: document.getElementById("farmNameInput"),
+  farmNameBtn: document.getElementById("farmNameBtn"),
+  farmHectares: document.getElementById("farmHectares"),
+  farmIncome: document.getElementById("farmIncome"),
+  farmHectarePrice: document.getElementById("farmHectarePrice"),
+  farmHectaresInput: document.getElementById("farmHectaresInput"),
+  farmBuyHectaresBtn: document.getElementById("farmBuyHectaresBtn"),
+  cattleList: document.getElementById("cattleList"),
+  farmInvestList: document.getElementById("farmInvestList"),
   aircraftSummary: document.getElementById("aircraftSummary"),
   aircraftAnnualDue: document.getElementById("aircraftAnnualDue"),
   aircraftDebtUsd: document.getElementById("aircraftDebtUsd"),
@@ -267,6 +597,19 @@ const el = {
   travelAircraftSelect: document.getElementById("travelAircraftSelect"),
   travelStats: document.getElementById("travelStats"),
   routeList: document.getElementById("routeList"),
+  safStatus: document.getElementById("safStatus"),
+  safMonthLine: document.getElementById("safMonthLine"),
+  safValuationLine: document.getElementById("safValuationLine"),
+  safClubChoices: document.getElementById("safClubChoices"),
+  safStructureList: document.getElementById("safStructureList"),
+  safMarketList: document.getElementById("safMarketList"),
+  safFinanceList: document.getElementById("safFinanceList"),
+  safExpansionList: document.getElementById("safExpansionList"),
+  safCompetitionsList: document.getElementById("safCompetitionsList"),
+  safCalendarList: document.getElementById("safCalendarList"),
+  safTrophiesList: document.getElementById("safTrophiesList"),
+  safEventList: document.getElementById("safEventList"),
+  safGoalLine: document.getElementById("safGoalLine"),
   passportSummary: document.getElementById("passportSummary"),
   passportList: document.getElementById("passportList"),
   workforceLine: document.getElementById("workforceLine"),
@@ -319,6 +662,11 @@ const el = {
   rankingList: document.getElementById("rankingList"),
   bankCash: document.getElementById("bankCash"),
   bankTaxDebt: document.getElementById("bankTaxDebt"),
+  savingsBalance: document.getElementById("savingsBalance"),
+  savingsMonthlyYield: document.getElementById("savingsMonthlyYield"),
+  savingsAmountInput: document.getElementById("savingsAmountInput"),
+  savingsDepositBtn: document.getElementById("savingsDepositBtn"),
+  savingsWithdrawBtn: document.getElementById("savingsWithdrawBtn"),
   usdRate: document.getElementById("usdRate"),
   usdWallet: document.getElementById("usdWallet"),
   usdWalletBrl: document.getElementById("usdWalletBrl"),
@@ -332,8 +680,20 @@ const el = {
   eurBuyBtn: document.getElementById("eurBuyBtn"),
   eurSellAllBtn: document.getElementById("eurSellAllBtn"),
   fxTotalBrl: document.getElementById("fxTotalBrl"),
+  cryptoSummary: document.getElementById("cryptoSummary"),
+  cryptoCoinPrice: document.getElementById("cryptoCoinPrice"),
+  cryptoCoinSelect: document.getElementById("cryptoCoinSelect"),
+  cryptoPowerLine: document.getElementById("cryptoPowerLine"),
+  cryptoMineRate: document.getElementById("cryptoMineRate"),
+  cryptoWalletSummary: document.getElementById("cryptoWalletSummary"),
+  cryptoOpsCost: document.getElementById("cryptoOpsCost"),
+  cryptoSpaceList: document.getElementById("cryptoSpaceList"),
+  cryptoGpuList: document.getElementById("cryptoGpuList"),
+  cryptoSellAllBtn: document.getElementById("cryptoSellAllBtn"),
+  cryptoConvertList: document.getElementById("cryptoConvertList"),
   taxOverlay: document.getElementById("taxOverlay"),
   taxDueText: document.getElementById("taxDueText"),
+  taxDetails: document.getElementById("taxDetails"),
   taxPayNowBtn: document.getElementById("taxPayNowBtn"),
   taxPayLaterBtn: document.getElementById("taxPayLaterBtn"),
   adminLoginBox: document.getElementById("adminLoginBox"),
@@ -365,6 +725,16 @@ const usdFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "US
 const eurFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "EUR" });
 let audioCtx;
 const adminSession = { loggedIn: false };
+let safClubFilter = "all";
+
+window.__GAME_LOADED__ = true;
+window.addEventListener("error", (ev) => {
+  console.error("Erro global:", ev?.error || ev?.message || ev);
+  if (el.statusMsg) {
+    el.statusMsg.className = "mini bad";
+    el.statusMsg.textContent = `Erro no jogo: ${ev?.message || "Falha desconhecida"}`;
+  }
+});
 
 function ensureAudio() {
   if (!audioCtx) {
@@ -425,6 +795,27 @@ function formatEur(v) {
   return eurFmt.format(v || 0);
 }
 
+function formatCoinAmount(v) {
+  const n = Math.max(0, safeNumber(v, 0));
+  const maxDecimals = n >= 1 ? 6 : 8;
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: maxDecimals, maximumFractionDigits: maxDecimals });
+}
+
+function formatWealthBrl(v) {
+  const value = safeNumber(v, 0);
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) {
+    return `R$ ${(value / 1_000_000_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} bi`;
+  }
+  if (abs >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi`;
+  }
+  if (abs >= 1_000) {
+    return `R$ ${(value / 1_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mil`;
+  }
+  return formatMoney(value);
+}
+
 function safeNumber(value, fallback = 0) {
   const n = Number(value);
   return Number.isFinite(n) ? n : fallback;
@@ -432,6 +823,16 @@ function safeNumber(value, fallback = 0) {
 
 function safeInt(value, fallback = 0) {
   return Math.trunc(safeNumber(value, fallback));
+}
+
+function safProfileMatchesFilter(profile, filter) {
+  if (!profile) return false;
+  if (filter === "all") return true;
+  if (filter === "eu") return profile.region === "Europa" || profile.league === "Europa";
+  if (filter === "a") return profile.league === "Serie A";
+  if (filter === "b") return profile.league === "Serie B";
+  if (filter === "c") return profile.league === "Serie C";
+  return true;
 }
 
 function escapeHtml(value) {
@@ -444,18 +845,32 @@ function escapeHtml(value) {
 }
 
 function toBase64Utf8(text) {
-  const bytes = new TextEncoder().encode(String(text));
-  let binary = "";
-  bytes.forEach((b) => {
-    binary += String.fromCharCode(b);
+  const raw = String(text);
+  if (typeof TextEncoder !== "undefined") {
+    const bytes = new TextEncoder().encode(raw);
+    let binary = "";
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary);
+  }
+  const percentEncoded = encodeURIComponent(raw).replace(/%([0-9A-F]{2})/g, (_, hex) => {
+    return String.fromCharCode(Number.parseInt(hex, 16));
   });
-  return btoa(binary);
+  return btoa(percentEncoded);
 }
 
 function fromBase64Utf8(base64) {
   const binary = atob(base64);
-  const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
-  return new TextDecoder().decode(bytes);
+  if (typeof TextDecoder !== "undefined") {
+    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    return new TextDecoder().decode(bytes);
+  }
+  let percentEncoded = "";
+  for (let i = 0; i < binary.length; i += 1) {
+    percentEncoded += `%${binary.charCodeAt(i).toString(16).padStart(2, "0")}`;
+  }
+  return decodeURIComponent(percentEncoded);
 }
 
 function currentDateKey() {
@@ -477,6 +892,88 @@ function clamp(v, min, max) {
 
 function getSectorMultiplier(setor) {
   return safeNumber(state.economy.sectorBoosts[setor], 1);
+}
+
+function cryptoCoinById(id) {
+  return cryptoCoinsCatalog.find((c) => c.id === id) || cryptoCoinsCatalog[0];
+}
+
+function cryptoGpuById(id) {
+  return cryptoGpuCatalog.find((g) => g.id === id) || null;
+}
+
+function cryptoSpaceById(id) {
+  return cryptoMiningSpacesCatalog.find((s) => s.id === id) || null;
+}
+
+function totalCryptoGpus() {
+  return cryptoGpuCatalog.reduce((sum, gpu) => sum + Math.max(0, safeInt(state.crypto?.gpus?.[gpu.id], 0)), 0);
+}
+
+function totalCryptoHashMh() {
+  return cryptoGpuCatalog.reduce((sum, gpu) => {
+    const qty = Math.max(0, safeInt(state.crypto?.gpus?.[gpu.id], 0));
+    return sum + qty * gpu.hashMh;
+  }, 0);
+}
+
+function totalCryptoCapacity() {
+  const units = cryptoMiningSpacesCatalog.reduce((sum, sp) => sum + Math.max(0, safeInt(state.crypto?.spaces?.[sp.id], 0)) * sp.capacityUnits, 0);
+  return units * GPU_CAPACITY_PER_UNIT;
+}
+
+function cryptoOpsMonthlyCost() {
+  const hashMh = totalCryptoHashMh();
+  const kwEstimated = hashMh * 0.0034;
+  const energyBrl = kwEstimated * 24 * 30 * 0.92;
+  const fixed = cryptoMiningSpacesCatalog.reduce(
+    (sum, sp) => sum + Math.max(0, safeInt(state.crypto?.spaces?.[sp.id], 0)) * sp.powerFeeMonthly,
+    0
+  );
+  return Math.floor(Math.max(0, energyBrl + fixed));
+}
+
+function cryptoTotalUsdValue() {
+  return cryptoCoinsCatalog.reduce((sum, coin) => {
+    const qty = Math.max(0, safeNumber(state.crypto?.coins?.[coin.id], 0));
+    const price = Math.max(1, safeNumber(state.crypto?.market?.[coin.id], coin.priceUsd));
+    return sum + qty * price;
+  }, 0);
+}
+
+function cryptoMiningRatePerSecond(coinId) {
+  const coin = cryptoCoinById(coinId);
+  const hashMh = totalCryptoHashMh();
+  if (hashMh <= 0) return 0;
+  const automationBonus = 1 + state.research.automation * 0.01;
+  return hashMh * coin.yieldPerMhSecond * automationBonus;
+}
+
+function mineCryptoSecond() {
+  const capacity = totalCryptoCapacity();
+  const totalGpus = totalCryptoGpus();
+  if (capacity <= 0 || totalGpus <= 0) return;
+  const coinId = cryptoCoinById(state.crypto.selectedCoinId).id;
+  const mined = cryptoMiningRatePerSecond(coinId);
+  if (mined <= 0) return;
+  state.crypto.coins[coinId] = Math.max(0, safeNumber(state.crypto.coins[coinId], 0)) + mined;
+}
+
+function updateCryptoMarketMonthly() {
+  cryptoCoinsCatalog.forEach((coin) => {
+    const current = Math.max(1, safeNumber(state.crypto.market[coin.id], coin.priceUsd));
+    const macro = (state.economy.confidence - 1) * 0.018;
+    const noise = (Math.random() - 0.5) * 0.13;
+    const meanReversion = (coin.priceUsd - current) / coin.priceUsd * 0.035;
+    const monthlyPct = clamp(macro + noise + meanReversion, -0.16, 0.18);
+    state.crypto.market[coin.id] = clamp(current * (1 + monthlyPct), coin.min, coin.max);
+  });
+}
+
+function cryptoGpuSellPrice(gpu) {
+  const confidenceBonus = clamp((state.economy.confidence - 1) * 0.3, -0.08, 0.1);
+  const ratio = clamp(0.66 + confidenceBonus, 0.6, 0.82);
+  return Math.floor(gpu.price * ratio);
 }
 
 function forexValueBrl(code) {
@@ -571,7 +1068,26 @@ function hrTurnoverFactor() {
 }
 
 function effectiveClickValue() {
-  return Math.floor(state.clickValue * getIncomeMultiplier());
+  const combo = currentClickComboMultiplier();
+  return Math.floor(state.clickValue * getIncomeMultiplier() * combo);
+}
+
+function currentClickComboMultiplier() {
+  const streak = safeInt(state.clickCombo?.streak, 0);
+  const bonus = Math.min(0.6, streak * 0.02);
+  return 1 + bonus;
+}
+
+function updateClickCombo() {
+  const now = Date.now();
+  const last = safeNumber(state.clickCombo?.lastTs, 0);
+  if (now - last <= 1200) {
+    state.clickCombo.streak = Math.min(30, safeInt(state.clickCombo.streak, 0) + 1);
+  } else {
+    state.clickCombo.streak = 0;
+  }
+  state.clickCombo.lastTs = now;
+  state.clickCombo.best = Math.max(state.clickCombo.best, state.clickCombo.streak);
 }
 
 function companyLevelMultiplier(c) {
@@ -596,12 +1112,10 @@ function companyProductivity(c) {
 
 function companyIncomePerUnit(c) {
   const tier = clamp(safeInt(c.salaryTier, 1), 0, COMPANY_MARGIN_OPTIONS.length - 1);
-  const margin = COMPANY_MARGIN_OPTIONS[tier].pct;
-  const valuationPerUnit = Math.max(
-    c.baseCost * companyLevelMultiplier(c) * Math.max(1, safeNumber(c.marketFactor, 1)),
-    c.baseCost * (1 + c.level * 0.5)
-  );
-  return Math.floor(valuationPerUnit * margin * getSectorMultiplier(c.setor));
+  const marginMult = COMPANY_MARGIN_OPTIONS[tier].mult;
+  const levelMult = 1 + c.level * 0.25;
+  const sectorMult = getSectorMultiplier(c.setor);
+  return Math.floor(c.baseIncome * levelMult * marginMult * sectorMult);
 }
 
 function companyTotalIncome(c) {
@@ -767,8 +1281,15 @@ function companyValuationMultiple(c) {
 }
 
 function companyFairValuation(c) {
+  if (c.owned <= 0) {
+    const annualBase = Math.max(0, safeNumber(c.baseIncome, 0)) * 12;
+    const economyAdj = clamp(0.92 + (state.economy.confidence - 1) * 0.35 - (state.economy.interest - 0.09) * 0.25, 0.75, 1.35);
+    const reputationAdj = 1 + Math.max(0, state.reputation - 50) / 500;
+    const entryValuation = annualBase * companyValuationMultiple(c) * economyAdj * reputationAdj;
+    return Math.floor(Math.max(c.baseCost * 0.9, entryValuation));
+  }
   const monthly = companyTotalIncome(c);
-  if (c.owned <= 0 || monthly <= 0) return 0;
+  if (monthly <= 0) return 0;
   const annualRevenue = monthly * 12;
   const growthBonus = 1 + c.level * 0.045 + Math.max(0, state.reputation - 50) / 380;
   const marketFactor = clamp(safeNumber(c.marketFactor, 1), 0.65, 3.8);
@@ -805,10 +1326,185 @@ function monthlyPayrollCost() {
   return 0;
 }
 
+function ownsRealEstate(defId) {
+  return Boolean(state.realEstate?.owned?.[defId]);
+}
+
+function isHousePersonalUse(defId) {
+  return Boolean(state.realEstate?.personalUse?.[defId]);
+}
+
+function realEstatePortfolioValue() {
+  return realEstateCatalog.reduce((sum, item) => {
+    if (!ownsRealEstate(item.id)) return sum;
+    return sum + item.valor;
+  }, 0);
+}
+
+function realEstateMonthlyIncome() {
+  return realEstateCatalog.reduce((sum, item) => {
+    if (!ownsRealEstate(item.id)) return sum;
+    if (item.tipo === "casa" && isHousePersonalUse(item.id)) return sum;
+    return sum + item.aluguelMensal;
+  }, 0);
+}
+
+function ownedRealEstateCount() {
+  return realEstateCatalog.reduce((count, item) => count + (ownsRealEstate(item.id) ? 1 : 0), 0);
+}
+
 function monthlyOperationalCost() {
-  const fixed = totalCompanyUnits() * 75;
-  const variable = Math.floor(totalCompanyIncome() * (0.08 + state.economy.interest * 0.06));
-  return Math.floor((fixed + variable) * automationCostFactor());
+  const variable = Math.floor(totalCompanyIncome() * 0.05);
+  return Math.floor(variable * automationCostFactor());
+}
+
+function fixedAnnualCosts() {
+  const ipva = garageAnnualIpva();
+  const aviationAnnual = aviationAnnualDueUsdPreview() * state.forex.usd.rate;
+  const loanAnnual = totalMonthlyInstallment() * 12;
+  const opsAnnual = monthlyOperationalCost() * 12;
+  return Math.floor(ipva + aviationAnnual + loanAnnual + opsAnnual);
+}
+
+function farmInvestmentMultiplier() {
+  const levels = state.farm?.investments || {};
+  const bonus = farmInvestments.reduce((sum, inv) => sum + (safeInt(levels[inv.id], 0) * inv.bonus), 0);
+  return 1 + bonus;
+}
+
+function farmMonthlyIncome() {
+  const hectares = Math.max(0, safeInt(state.farm?.hectares, 0));
+  if (hectares <= 0) return 0;
+  const invested = hectares * FARM_HECTARE_PRICE;
+  return Math.floor(invested * FARM_YIELD_PCT * farmInvestmentMultiplier());
+}
+
+function calcFarmInvestmentCost(invId) {
+  const inv = farmInvestments.find((x) => x.id === invId);
+  if (!inv) return 0;
+  const level = safeInt(state.farm?.investments?.[invId], 0);
+  return Math.floor(inv.baseCost * Math.pow(1.65, level));
+}
+
+function buyFarmInvestment(invId) {
+  const inv = farmInvestments.find((x) => x.id === invId);
+  if (!inv) return;
+  const cost = calcFarmInvestmentCost(invId);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para investir na fazenda.", "bad");
+    return;
+  }
+  state.money -= cost;
+  state.farm.investments[invId] = safeInt(state.farm.investments[invId], 0) + 1;
+  logEvent(`Investimento agro: ${inv.nome} (Nv. ${state.farm.investments[invId]}).`, "ok");
+  sfxBuy();
+  render();
+}
+
+function buyHectares() {
+  const qty = Math.floor(safeNumber(el.farmHectaresInput?.value, 0));
+  if (!Number.isFinite(qty) || qty <= 0) {
+    setStatus("Informe quantos hectares deseja comprar.", "warn");
+    return;
+  }
+  const cost = qty * FARM_HECTARE_PRICE;
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para comprar hectares.", "bad");
+    return;
+  }
+  state.money -= cost;
+  state.farm.hectares += qty;
+  if (el.farmHectaresInput) el.farmHectaresInput.value = "";
+  logEvent(`Compra de terra: +${qty} ha por ${formatMoney(cost)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function buyCattle(cattleId, qty) {
+  const item = cattleCatalog.find((x) => x.id === cattleId);
+  if (!item) return;
+  const amount = Math.floor(safeNumber(qty, 0));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    setStatus("Informe a quantidade de gado.", "warn");
+    return;
+  }
+  const cost = amount * item.buy;
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para comprar gado.", "bad");
+    return;
+  }
+  state.money -= cost;
+  state.farm.cattle.push({
+    id: state.farm.nextCattleId++,
+    cattleId: item.id,
+    nome: item.nome,
+    qty: amount,
+    buyPrice: item.buy,
+    sellPrice: item.sell
+  });
+  logEvent(`Gado comprado: ${amount}x ${item.nome} por ${formatMoney(cost)}.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function processFarmCattleSales() {
+  if (!state.farm?.cattle?.length) return 0;
+  const revenue = state.farm.cattle.reduce((sum, batch) => sum + batch.qty * batch.sellPrice, 0);
+  state.farm.cattle = [];
+  if (revenue > 0) {
+    state.money += revenue;
+    state.monthRevenue += revenue;
+    logEvent(`Venda automatica de gado: +${formatMoney(revenue)}.`, "ok");
+  }
+  return revenue;
+}
+
+function renderFarm() {
+  if (!el.farmName) return;
+  const name = (state.farm.name || "Sem nome").trim();
+  const hectares = Math.max(0, safeInt(state.farm.hectares, 0));
+  const income = farmMonthlyIncome();
+  el.farmName.textContent = name;
+  el.farmHectares.textContent = `${hectares.toLocaleString("pt-BR")} ha`;
+  el.farmIncome.textContent = `${formatMoney(income)}/mes`;
+  el.farmHectarePrice.textContent = formatMoney(FARM_HECTARE_PRICE);
+
+  if (el.cattleList) {
+    el.cattleList.innerHTML = "";
+    cattleCatalog.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${escapeHtml(item.nome)}</div>
+        <div class="meta">Compra: ${formatMoney(item.buy)} | Venda automatica: ${formatMoney(item.sell)}</div>
+        <div class="btn-row">
+          <input class="input-mini" type="number" min="1" step="1" placeholder="Qtd" />
+          <button class="btn">Comprar gado</button>
+        </div>
+      `;
+      const input = card.querySelector("input");
+      card.querySelector("button").addEventListener("click", () => buyCattle(item.id, input.value));
+      el.cattleList.appendChild(card);
+    });
+  }
+
+  if (el.farmInvestList) {
+    el.farmInvestList.innerHTML = "";
+    farmInvestments.forEach((inv) => {
+      const level = safeInt(state.farm.investments[inv.id], 0);
+      const cost = calcFarmInvestmentCost(inv.id);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${escapeHtml(inv.nome)} (Nv. ${level})</div>
+        <div class="meta">Bonus renda: +${Math.round(inv.bonus * 100)}% por nivel</div>
+        <div class="meta">Custo: ${formatMoney(cost)}</div>
+        <button class="btn" ${state.money < cost ? "disabled" : ""}>Investir</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => buyFarmInvestment(inv.id));
+      el.farmInvestList.appendChild(card);
+    });
+  }
 }
 
 function recruitmentCost(c) {
@@ -883,6 +1579,56 @@ function liquidateForexForAmount(targetBrl) {
   state.forex.usd.balance = Math.max(0, state.forex.usd.balance);
   state.forex.eur.balance = Math.max(0, state.forex.eur.balance);
   return { paid, remaining, soldUsd, soldEur };
+}
+
+function processSavingsMonth() {
+  const balance = Math.max(0, safeNumber(state.savings?.balance, 0));
+  const rate = clamp(safeNumber(state.savings?.monthlyRate, 0.01), 0, 0.05);
+  if (balance <= 0 || rate <= 0) {
+    state.savings.lastYield = 0;
+    return 0;
+  }
+  const yieldValue = Math.floor(balance * rate);
+  state.savings.lastYield = yieldValue;
+  state.savings.balance = balance + yieldValue;
+  state.savings.totalYield = Math.max(0, safeNumber(state.savings.totalYield, 0)) + yieldValue;
+  return yieldValue;
+}
+
+function depositSavings() {
+  const amount = Math.floor(safeNumber(el.savingsAmountInput?.value, 0));
+  if (amount <= 0) {
+    setStatus("Informe um valor valido para depositar na poupanca.", "warn");
+    return;
+  }
+  if (state.money < amount) {
+    setStatus("Saldo BRL insuficiente para deposito na poupanca.", "bad");
+    return;
+  }
+  state.money -= amount;
+  state.savings.balance = Math.max(0, safeNumber(state.savings.balance, 0)) + amount;
+  if (el.savingsAmountInput) el.savingsAmountInput.value = "";
+  logEvent(`Poupanca: deposito de ${formatMoney(amount)}.`, "ok");
+  render();
+}
+
+function withdrawSavings() {
+  const amount = Math.floor(safeNumber(el.savingsAmountInput?.value, 0));
+  if (amount <= 0) {
+    setStatus("Informe um valor valido para retirar da poupanca.", "warn");
+    return;
+  }
+  const balance = Math.max(0, safeNumber(state.savings.balance, 0));
+  if (balance <= 0) {
+    setStatus("Nao ha saldo na poupanca para saque.", "warn");
+    return;
+  }
+  const withdrawn = Math.min(balance, amount);
+  state.savings.balance = balance - withdrawn;
+  state.money += withdrawn;
+  if (el.savingsAmountInput) el.savingsAmountInput.value = "";
+  logEvent(`Poupanca: saque de ${formatMoney(withdrawn)}.`, "ok");
+  render();
 }
 
 function buyForex(code) {
@@ -960,10 +1706,876 @@ function effectiveCompanyIncome() {
   return Math.floor((totalCompanyIncome() + totalParticipationIncome()) * getIncomeMultiplier());
 }
 
+function pushSafEvent(text, type = "") {
+  const cls = type ? `class="${type}"` : "";
+  state.saf.eventFeed.unshift(`<div ${cls}>${escapeHtml(text)}</div>`);
+  state.saf.eventFeed = state.saf.eventFeed.slice(0, 40);
+}
+
+function safNetWorth() {
+  if (!state.saf.owned) return 0;
+  const ownedShare = clamp(1 - safeNumber(state.saf.safSoldPct, 0) / 100, 0, 1);
+  return Math.max(0, safeNumber(state.saf.valuation, 0) * ownedShare - safeNumber(state.saf.debt, 0));
+}
+
+function safStructureCost(structureId) {
+  const def = SAF_STRUCTURE_DEFS.find((x) => x.id === structureId);
+  if (!def) return Number.MAX_SAFE_INTEGER;
+  const level = Math.max(0, safeInt(state.saf.structures?.[structureId], 0));
+  const pressureFactor = 1 + safeNumber(state.saf.pressure, 50) / 200;
+  return Math.floor(def.baseCost * Math.pow(1.65, level) * pressureFactor);
+}
+
+function buySafClub(profileId) {
+  if (state.saf.owned) {
+    setStatus("Voce ja controla uma SAF. Venda participacao ou expanda com clube satelite.", "warn");
+    return;
+  }
+  const profile = SAF_CLUB_PROFILES.find((p) => p.id === profileId);
+  if (!profile) return;
+  if (state.money < profile.buyPrice) {
+    setStatus(`Saldo insuficiente para comprar ${profile.nome}.`, "warn");
+    return;
+  }
+  state.money -= profile.buyPrice;
+  state.saf = defaultSafState();
+  state.saf.owned = true;
+  state.saf.profileId = profile.id;
+  state.saf.clubName = profile.nome;
+  state.saf.league = profile.league;
+  state.saf.region = profile.region;
+  state.saf.purchasePrice = profile.buyPrice;
+  state.saf.debt = profile.debt;
+  state.saf.reputation = profile.reputation;
+  state.saf.fanMood = clamp(72 - profile.pressure * 0.25, 20, 85);
+  state.saf.pressure = profile.pressure;
+  state.saf.valuation = Math.floor(profile.buyPrice * 1.04);
+  state.saf.sponsorsLevel = profile.league === "Europa" ? 1 : 0;
+  state.saf.tvLevel = profile.league === "Serie A" || profile.league === "Europa" ? 1 : 0;
+  state.saf.competitions = createSafCompetitions();
+  state.saf.competitions.seasonYear = state.year;
+  const tier = profile.region === "Brasil" ? (profile.league === "Serie A" ? "A" : profile.league === "Serie B" ? "B" : "C") : "EU";
+  const meta = safLeagueMetaByTier(tier, profile.region);
+  state.saf.competitions.league.tier = meta.tier;
+  state.saf.competitions.league.roundsTotal = meta.roundsTotal;
+  state.saf.competitions.league.name = meta.name;
+  state.saf.competitions.libertadores.qualified = profile.region === "Europa" || (profile.region === "Brasil" && (profile.league === "Serie A" || profile.league === "Serie B"));
+  state.reputation = clamp(state.reputation + 2, 0, 100);
+  pushSafEvent(`Compra concluida: ${profile.nome} por ${formatMoney(profile.buyPrice)}.`, "ok");
+  logEvent(`Modo SAF: compra de ${profile.nome}. Divida herdada ${formatMoney(profile.debt)}.`, "warn");
+  setStatus(`Voce assumiu a ${profile.nome}.`, "ok");
+  render();
+}
+
+function buySafStructure(structureId) {
+  if (!state.saf.owned) return;
+  const def = SAF_STRUCTURE_DEFS.find((x) => x.id === structureId);
+  if (!def) return;
+  const cost = safStructureCost(structureId);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para esse investimento.", "warn");
+    return;
+  }
+  state.money -= cost;
+  state.saf.structures[structureId] = Math.max(0, safeInt(state.saf.structures[structureId], 0)) + 1;
+  state.saf.reputation = clamp(state.saf.reputation + def.repBoost, 0, 100);
+  state.saf.valuation = Math.floor(state.saf.valuation * (1 + def.revenueBoost * 0.55));
+  pushSafEvent(`Estrutura: ${def.nome} melhorado para nivel ${state.saf.structures[structureId]}.`, "ok");
+  setStatus(`Investimento concluido em ${def.nome}.`, "ok");
+  render();
+}
+
+function safCreatePlayer(kind) {
+  const youth = kind === "youth";
+  const media = kind === "media";
+  const basePot = youth ? 74 : media ? 78 : 68;
+  const pot = clamp(Math.floor(basePot + Math.random() * (youth ? 20 : 16)), 60, 95);
+  const age = youth ? 15 + Math.floor(Math.random() * 3) : 18 + Math.floor(Math.random() * 12);
+  const mediaScore = media ? 70 + Math.floor(Math.random() * 26) : Math.floor(Math.random() * 55);
+  const val = Math.floor((pot * pot) * (media ? 23000 : youth ? 12000 : 17000));
+  return {
+    id: `p_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
+    age,
+    potential: pot,
+    mediaScore,
+    value: Math.max(800000, val),
+    developed: false
+  };
+}
+
+function safBuyProspect() {
+  if (!state.saf.owned) return;
+  const scout = safeInt(state.saf.structures.scout, 0);
+  const cost = Math.floor((6000000 + Math.random() * 15000000) * (1 - Math.min(0.35, scout * 0.03)));
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para contratar promessa.", "warn");
+    return;
+  }
+  const p = safCreatePlayer("prospect");
+  state.money -= cost;
+  p.value = Math.floor(p.value * (1 + Math.random() * 0.08));
+  state.saf.roster.push(p);
+  state.saf.valuation += Math.floor(cost * 0.45);
+  pushSafEvent(`Mercado: promessa contratada por ${formatMoney(cost)} (potencial ${p.potential}).`);
+  render();
+}
+
+function safBuyMediaPlayer() {
+  if (!state.saf.owned) return;
+  const cost = Math.floor(35000000 + Math.random() * 140000000);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para jogador midiatico.", "warn");
+    return;
+  }
+  const p = safCreatePlayer("media");
+  state.money -= cost;
+  p.value = Math.floor(cost * (0.85 + Math.random() * 0.4));
+  state.saf.roster.push(p);
+  state.saf.sponsorsLevel += 1;
+  state.saf.reputation = clamp(state.saf.reputation + 3, 0, 100);
+  pushSafEvent(`Mercado: jogador midiatico contratado por ${formatMoney(cost)}.`);
+  render();
+}
+
+function safSellBestOffer() {
+  if (!state.saf.owned || state.saf.roster.length === 0) {
+    setStatus("Sem atletas para negociar.", "warn");
+    return;
+  }
+  state.saf.roster.sort((a, b) => b.value - a.value);
+  const player = state.saf.roster.shift();
+  if (!player) return;
+  const rep = state.saf.reputation / 100;
+  const offer = Math.floor(player.value * (0.9 + Math.random() * 0.45 + rep * 0.2));
+  state.money += offer;
+  state.monthRevenue += offer;
+  state.saf.valuation = Math.max(1000000, Math.floor(state.saf.valuation + offer * 0.12 - player.value * 0.25));
+  pushSafEvent(`Venda: atleta negociado por ${formatMoney(offer)}.`);
+  logEvent(`SAF vendeu atleta por ${formatMoney(offer)}.`, "ok");
+  render();
+}
+
+function safInvestInYouth(playerId) {
+  if (!state.saf.owned) return;
+  const idx = state.saf.youthPool.findIndex((p) => p.id === playerId);
+  if (idx < 0) {
+    setStatus("Jogador da base nao encontrado.", "warn");
+    return;
+  }
+  const p = state.saf.youthPool[idx];
+  const cost = Math.floor(5000000 + p.potential * 120000);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para desenvolver esse jovem.", "warn");
+    return;
+  }
+  state.money -= cost;
+  p.potential = clamp(p.potential + 3 + Math.floor(Math.random() * 4), 60, 98);
+  p.value = Math.floor(p.value * (1.45 + Math.random() * 0.25));
+  p.developed = true;
+  state.saf.roster.push(p);
+  state.saf.youthPool.splice(idx, 1);
+  state.saf.reputation = clamp(state.saf.reputation + 2, 0, 100);
+  state.saf.valuation += Math.floor(cost * 0.85);
+  pushSafEvent(`Base: jovem promovido (potencial ${p.potential}) apos investimento de ${formatMoney(cost)}.`);
+  render();
+}
+
+function safTakeLoan() {
+  if (!state.saf.owned) return;
+  const profile = SAF_CLUB_PROFILES.find((p) => p.id === state.saf.profileId);
+  const boost = Math.floor((profile?.buyPrice || 250000000) * 0.18);
+  state.money += boost;
+  state.saf.debt += Math.floor(boost * 1.18);
+  state.saf.pressure = clamp(state.saf.pressure + 6, 0, 100);
+  pushSafEvent(`Financeiro: emprestimo SAF recebido ${formatMoney(boost)}.`, "warn");
+  render();
+}
+
+function safSellShare(pctPoints) {
+  if (!state.saf.owned) return;
+  const current = safeNumber(state.saf.safSoldPct, 0);
+  if (current >= 90) {
+    setStatus("Limite de venda parcial atingido (90%).", "warn");
+    return;
+  }
+  const pct = clamp(pctPoints, 1, 40);
+  const available = Math.max(0, 90 - current);
+  const applied = Math.min(available, pct);
+  if (applied <= 0) return;
+  const received = Math.floor(state.saf.valuation * (applied / 100) * 0.98);
+  state.saf.safSoldPct = current + applied;
+  state.money += received;
+  state.saf.pressure = clamp(state.saf.pressure - 3, 0, 100);
+  pushSafEvent(`Capitalizacao: venda de ${applied}% da SAF por ${formatMoney(received)}.`);
+  render();
+}
+
+function safAttractInvestor(type) {
+  if (!state.saf.owned) return;
+  const key = type === "arab" ? "arab" : "us";
+  if (state.saf.investors[key]) {
+    setStatus("Investidor ja captado.", "warn");
+    return;
+  }
+  const minRep = key === "arab" ? 58 : 52;
+  if (state.saf.reputation < minRep) {
+    setStatus(`Reputacao da SAF abaixo do minimo (${minRep}).`, "warn");
+    return;
+  }
+  const amount = Math.floor(state.saf.valuation * (key === "arab" ? 0.22 : 0.14));
+  state.saf.investors[key] = true;
+  state.money += amount;
+  state.saf.valuation = Math.floor(state.saf.valuation * (key === "arab" ? 1.18 : 1.12));
+  state.saf.fanMood = clamp(state.saf.fanMood + (key === "arab" ? -4 : 2), 0, 100);
+  pushSafEvent(`Investimento externo: aporte ${formatMoney(amount)} (${key === "arab" ? "arabe" : "americano"}).`, "ok");
+  render();
+}
+
+function safOpenIpo() {
+  if (!state.saf.owned) return;
+  if (state.saf.investors.ipo) {
+    setStatus("A SAF ja abriu capital.", "warn");
+    return;
+  }
+  if (state.saf.reputation < 65 || state.saf.valuation < 500000000) {
+    setStatus("Exigencia para IPO: reputacao >= 65 e valor >= R$ 500 mi.", "warn");
+    return;
+  }
+  const raised = Math.floor(state.saf.valuation * 0.25);
+  state.saf.investors.ipo = true;
+  state.saf.safSoldPct = clamp(state.saf.safSoldPct + 15, 0, 90);
+  state.money += raised;
+  state.saf.tvLevel += 1;
+  state.saf.valuation = Math.floor(state.saf.valuation * 1.12);
+  pushSafEvent(`Bolsa ficticia: IPO realizado com captacao de ${formatMoney(raised)}.`, "ok");
+  render();
+}
+
+function safCreateEuropeBranch() {
+  if (!state.saf.owned) return;
+  if (state.saf.europeBranch) {
+    setStatus("Filial europeia ja ativa.", "warn");
+    return;
+  }
+  const cost = Math.floor(Math.max(220000000, state.saf.valuation * 0.2));
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para abrir filial europeia.", "warn");
+    return;
+  }
+  state.money -= cost;
+  state.saf.europeBranch = true;
+  state.saf.reputation = clamp(state.saf.reputation + 6, 0, 100);
+  state.saf.valuation = Math.floor(state.saf.valuation * 1.14);
+  pushSafEvent(`Expansao: filial europeia criada por ${formatMoney(cost)}.`);
+  render();
+}
+
+function safBuySatelliteClub() {
+  if (!state.saf.owned) return;
+  if (state.saf.networkClubs >= 2) {
+    setStatus("Rede no limite: voce ja controla 3 clubes no total.", "warn");
+    return;
+  }
+  const cost = Math.floor(140000000 + state.saf.networkClubs * 120000000);
+  if (state.money < cost) {
+    setStatus("Saldo insuficiente para comprar clube satelite.", "warn");
+    return;
+  }
+  state.money -= cost;
+  state.saf.networkClubs += 1;
+  state.saf.valuation += Math.floor(cost * 0.9);
+  state.saf.reputation = clamp(state.saf.reputation + 3, 0, 100);
+  pushSafEvent(`Grupo de clubes: novo satelite adquirido por ${formatMoney(cost)}.`);
+  render();
+}
+
+function safMaybeRevealYouth() {
+  if (!state.saf.owned) return;
+  const baseLv = safeInt(state.saf.structures.base, 0);
+  const scoutLv = safeInt(state.saf.structures.scout, 0);
+  const chance = 0.12 + baseLv * 0.035 + scoutLv * 0.025;
+  if (Math.random() > chance || state.saf.youthPool.length >= 8) return;
+  const kid = safCreatePlayer("youth");
+  state.saf.youthPool.push(kid);
+  pushSafEvent(`Base: jovem de ${kid.age} anos apareceu (potencial ${kid.potential}).`);
+}
+
+function safRandomEventMonth() {
+  if (!state.saf.owned || Math.random() > 0.3) return;
+  const events = [
+    () => {
+      const hit = Math.floor(state.saf.valuation * 0.012);
+      state.money = Math.max(0, state.money - hit);
+      state.saf.fanMood = clamp(state.saf.fanMood - 5, 0, 100);
+      pushSafEvent(`Crise da torcida: custo emergencial de ${formatMoney(hit)}.`, "bad");
+    },
+    () => {
+      const gain = Math.floor(state.saf.valuation * 0.018);
+      state.money += gain;
+      state.saf.reputation = clamp(state.saf.reputation + 2, 0, 100);
+      pushSafEvent(`Novo patrocinador: entrada de ${formatMoney(gain)}.`, "ok");
+    },
+    () => {
+      const cost = Math.floor(state.saf.valuation * 0.01);
+      state.money = Math.max(0, state.money - cost);
+      state.saf.reputation = clamp(state.saf.reputation - 4, 0, 100);
+      pushSafEvent(`Investigacao financeira: multa de ${formatMoney(cost)} e queda de reputacao.`, "warn");
+    },
+    () => {
+      state.saf.reputation = clamp(state.saf.reputation - 3, 0, 100);
+      state.saf.pressure = clamp(state.saf.pressure + 7, 0, 100);
+      pushSafEvent("Polemica com jogador: imprensa pressiona a SAF.", "warn");
+    },
+    () => {
+      if (state.saf.roster.length === 0) return;
+      state.saf.roster.sort((a, b) => b.value - a.value);
+      const p = state.saf.roster[0];
+      const offer = Math.floor(p.value * 1.6);
+      state.money += offer;
+      state.saf.roster.shift();
+      state.saf.valuation += Math.floor(offer * 0.08);
+      pushSafEvent(`Proposta inesperada aceita: +${formatMoney(offer)}.`, "ok");
+    }
+  ];
+  const pick = events[Math.floor(Math.random() * events.length)];
+  if (pick) pick();
+}
+
+function safCompetitionActionAvailable() {
+  return monthStamp() !== String(state.saf.competitions?.lastActionMonthStamp || "");
+}
+
+function safStrengthScore() {
+  const saf = state.saf;
+  const rosterQuality = saf.roster.reduce((sum, p) => sum + (safeNumber(p.potential, 70) / 100), 0);
+  return 0.35
+    + saf.reputation / 150
+    + safeInt(saf.structures.ct, 0) * 0.045
+    + safeInt(saf.structures.base, 0) * 0.04
+    + safeInt(saf.structures.medico, 0) * 0.03
+    + safeInt(saf.structures.scout, 0) * 0.04
+    + Math.min(0.45, rosterQuality / 30);
+}
+
+function safTakeCompetitionAction() {
+  state.saf.competitions.lastActionMonthStamp = monthStamp();
+}
+
+function safRecordTrophy(name) {
+  const year = state.year;
+  state.saf.trophyHistory.unshift({ year, name });
+  state.saf.trophyHistory = state.saf.trophyHistory.slice(0, 24);
+}
+
+function safMaybeStartNewSeason() {
+  const comp = state.saf.competitions;
+  if (state.month !== 1) return;
+  if (comp.seasonYear === state.year) return;
+  const prevLeague = comp.league;
+  let nextTier = String(prevLeague.tier || "A");
+  if (state.saf.region === "Brasil" && prevLeague.finished) {
+    if (nextTier === "A" && prevLeague.position >= 17) nextTier = "B";
+    else if (nextTier === "B" && prevLeague.position <= 4) nextTier = "A";
+    else if (nextTier === "B" && prevLeague.position >= 17) nextTier = "C";
+    else if (nextTier === "C" && prevLeague.position <= 4) nextTier = "B";
+  }
+  const qualifiedLiberta = state.saf.region === "Europa"
+    ? true
+    : prevLeague.finished && String(prevLeague.tier || "A") === "A" && prevLeague.position <= 6;
+  state.saf.competitions = createSafCompetitions();
+  state.saf.competitions.seasonYear = state.year;
+  const meta = safLeagueMetaByTier(nextTier, state.saf.region);
+  state.saf.competitions.league.tier = meta.tier;
+  state.saf.competitions.league.name = meta.name;
+  state.saf.competitions.league.roundsTotal = meta.roundsTotal;
+  state.saf.competitions.libertadores.qualified = state.saf.region === "Europa" || (state.saf.region === "Brasil" && qualifiedLiberta);
+  if (state.saf.region === "Brasil" && prevLeague.finished) {
+    if (nextTier !== String(prevLeague.tier || "A")) {
+      const moveLabel = nextTier < String(prevLeague.tier || "A") ? "Acesso" : "Rebaixamento";
+      pushSafEvent(`${moveLabel} confirmado: nova temporada na ${meta.name}.`, nextTier < String(prevLeague.tier || "A") ? "ok" : "warn");
+    } else {
+      pushSafEvent(`Nova temporada iniciada (${state.year}) na ${meta.name}.`);
+    }
+  } else {
+    pushSafEvent(`Nova temporada iniciada (${state.year}) na ${meta.name}.`);
+  }
+}
+
+function safPlayLeagueRound() {
+  if (!state.saf.owned) return;
+  const comp = state.saf.competitions;
+  if (!safCompetitionActionAvailable()) {
+    setStatus("Voce ja disputou uma partida de competicao neste mes.", "warn");
+    return;
+  }
+  if (comp.league.finished) {
+    setStatus("Liga nacional ja encerrada nesta temporada.", "warn");
+    return;
+  }
+  const str = safStrengthScore();
+  const drawChance = clamp(0.18 + (1 - str) * 0.1, 0.12, 0.28);
+  const winChance = clamp(0.26 + str * 0.42, 0.2, 0.78);
+  const roll = Math.random();
+  const gf = Math.max(0, Math.floor(Math.random() * 3 + str * 2));
+  const ga = Math.max(0, Math.floor(Math.random() * 3 + (1 - str) * 1.8));
+  let result = "D";
+  if (roll <= winChance) {
+    comp.league.points += 3;
+    comp.league.wins += 1;
+    result = "V";
+    state.money += 700000;
+  } else if (roll <= winChance + drawChance) {
+    comp.league.points += 1;
+    comp.league.draws += 1;
+    result = "E";
+    state.money += 300000;
+  } else {
+    comp.league.losses += 1;
+    result = "D";
+  }
+  comp.league.roundsPlayed += 1;
+  comp.league.goalsFor += gf;
+  comp.league.goalsAgainst += ga;
+  const progress = comp.league.roundsPlayed / Math.max(1, comp.league.roundsTotal);
+  const performance = comp.league.points / Math.max(1, comp.league.roundsPlayed * 3);
+  comp.league.position = clamp(Math.round(20 - performance * 19 + (1 - progress) * (Math.random() * 4 - 2)), 1, 20);
+  state.saf.reputation = clamp(state.saf.reputation + (result === "V" ? 1.2 : result === "E" ? 0.2 : -1), 0, 100);
+  state.saf.fanMood = clamp(state.saf.fanMood + (result === "V" ? 2 : result === "E" ? 0 : -2), 0, 100);
+  pushSafEvent(`Liga: rodada ${comp.league.roundsPlayed}/${comp.league.roundsTotal} (${result}) | placar ${gf}x${ga}.`);
+  safTakeCompetitionAction();
+
+  if (comp.league.roundsPlayed >= comp.league.roundsTotal) {
+    comp.league.finished = true;
+    const finalPrize = safLeaguePrizeByTier(String(comp.league.tier || "A"), comp.league.position);
+    state.money += finalPrize;
+    if (comp.league.position === 1 && (state.saf.region === "Brasil" || state.saf.region === "Europa")) {
+      if (state.saf.region === "Brasil" && String(comp.league.tier || "A") === "A") {
+        state.saf.trophies.brasileirao += 1;
+        safRecordTrophy("Brasileirao");
+      }
+      state.saf.titles += 1;
+      state.saf.valuation = Math.floor(state.saf.valuation * 1.12);
+      if (state.saf.region === "Brasil" && String(comp.league.tier || "A") === "A") {
+        state.saf.competitions.libertadores.qualified = true;
+      }
+      pushSafEvent(`Campeao da ${comp.league.name}! Premiacao final ${formatMoney(finalPrize)}.`, "ok");
+    } else {
+      pushSafEvent(`Liga encerrada em ${comp.league.position}o lugar. Premiacao ${formatMoney(finalPrize)}.`);
+      if (state.saf.region === "Brasil" && String(comp.league.tier || "A") === "A" && comp.league.position <= 6) {
+        state.saf.competitions.libertadores.qualified = true;
+      }
+    }
+  }
+  render();
+}
+
+function safPlayCupMatch(cupId) {
+  if (!state.saf.owned) return;
+  const comp = state.saf.competitions;
+  if (!safCompetitionActionAvailable()) {
+    setStatus("Voce ja disputou uma partida de competicao neste mes.", "warn");
+    return;
+  }
+  const isLiberta = cupId === "libertadores";
+  const target = isLiberta ? comp.libertadores : comp.copa;
+  const continentalLabel = state.saf.region === "Europa" ? "Champions" : "Libertadores";
+  if (isLiberta && !target.qualified) {
+    setStatus(`Seu clube nao esta classificado para ${continentalLabel} nesta temporada.`, "warn");
+    return;
+  }
+  if (!target.alive || target.finished) {
+    setStatus("Competicao ja encerrada nesta temporada.", "warn");
+    return;
+  }
+  const phaseLabel = target.phases[target.phase] || "Fase";
+  const str = safStrengthScore();
+  const baseWin = isLiberta ? 0.44 : 0.5;
+  const winChance = clamp(baseWin + (str - 0.8) * 0.26, 0.2, 0.82);
+  const won = Math.random() <= winChance;
+  safTakeCompetitionAction();
+
+  if (!won) {
+    target.alive = false;
+    target.finished = true;
+    state.saf.reputation = clamp(state.saf.reputation - (isLiberta ? 2.2 : 1.4), 0, 100);
+    pushSafEvent(`${isLiberta ? continentalLabel : "Copa do Brasil"}: eliminado na fase ${phaseLabel}.`, "bad");
+    render();
+    return;
+  }
+
+  const reward = Math.floor((isLiberta ? 4500000 : 2600000) * (1 + target.phase * 0.42));
+  state.money += reward;
+  state.saf.reputation = clamp(state.saf.reputation + (isLiberta ? 1.6 : 1.1), 0, 100);
+  target.phase += 1;
+  pushSafEvent(`${isLiberta ? continentalLabel : "Copa do Brasil"}: classificou na fase ${phaseLabel} (+${formatMoney(reward)}).`, "ok");
+
+  if (target.phase >= target.phases.length) {
+    target.finished = true;
+    target.alive = false;
+    if (isLiberta) {
+      if (state.saf.region === "Europa") {
+        state.saf.trophies.champions += 1;
+        state.saf.champions += 1;
+        state.saf.valuation = Math.floor(state.saf.valuation * 1.19);
+        state.money += 65000000;
+        safRecordTrophy("Champions");
+        pushSafEvent(`Titulo continental: Champions conquistada!`, "ok");
+      } else {
+        state.saf.trophies.libertadores += 1;
+        state.saf.libertadores += 1;
+        state.saf.valuation = Math.floor(state.saf.valuation * 1.16);
+        state.money += 45000000;
+        safRecordTrophy("Libertadores");
+        pushSafEvent(`Titulo continental: Libertadores conquistada!`, "ok");
+      }
+    } else {
+      state.saf.trophies.copaDoBrasil += 1;
+      state.saf.titles += 1;
+      state.saf.valuation = Math.floor(state.saf.valuation * 1.08);
+      state.money += 22000000;
+      safRecordTrophy("Copa do Brasil");
+      pushSafEvent(`Campeao da Copa do Brasil!`, "ok");
+    }
+  }
+  render();
+}
+
+function processSafMonth() {
+  if (!state.saf.owned) return { revenue: 0, costs: 0, net: 0 };
+  safMaybeStartNewSeason();
+  safMaybeRevealYouth();
+  safRandomEventMonth();
+
+  const structureBoost = SAF_STRUCTURE_DEFS.reduce((sum, def) => sum + safeInt(state.saf.structures?.[def.id], 0) * def.revenueBoost, 0);
+  const moodFactor = clamp(0.62 + state.saf.fanMood / 120, 0.35, 1.45);
+  const repFactor = clamp(0.55 + state.saf.reputation / 120, 0.35, 1.6);
+  const scale = Math.max(0.9, state.saf.purchasePrice / 220000000);
+  const mediaPower = state.saf.roster.reduce((sum, p) => sum + (safeNumber(p.mediaScore, 0) / 120), 0);
+
+  const ticketRevenue = 190000 * scale * moodFactor * (1 + safeInt(state.saf.structures.estadio, 0) * 0.14);
+  const sponsorRevenue = 210000 * scale * repFactor * (1 + state.saf.sponsorsLevel * 0.1) * (1 + mediaPower * 0.02);
+  const tvRevenue = 180000 * scale * (1 + state.saf.tvLevel * 0.11) * (1 + state.saf.networkClubs * 0.06);
+  const youthRevenue = state.saf.youthPool.length * 15000 * (1 + safeInt(state.saf.structures.base, 0) * 0.06);
+  const branchRevenue = state.saf.europeBranch ? 130000 * repFactor : 0;
+  const totalRevenue = Math.floor(ticketRevenue + sponsorRevenue + tvRevenue + youthRevenue + branchRevenue);
+
+  const wageCost = 340000 * scale * (1 + state.saf.roster.length * 0.065);
+  const medicalCost = 98000 * scale * clamp(1 - safeInt(state.saf.structures.medico, 0) * 0.06, 0.65, 1.1);
+  const scoutCost = 85000 * (1 + safeInt(state.saf.structures.scout, 0) * 0.24);
+  const baseCost = 110000 * (1 + safeInt(state.saf.structures.base, 0) * 0.22);
+  const stadiumMaint = 72000 * (1 + safeInt(state.saf.structures.estadio, 0) * 0.2);
+  const debtService = safeNumber(state.saf.debt, 0) * 0.0115;
+  const taxBurden = totalRevenue * 0.06;
+  const totalCosts = Math.floor(wageCost + medicalCost + scoutCost + baseCost + stadiumMaint + debtService + taxBurden);
+
+  const net = totalRevenue - totalCosts;
+  state.money += net;
+  if (state.money < 0) state.money = 0;
+  state.monthRevenue += net;
+  state.stats.companyRevenue += totalRevenue;
+  state.stats.operationalCosts += totalCosts;
+  state.saf.lastMonthly = { revenue: totalRevenue, costs: totalCosts, net };
+
+  const debtReduction = Math.max(0, Math.floor((debtService * 0.2) + (net > 0 ? net * 0.015 : 0)));
+  state.saf.debt = Math.max(0, state.saf.debt - debtReduction);
+
+  state.saf.fanMood = clamp(state.saf.fanMood + (net >= 0 ? 0.6 : -2.8) - state.saf.pressure * 0.012, 0, 100);
+  state.saf.reputation = clamp(state.saf.reputation + (net >= 0 ? 0.35 : -1.9), 0, 100);
+  state.saf.pressure = clamp(state.saf.pressure + (net >= 0 ? -0.45 : 2.4), 0, 100);
+
+  const growth = (net / Math.max(1, state.saf.valuation)) + structureBoost * 0.17 + (state.saf.reputation - 50) * 0.00045 - (state.saf.debt / Math.max(1, state.saf.valuation)) * 0.09;
+  state.saf.valuation = Math.max(Math.floor(state.saf.purchasePrice * 0.42), Math.floor(state.saf.valuation * (1 + clamp(growth, -0.12, 0.09))));
+  return state.saf.lastMonthly;
+}
+
+function renderSafCalendar() {
+  if (!el.safCalendarList || !state.saf?.owned) return;
+  const comp = state.saf.competitions;
+  const liga = comp.league;
+  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const roundsPerMonth = Math.max(1, Math.ceil(liga.roundsTotal / 10));
+  const schedule = months.map((name, idx) => {
+    const m = idx + 1;
+    let focus = "Treino e mercado";
+    let tone = "base";
+    if (m >= 2 && m <= 11 && !liga.finished) {
+      const startRound = Math.min(liga.roundsTotal, Math.max(1, (m - 2) * roundsPerMonth + 1));
+      const endRound = Math.min(liga.roundsTotal, startRound + roundsPerMonth - 1);
+      focus = `Liga (${startRound}-${endRound})`;
+      tone = "league";
+    }
+    if (state.saf.region === "Brasil" && m >= 3 && m <= 11 && comp.copa.alive && !comp.copa.finished) {
+      focus += " | Copa BR";
+      tone = "cup";
+    }
+    if (comp.libertadores.qualified && m >= 4 && m <= 11 && comp.libertadores.alive && !comp.libertadores.finished) {
+      focus += state.saf.region === "Europa" ? " | Champions" : " | Libertadores";
+      tone = "continental";
+    }
+    return { m, name, focus, tone };
+  });
+
+  const targetPos = state.saf.region === "Brasil" ? (String(liga.tier || "A") === "A" ? "Top 6" : "Top 4") : "Top 4";
+  const cupGoal = state.saf.region === "Brasil" ? "Chegar na semifinal da Copa do Brasil" : "Sem copa nacional no modo atual";
+  const continental = state.saf.region === "Europa" ? "Champions" : "Libertadores";
+  const contGoal = comp.libertadores.qualified ? `Chegar na semifinal da ${continental}` : `Classificar para ${continental} na proxima temporada`;
+  const financialGoal = state.saf.debt > 0 ? `Reduzir divida SAF para abaixo de ${formatMoney(state.saf.purchasePrice * 0.25)}` : "Manter caixa positivo por toda a temporada";
+  const grid = schedule.map((s) => `
+    <div class="saf-cal-card ${s.tone} ${s.m === state.month ? "current" : ""}">
+      <div class="saf-cal-month">${s.name}</div>
+      <div class="saf-cal-focus">${s.focus}</div>
+    </div>
+  `).join("");
+
+  el.safCalendarList.innerHTML = `
+    <div class="card">
+      <div class="title">Temporada ${comp.seasonYear} - Roteiro mensal</div>
+      <div class="saf-cal-grid">${grid}</div>
+    </div>
+    <div class="card">
+      <div class="title">Metas da temporada</div>
+      <div class="meta">Liga: terminar no ${targetPos} (atual ${liga.position}o)</div>
+      <div class="meta">${cupGoal}</div>
+      <div class="meta">${contGoal}</div>
+      <div class="meta">${financialGoal}</div>
+    </div>
+  `;
+}
+
+function renderSaf() {
+  if (!el.safStatus || !el.safClubChoices || !el.safMonthLine || !el.safValuationLine) return;
+  const saf = state.saf;
+
+  if (!saf.owned) {
+    el.safStatus.textContent = "Sem clube no momento.";
+    el.safMonthLine.textContent = "Receitas R$ 0,00 | Custos R$ 0,00 | Liquido R$ 0,00";
+    el.safValuationLine.textContent = formatMoney(0);
+    const filtered = SAF_CLUB_PROFILES.filter((p) => safProfileMatchesFilter(p, safClubFilter));
+    const filterBar = `
+      <div class="card">
+        <div class="title">Filtrar clubes</div>
+        <div class="btn-row">
+          <button class="btn ${safClubFilter === "all" ? "alt" : ""}" data-filter="all">Todos</button>
+          <button class="btn ${safClubFilter === "a" ? "alt" : ""}" data-filter="a">Serie A</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn ${safClubFilter === "b" ? "alt" : ""}" data-filter="b">Serie B</button>
+          <button class="btn ${safClubFilter === "c" ? "alt" : ""}" data-filter="c">Serie C</button>
+        </div>
+        <button class="btn ${safClubFilter === "eu" ? "alt" : ""}" data-filter="eu">Europa</button>
+      </div>
+    `;
+    el.safClubChoices.innerHTML = filterBar;
+    el.safClubChoices.querySelectorAll("[data-filter]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        safClubFilter = String(btn.getAttribute("data-filter") || "all");
+        render();
+      });
+    });
+    filtered.forEach((p) => {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${escapeHtml(p.nome)}</div>
+        <div class="meta">${escapeHtml(p.league)} | Compra ${formatMoney(p.buyPrice)} | Divida ${formatMoney(p.debt)}</div>
+        <div class="meta">Pressao inicial: ${p.pressure}% | Potencial: x${p.potential.toFixed(2)}</div>
+        <button class="btn" ${state.money < p.buyPrice ? "disabled" : ""}>Comprar SAF</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => buySafClub(p.id));
+      el.safClubChoices.appendChild(card);
+    });
+    if (!filtered.length) {
+      const empty = document.createElement("div");
+      empty.className = "mini warn";
+      empty.textContent = "Nenhum clube encontrado nesse filtro.";
+      el.safClubChoices.appendChild(empty);
+    }
+    if (el.safStructureList) el.safStructureList.innerHTML = `<div class="mini">Compre uma SAF para desbloquear gestao de estrutura.</div>`;
+    if (el.safMarketList) el.safMarketList.innerHTML = `<div class="mini">Compre uma SAF para acessar mercado de atletas.</div>`;
+    if (el.safFinanceList) el.safFinanceList.innerHTML = `<div class="mini">Compre uma SAF para acessar financas do clube.</div>`;
+    if (el.safExpansionList) el.safExpansionList.innerHTML = `<div class="mini">Compre uma SAF para iniciar expansao internacional.</div>`;
+    if (el.safCompetitionsList) el.safCompetitionsList.innerHTML = `<div class="mini">Compre uma SAF para disputar campeonatos.</div>`;
+    if (el.safCalendarList) el.safCalendarList.innerHTML = `<div class="mini">Compre uma SAF para desbloquear calendario da temporada.</div>`;
+    if (el.safTrophiesList) el.safTrophiesList.innerHTML = `<div class="mini">Sem titulos ainda.</div>`;
+    if (el.safEventList) el.safEventList.innerHTML = `<div class="mini">Eventos do futebol aparecerao apos a compra da SAF.</div>`;
+    if (el.safGoalLine) el.safGoalLine.textContent = "Objetivo: 3 clubes, Libertadores, Champions e base de elite.";
+    return;
+  }
+
+  const netWorth = safNetWorth();
+  el.safStatus.textContent = `${saf.clubName} | ${saf.league} | Reputacao ${Math.round(saf.reputation)} | Torcida ${Math.round(saf.fanMood)}%`;
+  el.safMonthLine.textContent = `Receitas ${formatMoney(saf.lastMonthly.revenue)} | Custos ${formatMoney(saf.lastMonthly.costs)} | Liquido ${formatMoney(saf.lastMonthly.net)}`;
+  el.safValuationLine.textContent = `${formatMoney(saf.valuation)} | Divida ${formatMoney(saf.debt)} | Participacao vendida ${saf.safSoldPct.toFixed(1)}%`;
+
+  el.safClubChoices.innerHTML = `<div class="mini">SAF ativa: ${escapeHtml(saf.clubName)} (patrimonio SAF: ${formatMoney(netWorth)}).</div>`;
+
+  if (el.safStructureList) {
+    el.safStructureList.innerHTML = "";
+    SAF_STRUCTURE_DEFS.forEach((def) => {
+      const lvl = safeInt(saf.structures?.[def.id], 0);
+      const cost = safStructureCost(def.id);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${def.nome} (Nv. ${lvl})</div>
+        <div class="meta">Custo: ${formatMoney(cost)} | Bonus de receita por nivel: +${(def.revenueBoost * 100).toFixed(1)}%</div>
+        <button class="btn" ${state.money < cost ? "disabled" : ""}>Investir</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => buySafStructure(def.id));
+      el.safStructureList.appendChild(card);
+    });
+  }
+
+  if (el.safMarketList) {
+    const youthCards = saf.youthPool.map((p) => {
+      const cost = Math.floor(5000000 + p.potential * 120000);
+      return `
+        <div class="card">
+          <div class="title">Base: ${p.age} anos | potencial ${p.potential}</div>
+          <div class="meta">Investir ${formatMoney(cost)} para promover ao elenco</div>
+          <button class="btn" data-act="youth" data-id="${p.id}" ${state.money < cost ? "disabled" : ""}>Desenvolver e promover</button>
+        </div>
+      `;
+    }).join("");
+    el.safMarketList.innerHTML = `
+      <div class="card">
+        <div class="title">Mercado de atletas</div>
+        <div class="meta">Elenco: ${saf.roster.length} atleta(s)</div>
+        <div class="btn-row">
+          <button class="btn" data-act="prospect">Comprar promessa</button>
+          <button class="btn alt" data-act="media">Contratar midiatico</button>
+        </div>
+        <button class="btn alt" data-act="sell">Aceitar melhor proposta</button>
+      </div>
+      ${youthCards || `<div class="mini">Nenhum jovem disponivel na base neste momento.</div>`}
+    `;
+    el.safMarketList.querySelector('[data-act="prospect"]')?.addEventListener("click", safBuyProspect);
+    el.safMarketList.querySelector('[data-act="media"]')?.addEventListener("click", safBuyMediaPlayer);
+    el.safMarketList.querySelector('[data-act="sell"]')?.addEventListener("click", safSellBestOffer);
+    el.safMarketList.querySelectorAll('[data-act="youth"]').forEach((btn) => {
+      btn.addEventListener("click", () => safInvestInYouth(String(btn.dataset.id || "")));
+    });
+  }
+
+  if (el.safFinanceList) {
+    const share10 = Math.floor(saf.valuation * 0.1 * 0.98);
+    const share40 = Math.floor(saf.valuation * 0.4 * 0.98);
+    el.safFinanceList.innerHTML = `
+      <div class="card">
+        <div class="title">Receitas e dividas do clube</div>
+        <div class="meta">Bilheteria/patrocinio/TV entram mensalmente no caixa principal.</div>
+        <div class="meta">Divida SAF atual: ${formatMoney(saf.debt)}</div>
+        <div class="btn-row">
+          <button class="btn" data-act="loan">Pegar emprestimo SAF</button>
+          <button class="btn alt" data-act="sell10">Vender 10% (${formatMoney(share10)})</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn alt" data-act="sell40">Vender 40% (${formatMoney(share40)})</button>
+          <button class="btn" data-act="ipo" ${saf.investors.ipo ? "disabled" : ""}>Abrir capital (IPO)</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" data-act="arab" ${saf.investors.arab ? "disabled" : ""}>Atrair investidor arabe</button>
+          <button class="btn alt" data-act="us" ${saf.investors.us ? "disabled" : ""}>Atrair investidor americano</button>
+        </div>
+      </div>
+    `;
+    el.safFinanceList.querySelector('[data-act="loan"]')?.addEventListener("click", safTakeLoan);
+    el.safFinanceList.querySelector('[data-act="sell10"]')?.addEventListener("click", () => safSellShare(10));
+    el.safFinanceList.querySelector('[data-act="sell40"]')?.addEventListener("click", () => safSellShare(40));
+    el.safFinanceList.querySelector('[data-act="ipo"]')?.addEventListener("click", safOpenIpo);
+    el.safFinanceList.querySelector('[data-act="arab"]')?.addEventListener("click", () => safAttractInvestor("arab"));
+    el.safFinanceList.querySelector('[data-act="us"]')?.addEventListener("click", () => safAttractInvestor("us"));
+  }
+
+  if (el.safExpansionList) {
+    const branchCost = Math.floor(Math.max(220000000, saf.valuation * 0.2));
+    const satCost = Math.floor(140000000 + saf.networkClubs * 120000000);
+    el.safExpansionList.innerHTML = `
+      <div class="card">
+        <div class="title">Rede internacional de clubes</div>
+        <div class="meta">Filial Europa: ${saf.europeBranch ? "Ativa" : "Inativa"} | Clubes no grupo: ${1 + saf.networkClubs}</div>
+        <div class="btn-row">
+          <button class="btn" data-act="branch" ${saf.europeBranch || state.money < branchCost ? "disabled" : ""}>Criar filial na Europa (${formatMoney(branchCost)})</button>
+          <button class="btn alt" data-act="sat" ${saf.networkClubs >= 2 || state.money < satCost ? "disabled" : ""}>Comprar clube satelite (${formatMoney(satCost)})</button>
+        </div>
+      </div>
+    `;
+    el.safExpansionList.querySelector('[data-act="branch"]')?.addEventListener("click", safCreateEuropeBranch);
+    el.safExpansionList.querySelector('[data-act="sat"]')?.addEventListener("click", safBuySatelliteClub);
+  }
+
+  if (el.safCompetitionsList) {
+    const canAct = safCompetitionActionAvailable();
+    const comp = saf.competitions;
+    const liga = comp.league;
+    const continentalLabel = saf.region === "Europa" ? "Champions" : "Libertadores";
+    const libOn = comp.libertadores.qualified && comp.libertadores.alive && !comp.libertadores.finished;
+    const copaOn = saf.region === "Brasil" && comp.copa.alive && !comp.copa.finished;
+    const ligaOn = !liga.finished;
+    const nextCopa = comp.copa.phases[Math.min(comp.copa.phase, comp.copa.phases.length - 1)] || "Encerrada";
+    const nextLib = comp.libertadores.phases[Math.min(comp.libertadores.phase, comp.libertadores.phases.length - 1)] || "Encerrada";
+    el.safCompetitionsList.innerHTML = `
+      <div class="card">
+        <div class="title">Tabela: ${escapeHtml(liga.name)}</div>
+        <div class="meta">Rodadas: ${liga.roundsPlayed}/${liga.roundsTotal} | Pontos: ${liga.points} | Posicao: ${liga.position}o</div>
+        <div class="meta">Zona: ${saf.region === "Brasil" ? (String(liga.tier || "A") === "A" ? "G6 classifica Libertadores | Z4 rebaixa" : String(liga.tier || "A") === "B" ? "G4 sobe Serie A | Z4 cai Serie C" : "G4 sobe Serie B") : "Liga europeia sem rebaixamento no modo atual"}</div>
+        <div class="meta">V: ${liga.wins} | E: ${liga.draws} | D: ${liga.losses} | GP: ${liga.goalsFor} | GC: ${liga.goalsAgainst}</div>
+        <button class="btn" data-act="league" ${!canAct || !ligaOn ? "disabled" : ""}>Jogar rodada (pontos corridos)</button>
+      </div>
+      <div class="card">
+        <div class="title">Copa do Brasil</div>
+        <div class="meta">${copaOn ? `Proxima fase: ${nextCopa}` : comp.copa.finished ? "Encerrada na temporada" : "Nao disponivel"}</div>
+        <button class="btn" data-act="copa" ${!canAct || !copaOn ? "disabled" : ""}>Disputar fase da Copa do Brasil</button>
+      </div>
+      <div class="card">
+        <div class="title">${continentalLabel}</div>
+        <div class="meta">${comp.libertadores.qualified ? (libOn ? `Proxima fase: ${nextLib}` : "Encerrada na temporada") : "Sem classificacao nesta temporada"}</div>
+        <button class="btn" data-act="liberta" ${!canAct || !libOn ? "disabled" : ""}>Disputar fase da ${continentalLabel}</button>
+      </div>
+      <div class="mini">${canAct ? "Voce pode disputar 1 partida/fase neste mes." : "Acao de competicao deste mes ja utilizada."}</div>
+    `;
+    el.safCompetitionsList.querySelector('[data-act="league"]')?.addEventListener("click", safPlayLeagueRound);
+    el.safCompetitionsList.querySelector('[data-act="copa"]')?.addEventListener("click", () => safPlayCupMatch("copa"));
+    el.safCompetitionsList.querySelector('[data-act="liberta"]')?.addEventListener("click", () => safPlayCupMatch("libertadores"));
+  }
+
+  renderSafCalendar();
+
+  if (el.safTrophiesList) {
+    const trophies = saf.trophies || { brasileirao: 0, copaDoBrasil: 0, libertadores: 0, champions: 0 };
+    const history = Array.isArray(saf.trophyHistory) ? saf.trophyHistory : [];
+    const rows = history.length
+      ? history.map((h) => `<div class="row"><span>${escapeHtml(h.name)}</span><strong>Ano ${Math.max(1, safeInt(h.year, 1))}</strong></div>`).join("")
+      : `<div class="mini">Nenhum titulo conquistado ainda.</div>`;
+    el.safTrophiesList.innerHTML = `
+      <div class="card">
+        <div class="title">Sala de trofeus</div>
+        <div class="meta">Brasileirao: ${trophies.brasileirao} | Copa do Brasil: ${trophies.copaDoBrasil}</div>
+        <div class="meta">Libertadores: ${trophies.libertadores} | Champions: ${trophies.champions}</div>
+      </div>
+      <div class="card">
+        <div class="title">Historico recente</div>
+        ${rows}
+      </div>
+    `;
+  }
+
+  if (el.safEventList) {
+    el.safEventList.innerHTML = saf.eventFeed.length ? saf.eventFeed.join("") : `<div class="mini">Sem eventos recentes.</div>`;
+  }
+  if (el.safGoalLine) {
+    el.safGoalLine.textContent = `Objetivo: ${1 + saf.networkClubs}/3 clubes | Libertadores ${safeInt(saf.trophies?.libertadores, 0)} | Champions ${safeInt(saf.trophies?.champions, 0)} | Base Nv.${safeInt(saf.structures.base, 0)}`;
+  }
+}
+
 function getPatrimonio() {
   const aircraftBrl = state.aviation.fleet.reduce((sum, a) => sum + a.currentValueUsd * state.forex.usd.rate, 0);
   const aviationDebtBrl = state.aviation.debtUsd * state.forex.usd.rate;
-  return state.money + effectiveCompanyIncome() * 6 + totalParticipationValue() + garageTotalValue() + aircraftBrl + forexValueBrl("USD") + forexValueBrl("EUR") - state.tax.debt - aviationDebtBrl;
+  const savingsBalance = Math.max(0, safeNumber(state.savings?.balance, 0));
+  const cryptoBrl = cryptoTotalUsdValue() * state.forex.usd.rate;
+  const realEstateIncome = realEstateMonthlyIncome();
+  const realEstateValue = realEstatePortfolioValue();
+  return state.money + savingsBalance + cryptoBrl + (effectiveCompanyIncome() + farmMonthlyIncome() + realEstateIncome) * 6 + realEstateValue + totalParticipationValue() + garageTotalValue() + aircraftBrl + forexValueBrl("USD") + forexValueBrl("EUR") + safNetWorth() - state.tax.debt - aviationDebtBrl;
 }
 
 function xpToNext(level) {
@@ -982,7 +2594,15 @@ function addXp(amount) {
 }
 
 function calcUpgradeCost(u) {
-  return Math.floor(u.baseCost * Math.pow(1.7, u.level));
+  return Math.floor(u.baseCost * Math.pow(1.7, u.level) * clickUpgradeCostMultiplier());
+}
+
+function clickUpgradeCostMultiplier() {
+  const click = effectiveClickValue();
+  if (click >= 20000) return 2.5;
+  if (click >= 5000) return 1.8;
+  if (click >= 1000) return 1.35;
+  return 1;
 }
 
 function calcCompanyCost(c) {
@@ -1021,7 +2641,7 @@ function renderAdminPanel() {
 
 function adminNeedAuth() {
   if (adminSession.loggedIn) return true;
-  setStatus("Painel admin bloqueado. FaÃ§a login para usar.", "warn");
+  setStatus("Painel admin bloqueado. Faca login para usar.", "warn");
   renderAdminPanel();
   return false;
 }
@@ -1415,7 +3035,7 @@ function generateDailyMissions() {
       {
         id: "d_clicks",
         title: "Cliqueiro do dia",
-        desc: `FaÃ§a ${clicksTarget} cliques hoje`,
+        desc: `Faca ${clicksTarget} cliques hoje`,
         metric: "totalClicks",
         start: state.stats.totalClicks,
         target: clicksTarget,
@@ -1426,7 +3046,7 @@ function generateDailyMissions() {
       {
         id: "d_click_rev",
         title: "Receita ativa",
-        desc: `Ganhe ${formatMoney(clickRevTarget)} em cliques hoje`,
+        desc: `Faca ${clicksTarget} cliques hoje`,
         metric: "clickRevenue",
         start: state.stats.clickRevenue,
         target: clickRevTarget,
@@ -1605,14 +3225,14 @@ function renderWorldRanking() {
   const playerRank = roster.findIndex((x) => x.isPlayer) + 1;
   const top5 = roster.slice(0, 5);
 
-  el.worldRankingInfo.textContent = `Base Forbes 2025 â€¢ Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
+  el.worldRankingInfo.textContent = `Base Forbes 2025 | Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
   el.worldRankingList.innerHTML = "";
   top5.forEach((r, i) => {
     const row = document.createElement("div");
     row.className = "rank-item";
     const label = r.isPlayer ? `${escapeHtml(r.name)} (voce)` : escapeHtml(r.name);
     row.innerHTML = `
-      <div class="rank-head"><span>#${i + 1} ${label}</span><span>${formatMoney(r.wealthBrl)}</span></div>
+      <div class="rank-head"><span>#${i + 1} ${label}</span><span class="rank-value">${formatWealthBrl(r.wealthBrl)}</span></div>
       <div class="rank-meta">${r.isPlayer ? "Patrimonio atual no jogo" : "Fortuna de referencia convertida para BRL"}</div>
     `;
     el.worldRankingList.appendChild(row);
@@ -1620,7 +3240,9 @@ function renderWorldRanking() {
 }
 
 function buildAnnualCloseSummary() {
-  const total = state.yearlyRevenues.reduce((a, b) => a + b, 0);
+  const baseTotal = state.yearlyRevenues.reduce((a, b) => a + b, 0);
+  const clickTotal = Math.max(0, safeNumber(state.yearlyClickRevenue, 0));
+  const total = baseTotal + clickTotal;
   const avg = Math.max(0, total / 12);
   const rate = taxRateFor(avg);
   const yearlyTax = Math.floor(avg * rate);
@@ -1630,6 +3252,8 @@ function buildAnnualCloseSummary() {
   const debtDue = previousDebt + debtInterest;
   return {
     closeYear: state.year,
+    totalYearRevenue: total,
+    clickYearRevenue: clickTotal,
     avg,
     rate,
     yearlyTax,
@@ -1649,15 +3273,60 @@ function updateTaxOverlay() {
   if (!el.taxOverlay || !el.taxDueText) return;
   if (!hasPendingTaxDecision()) {
     el.taxOverlay.classList.remove("show");
+    if (el.taxDetails) el.taxDetails.textContent = "";
     return;
   }
-  const due = Math.max(0, safeNumber(state.tax.pendingYearClose.totalDue, 0));
+  const summary = state.tax.pendingYearClose;
+  const due = Math.max(0, safeNumber(summary.totalDue, 0));
+  const totalYear = Math.max(0, safeNumber(summary.totalYearRevenue, 0));
+  const clickYear = Math.max(0, safeNumber(summary.clickYearRevenue, 0));
+  const avg = Math.max(0, safeNumber(summary.avg, 0));
+  const rate = clamp(safeNumber(summary.rate, 0), 0, 1);
+  const yearlyTax = Math.max(0, safeNumber(summary.yearlyTax, 0));
+  const yearlyIpva = Math.max(0, safeNumber(summary.yearlyIpva, 0));
+  const previousDebt = Math.max(0, safeNumber(summary.previousDebt, 0));
+  const debtInterest = Math.max(0, safeNumber(summary.debtInterest, 0));
+  const debtDue = Math.max(0, safeNumber(summary.debtDue, previousDebt + debtInterest));
+  const cash = Math.max(0, safeNumber(state.money, 0));
+  const fxTotal = Math.max(0, forexValueBrl("USD") + forexValueBrl("EUR"));
+  const available = cash + fxTotal;
+  const deficit = Math.max(0, due - available);
+
   el.taxDueText.textContent = `Total devido: ${formatMoney(due)}`;
+  if (el.taxDetails) {
+    el.taxDetails.innerHTML = `
+      <div class="tax-grid">
+        <div class="tax-block">
+          <div class="tax-block-title">Resumo do ano</div>
+          <div class="tax-row"><span>Receita total</span><strong>${formatMoney(totalYear)}</strong></div>
+          <div class="tax-row"><span>Receita de cliques</span><strong>${formatMoney(clickYear)}</strong></div>
+          <div class="tax-row"><span>Media mensal</span><strong>${formatMoney(avg)}</strong></div>
+          <div class="tax-row"><span>Aliquota</span><strong>${(rate * 100).toFixed(1)}%</strong></div>
+        </div>
+        <div class="tax-block">
+          <div class="tax-block-title">Composicao da cobranca</div>
+          <div class="tax-row"><span>Imposto base</span><strong>${formatMoney(yearlyTax)}</strong></div>
+          <div class="tax-row"><span>IPVA anual</span><strong>${formatMoney(yearlyIpva)}</strong></div>
+          <div class="tax-row"><span>Divida anterior</span><strong>${formatMoney(previousDebt)}</strong></div>
+          <div class="tax-row"><span>Juros da divida</span><strong>${formatMoney(debtInterest)}</strong></div>
+          <div class="tax-row"><span>Total de divida antiga</span><strong>${formatMoney(debtDue)}</strong></div>
+        </div>
+        <div class="tax-block">
+          <div class="tax-block-title">Capacidade de pagamento</div>
+          <div class="tax-row"><span>Saldo em caixa</span><strong>${formatMoney(cash)}</strong></div>
+          <div class="tax-row"><span>Conta global (USD+EUR)</span><strong>${formatMoney(fxTotal)}</strong></div>
+          <div class="tax-row ${deficit > 0 ? "bad" : "ok"}"><span>Disponivel para quitar</span><strong>${formatMoney(available)}</strong></div>
+          <div class="tax-row ${deficit > 0 ? "bad" : "ok"}"><span>${deficit > 0 ? "Falta para quitar" : "Sobra apos quitar"}</span><strong>${formatMoney(deficit > 0 ? deficit : available - due)}</strong></div>
+        </div>
+      </div>
+    `;
+  }
   el.taxOverlay.classList.add("show");
 }
 
 function closeYear(settleNow) {
   settleAviationYearlyCharges();
+  const cattleRevenue = processFarmCattleSales();
   const summary = hasPendingTaxDecision() ? state.tax.pendingYearClose : buildAnnualCloseSummary();
   const {
     avg,
@@ -1721,6 +3390,9 @@ function closeYear(settleNow) {
   } else if (totalDue > 0) {
     logEvent(`Impostos/IPVA quitados. BRL ${formatMoney(paidFromCash)} + contas globais ${formatMoney(paidFromFx)}.`, "ok");
   }
+  if (cattleRevenue > 0) {
+    logEvent(`Venda anual de gado: +${formatMoney(cattleRevenue)}.`, "ok");
+  }
 
   evolveEconomyYearly();
   applyYearlyInflation();
@@ -1729,6 +3401,9 @@ function closeYear(settleNow) {
     "warn"
   );
   state.yearlyRevenues = [];
+  state.yearlyClickRevenue = 0;
+  state.yearlyClickRevenue = 0;
+  state.yearlyClickRevenue = 0;
   state.tax.pendingYearClose = null;
   state.month = 1;
   state.year += 1;
@@ -1739,19 +3414,26 @@ function closeYear(settleNow) {
 function processMonth() {
   updateParticipationMarketMonthly();
   updateCompanyValuationsMonthly();
-  const passive = effectiveCompanyIncome();
+  updateCryptoMarketMonthly();
+  const safMonthly = processSafMonth();
+  const savingsYield = processSavingsMonth();
+  const farmIncome = farmMonthlyIncome();
+  const realEstateIncome = realEstateMonthlyIncome();
+  const passive = effectiveCompanyIncome() + farmIncome + realEstateIncome;
   const opsCost = monthlyOperationalCost();
+  const cryptoOps = cryptoOpsMonthlyCost();
   const payroll = monthlyPayrollCost();
   state.money += passive;
-  state.money -= opsCost + payroll;
+  state.money -= opsCost + cryptoOps + payroll;
   const loanPaid = processLoanPayment();
   const contractPayout = processContractsMonth();
-  const totalCosts = opsCost + payroll + loanPaid;
-  const netPassive = passive - opsCost - payroll - loanPaid + contractPayout;
+  const totalCosts = opsCost + cryptoOps + payroll + loanPaid;
+  const netPassive = passive - opsCost - cryptoOps - payroll - loanPaid + contractPayout + safMonthly.net;
   if (state.money < 0) state.money = 0;
   state.monthRevenue += netPassive;
   state.stats.companyRevenue += passive;
-  state.stats.operationalCosts += opsCost;
+  state.stats.realEstateRevenue += realEstateIncome;
+  state.stats.operationalCosts += opsCost + cryptoOps;
   state.stats.payrollPaid += payroll;
   state.reputation = clamp(
     state.reputation + (netPassive >= 0 ? 0.3 : -0.8) + state.research.branding * 0.05 - (state.loan.monthsLeft > 0 ? 0.1 : 0),
@@ -1761,8 +3443,11 @@ function processMonth() {
 
   state.yearlyRevenues.push(state.monthRevenue);
   logEvent(
-    `Mes fechado: bruto ${formatMoney(passive)} | contratos ${formatMoney(contractPayout)} | custos ${formatMoney(totalCosts)} (ops ${formatMoney(opsCost)}, folha ${formatMoney(payroll)}, banco ${formatMoney(loanPaid)}) | liquido ${formatMoney(netPassive)}.`
+    `Mes fechado: bruto ${formatMoney(passive)} | agro ${formatMoney(farmIncome)} | imoveis ${formatMoney(realEstateIncome)} | contratos ${formatMoney(contractPayout)} | SAF ${formatMoney(safMonthly.net)} | custos ${formatMoney(totalCosts)} (ops ${formatMoney(opsCost)}, mineracao ${formatMoney(cryptoOps)}, folha ${formatMoney(payroll)}, banco ${formatMoney(loanPaid)}) | liquido ${formatMoney(netPassive)}.`
   );
+  if (savingsYield > 0) {
+    logEvent(`Poupanca: rendimento de ${formatMoney(savingsYield)} no mes (juros compostos).`, "ok");
+  }
   addXp(6 + Math.floor(passive / 1000));
   state.monthRevenue = 0;
 
@@ -1803,11 +3488,12 @@ function renderUpgrades() {
   el.upgradeList.innerHTML = "";
   upgrades.forEach((u) => {
     const cost = calcUpgradeCost(u);
+    const costMult = clickUpgradeCostMultiplier();
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
       <div class="title">${u.nome} (Nv. ${u.level})</div>
-      <div class="meta">+${formatMoney(u.add)} no clique base | Custo: ${formatMoney(cost)}</div>
+      <div class="meta">+${formatMoney(u.add)} no clique base | Custo: ${formatMoney(cost)}${costMult > 1 ? ` (x${costMult.toFixed(2)} por clique alto)` : ""}</div>
       <button class="btn" ${state.money < cost ? "disabled" : ""}>Comprar upgrade</button>
     `;
     card.querySelector("button").addEventListener("click", () => {
@@ -1842,18 +3528,18 @@ function renderCompanies() {
     card.className = "card";
     card.innerHTML = `
       <div class="title">${c.nome}</div>
-      <div class="meta">Setor: ${c.setor} (x${sectorMult.toFixed(2)}) | Unidades: ${c.owned} | Nivel: ${c.level}</div>
-      <div class="meta">Valuation estimado: ${formatMoney(valuation)} | Margem: ${marginCfg.label} (${(marginCfg.pct * 100).toFixed(2)}% ao mes)</div>
-      <div class="meta">Renda por unidade: ${formatMoney(perUnit)}/mes | Total: ${formatMoney(total)}/mes</div>
-      <div class="meta">Oferta justa por unidade: ${formatMoney(offer)}</div>
-      <div class="meta">Compra: ${formatMoney(buyCost)} | Upgrade: ${formatMoney(upgradeCost)}</div>
+      <div class="meta">Setor: ${escapeHtml(c.setor)} | Unidades: ${c.owned} | Nivel: ${c.level}</div>
+      <div class="meta">Valuation estimado: ${formatMoney(valuation)}</div>
+      <div class="meta">Ganho ao comprar: ${formatMoney(perUnit)}/mes por unidade</div>
+      <div class="meta">Preco compra: ${formatMoney(buyCost)} | Upgrade: ${formatMoney(upgradeCost)}</div>
+      <div class="meta">Oferta atual por unidade: ${c.owned > 0 ? formatMoney(offer) : "-"}</div>
       <div class="btn-row">
-        <button class="btn" data-act="buy" ${state.money < buyCost ? "disabled" : ""}>Comprar unidade</button>
-        <button class="btn alt" data-act="upg" ${state.money < upgradeCost || c.owned === 0 ? "disabled" : ""}>Upgrade empresa</button>
+        <button class="btn" data-act="buy" ${state.money < buyCost ? "disabled" : ""}>Comprar unidade (${formatMoney(buyCost)})</button>
+        <button class="btn alt" data-act="upg" ${state.money < upgradeCost || c.owned === 0 ? "disabled" : ""}>Upgrade (${formatMoney(upgradeCost)})</button>
       </div>
       <div class="btn-row">
         <button class="btn" data-act="margin">Ajustar margem (${marginCfg.label})</button>
-        <button class="btn alt" data-act="sell" ${c.owned <= 0 ? "disabled" : ""}>Vender 1 unidade</button>
+        <button class="btn alt" data-act="sell" ${c.owned <= 0 ? "disabled" : ""}>Vender 1 (${c.owned > 0 ? formatMoney(offer) : "-"})</button>
       </div>
     `;
     card.querySelector('[data-act="buy"]').addEventListener("click", () => {
@@ -1891,10 +3577,62 @@ function renderCompanies() {
     card.querySelector('[data-act="margin"]').addEventListener("click", () => {
       c.salaryTier = (marginIdx + 1) % COMPANY_MARGIN_OPTIONS.length;
       const next = COMPANY_MARGIN_OPTIONS[c.salaryTier];
-      logEvent(`Margem da ${c.nome} ajustada para ${next.label} (${(next.pct * 100).toFixed(2)}% ao mes).`);
+      logEvent(`Margem da ${c.nome} ajustada para ${next.label} (x${next.mult.toFixed(2)}).`);
       render();
     });
     el.companyList.appendChild(card);
+  });
+}
+
+function renderRealEstate() {
+  if (!el.realEstateList || !el.realEstateSummary) return;
+  const totalOwned = ownedRealEstateCount();
+  const portfolio = realEstatePortfolioValue();
+  const rental = realEstateMonthlyIncome();
+  el.realEstateSummary.textContent = `${totalOwned} imoveis | Valor ${formatMoney(portfolio)} | Aluguel ${formatMoney(rental)}/mes`;
+  el.realEstateList.innerHTML = "";
+
+  realEstateCatalog.forEach((item) => {
+    const owned = ownsRealEstate(item.id);
+    const personalUse = item.tipo === "casa" && isHousePersonalUse(item.id);
+    const rentValue = personalUse ? 0 : item.aluguelMensal;
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="title">${item.nome}</div>
+      <div class="meta">Tipo: ${item.tipo === "casa" ? "Casa" : "Predio"} | Local: ${escapeHtml(item.localizacao)}</div>
+      <div class="meta">Valor do imovel: ${formatMoney(item.valor)}</div>
+      <div class="meta">Aluguel mensal: ${formatMoney(rentValue)}${personalUse ? " (uso pessoal)" : ""}</div>
+      <div class="btn-row">
+        <button class="btn" data-act="buy" ${owned || state.money < item.valor ? "disabled" : ""}>${owned ? "Comprado" : `Comprar (${formatMoney(item.valor)})`}</button>
+        ${item.tipo === "casa"
+          ? `<button class="btn alt" data-act="use" ${!owned ? "disabled" : ""}>${personalUse ? "Colocar para alugar" : "Usar pessoalmente"}</button>`
+          : `<button class="btn alt" data-act="use" disabled>Predio sempre alugado</button>`}
+      </div>
+    `;
+
+    const buyBtn = card.querySelector('[data-act="buy"]');
+    buyBtn?.addEventListener("click", () => {
+      if (owned || state.money < item.valor) return;
+      state.money -= item.valor;
+      state.realEstate.owned[item.id] = true;
+      if (item.tipo === "casa") state.realEstate.personalUse[item.id] = false;
+      state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+      logEvent(`Imovel comprado: ${item.nome} em ${item.localizacao} por ${formatMoney(item.valor)}.`, "ok");
+      sfxBuy();
+      render();
+    });
+
+    const useBtn = card.querySelector('[data-act="use"]');
+    useBtn?.addEventListener("click", () => {
+      if (!owned || item.tipo !== "casa") return;
+      const next = !isHousePersonalUse(item.id);
+      state.realEstate.personalUse[item.id] = next;
+      logEvent(`${item.nome}: ${next ? "agora em uso pessoal (sem aluguel)." : "voltou para aluguel mensal."}`, "warn");
+      render();
+    });
+
+    el.realEstateList.appendChild(card);
   });
 }
 
@@ -2148,14 +3886,17 @@ function settleAviationYearlyCharges() {
 }
 
 function tripCostBrl(aircraft, route) {
-  const distance = route.km;
+  const oneWayKm = route.km;
+  const distance = oneWayKm * 2; // round-trip: ida e volta
   const cruiseHours = distance / aircraft.cruiseKmh;
   const flightHours = cruiseHours * 1.08;
   const baseOp = flightHours * aircraft.opCostUsdPerHour;
   const luxuryFactor = clamp(aircraft.originalPriceUsd / 15000000, 0.8, 4);
-  const routeFee = route.airportFeeUsd + (route.pais === "Brasil" ? 350 : 1500);
+  const routeFee = (route.airportFeeUsd + (route.pais === "Brasil" ? 350 : 1500)) * 2;
   const totalUsd = (baseOp + routeFee) * luxuryFactor;
   return {
+    oneWayKm,
+    roundTripKm: distance,
     flightHours,
     totalUsd,
     totalBrl: totalUsd * state.forex.usd.rate
@@ -2178,11 +3919,11 @@ function travelRoute(routeId) {
 
   state.money -= trip.totalBrl;
   state.stats.travelSpendBrl += trip.totalBrl;
-  state.stats.totalFlightKm += route.km;
+  state.stats.totalFlightKm += trip.roundTripKm;
   state.stats.totalFlightHours += trip.flightHours;
 
   aircraft.flightHours += trip.flightHours;
-  aircraft.totalKm += route.km;
+  aircraft.totalKm += trip.roundTripKm;
   const tripWear = clamp(0.002 + trip.flightHours * 0.00045, 0.002, 0.03);
   aircraft.currentValueUsd = Math.max(aircraft.originalPriceUsd * 0.25, aircraft.currentValueUsd * (1 - tripWear));
 
@@ -2195,7 +3936,7 @@ function travelRoute(routeId) {
   state.aviation.selectedAircraftId = aircraft.id;
 
   logEvent(
-    `Viagem privada: Sao Paulo -> ${route.destino} (${route.km} km) com ${aircraft.nome}. Custo ${formatMoney(trip.totalBrl)}.`,
+    `Viagem privada (ida e volta): Sao Paulo -> ${route.destino} (${trip.roundTripKm.toLocaleString("pt-BR")} km) com ${aircraft.nome}. Custo ${formatMoney(trip.totalBrl)}.`,
     "warn"
   );
   render();
@@ -2268,7 +4009,7 @@ function renderTravel() {
 
   const selected = state.aviation.fleet.find((a) => a.id === safeInt(el.travelAircraftSelect.value, 0)) || state.aviation.fleet[0];
   if (selected) state.aviation.selectedAircraftId = selected.id;
-  el.travelAircraftInfo.textContent = selected ? `${selected.nome} â€¢ ${selected.flightHours.toFixed(1)}h voo` : "Sem aviao";
+  el.travelAircraftInfo.textContent = selected ? `${selected.nome} | ${selected.flightHours.toFixed(1)}h voo` : "Sem aviao";
   el.travelStats.textContent = `Gasto total em viagens: ${formatMoney(state.stats.travelSpendBrl)} | Distancia: ${Math.floor(state.stats.totalFlightKm).toLocaleString("pt-BR")} km`;
 
   el.routeList.innerHTML = "";
@@ -2278,13 +4019,196 @@ function renderTravel() {
     card.className = "card";
     card.innerHTML = `
       <div class="title">${escapeHtml(route.origem)} -> ${escapeHtml(route.destino)} (${escapeHtml(route.pais)})</div>
-      <div class="meta">Distancia: ${route.km.toLocaleString("pt-BR")} km</div>
+      <div class="meta">Distancia ida e volta: ${trip.roundTripKm.toLocaleString("pt-BR")} km (ida ${route.km.toLocaleString("pt-BR")} km)</div>
       <div class="meta">Estimativa de custo: ${formatMoney(trip.totalBrl)} (debita BRL da conta pessoal)</div>
       <button class="btn" ${state.money < trip.totalBrl ? "disabled" : ""}>Viajar nesta rota</button>
     `;
     card.querySelector("button").addEventListener("click", () => travelRoute(route.id));
     el.routeList.appendChild(card);
   });
+}
+
+function buyCryptoSpace(spaceId) {
+  const space = cryptoSpaceById(spaceId);
+  if (!space) return;
+  const owned = Math.max(0, safeInt(state.crypto.spaces[space.id], 0));
+  const cost = Math.floor(space.baseCost * Math.pow(1.26, owned));
+  if (state.money < cost) {
+    setStatus(`Saldo insuficiente para ${space.nome}.`, "bad");
+    return;
+  }
+  state.money -= cost;
+  state.crypto.spaces[space.id] = owned + 1;
+  state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
+  addXp(8);
+  logEvent(`Novo espaco de mineracao adquirido: ${space.nome}. Capacidade +${space.capacityUnits * GPU_CAPACITY_PER_UNIT} GPUs.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function buyCryptoGpu(gpuId) {
+  const gpu = cryptoGpuById(gpuId);
+  if (!gpu) return;
+  const totalGpus = totalCryptoGpus();
+  const capacity = totalCryptoCapacity();
+  if (capacity <= 0) {
+    setStatus("Compre um espaco de mineracao antes de comprar GPUs.", "warn");
+    return;
+  }
+  if (totalGpus >= capacity) {
+    setStatus("Capacidade lotada. Compre mais espaco para instalar novas placas.", "warn");
+    return;
+  }
+  if (state.money < gpu.price) {
+    setStatus(`Saldo insuficiente para ${gpu.nome}.`, "bad");
+    return;
+  }
+  state.money -= gpu.price;
+  state.crypto.gpus[gpu.id] = Math.max(0, safeInt(state.crypto.gpus[gpu.id], 0)) + 1;
+  addXp(4);
+  logEvent(`GPU comprada: ${gpu.nome} (+${gpu.hashMh} MH/s).`, "ok");
+  sfxBuy();
+  render();
+}
+
+function sellCryptoGpu(gpuId) {
+  const gpu = cryptoGpuById(gpuId);
+  if (!gpu) return;
+  const qty = Math.max(0, safeInt(state.crypto.gpus[gpu.id], 0));
+  if (qty <= 0) return;
+  const sellPrice = cryptoGpuSellPrice(gpu);
+  state.crypto.gpus[gpu.id] = qty - 1;
+  state.money += sellPrice;
+  state.monthRevenue += sellPrice;
+  logEvent(`GPU vendida: ${gpu.nome} por ${formatMoney(sellPrice)}.`, "warn");
+  sfxBuy();
+  render();
+}
+
+function convertCryptoToUsd(coinId) {
+  const coin = cryptoCoinById(coinId);
+  const qty = Math.max(0, safeNumber(state.crypto.coins[coin.id], 0));
+  if (qty <= 0) {
+    setStatus(`Sem saldo em ${coin.id} para converter.`, "warn");
+    return;
+  }
+  const price = Math.max(1, safeNumber(state.crypto.market[coin.id], coin.priceUsd));
+  const usd = qty * price;
+  state.crypto.coins[coin.id] = 0;
+  state.forex.usd.balance += usd;
+  logEvent(`Conversao ${coin.id}: ${formatCoinAmount(qty)} ${coin.id} -> ${formatUsd(usd)} em conta USD.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function convertAllCryptoToUsd() {
+  let totalUsd = 0;
+  cryptoCoinsCatalog.forEach((coin) => {
+    const qty = Math.max(0, safeNumber(state.crypto.coins[coin.id], 0));
+    if (qty <= 0) return;
+    const price = Math.max(1, safeNumber(state.crypto.market[coin.id], coin.priceUsd));
+    totalUsd += qty * price;
+    state.crypto.coins[coin.id] = 0;
+  });
+  if (totalUsd <= 0) {
+    setStatus("Carteira cripto vazia.", "warn");
+    return;
+  }
+  state.forex.usd.balance += totalUsd;
+  logEvent(`Carteira cripto convertida integralmente: +${formatUsd(totalUsd)} na conta USD.`, "ok");
+  sfxBuy();
+  render();
+}
+
+function renderCrypto() {
+  if (!el.cryptoSummary) return;
+
+  if (el.cryptoCoinSelect && !el.cryptoCoinSelect.options.length) {
+    el.cryptoCoinSelect.innerHTML = "";
+    cryptoCoinsCatalog.forEach((coin) => {
+      const opt = document.createElement("option");
+      opt.value = coin.id;
+      opt.textContent = `${coin.id} (${coin.nome})`;
+      el.cryptoCoinSelect.appendChild(opt);
+    });
+  }
+
+  const selected = cryptoCoinById(state.crypto.selectedCoinId);
+  if (el.cryptoCoinSelect) {
+    el.cryptoCoinSelect.value = selected.id;
+  }
+
+  const used = totalCryptoGpus();
+  const capacity = totalCryptoCapacity();
+  const hashMh = totalCryptoHashMh();
+  const rate = cryptoMiningRatePerSecond(selected.id);
+  const walletUsd = cryptoTotalUsdValue();
+  const opsMonthly = cryptoOpsMonthlyCost();
+
+  el.cryptoSummary.textContent = `${used} placas | ${used}/${capacity} vagas`;
+  if (el.cryptoCoinPrice) el.cryptoCoinPrice.textContent = `${selected.id} @ ${formatUsd(state.crypto.market[selected.id])}`;
+  if (el.cryptoPowerLine) el.cryptoPowerLine.textContent = `${hashMh.toLocaleString("pt-BR")} MH/s`;
+  if (el.cryptoMineRate) el.cryptoMineRate.textContent = `${formatCoinAmount(rate)} ${selected.id}/s`;
+  if (el.cryptoWalletSummary) el.cryptoWalletSummary.textContent = `${formatUsd(walletUsd)} (equivalente em USD)`;
+  if (el.cryptoOpsCost) el.cryptoOpsCost.textContent = formatMoney(opsMonthly);
+
+  if (el.cryptoSpaceList) {
+    el.cryptoSpaceList.innerHTML = "";
+    cryptoMiningSpacesCatalog.forEach((space) => {
+      const owned = Math.max(0, safeInt(state.crypto.spaces[space.id], 0));
+      const cost = Math.floor(space.baseCost * Math.pow(1.26, owned));
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${space.nome} (x${owned})</div>
+        <div class="meta">Capacidade: +${space.capacityUnits * GPU_CAPACITY_PER_UNIT} placas | Taxa mensal: ${formatMoney(space.powerFeeMonthly)}</div>
+        <button class="btn" ${state.money < cost ? "disabled" : ""}>Comprar espaco (${formatMoney(cost)})</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => buyCryptoSpace(space.id));
+      el.cryptoSpaceList.appendChild(card);
+    });
+  }
+
+  if (el.cryptoGpuList) {
+    el.cryptoGpuList.innerHTML = "";
+    cryptoGpuCatalog.forEach((gpu) => {
+      const qty = Math.max(0, safeInt(state.crypto.gpus[gpu.id], 0));
+      const sell = cryptoGpuSellPrice(gpu);
+      const atCapacity = capacity > 0 && used >= capacity;
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${gpu.nome}</div>
+        <div class="meta">Hash: ${gpu.hashMh} MH/s | Consumo: ${gpu.watts}W | Estoque: ${qty}</div>
+        <div class="btn-row">
+          <button class="btn" ${state.money < gpu.price || capacity <= 0 || atCapacity ? "disabled" : ""}>Comprar (${formatMoney(gpu.price)})</button>
+          <button class="btn alt" ${qty <= 0 ? "disabled" : ""}>Vender (${formatMoney(sell)})</button>
+        </div>
+      `;
+      const [buyBtn, sellBtn] = card.querySelectorAll("button");
+      buyBtn.addEventListener("click", () => buyCryptoGpu(gpu.id));
+      sellBtn.addEventListener("click", () => sellCryptoGpu(gpu.id));
+      el.cryptoGpuList.appendChild(card);
+    });
+  }
+
+  if (el.cryptoConvertList) {
+    el.cryptoConvertList.innerHTML = "";
+    cryptoCoinsCatalog.forEach((coin) => {
+      const qty = Math.max(0, safeNumber(state.crypto.coins[coin.id], 0));
+      const usdValue = qty * Math.max(1, safeNumber(state.crypto.market[coin.id], coin.priceUsd));
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="title">${coin.nome} (${coin.id})</div>
+        <div class="meta">Saldo: ${formatCoinAmount(qty)} ${coin.id}</div>
+        <div class="meta">Valor estimado: ${formatUsd(usdValue)}</div>
+        <button class="btn alt" ${qty <= 0 ? "disabled" : ""}>Converter para USD</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => convertCryptoToUsd(coin.id));
+      el.cryptoConvertList.appendChild(card);
+    });
+  }
 }
 
 function renderPassport() {
@@ -2329,10 +4253,17 @@ function resetCharacter() {
   state.month = 1;
   state.secondsToMonth = MONTH_SECONDS;
   state.yearlyRevenues = [];
+  state.yearlyClickRevenue = 0;
   state.level = 1;
   state.xp = 0;
   state.reputation = 50;
   state.prestigePoints = 0;
+  state.clickCombo = { streak: 0, best: 0, lastTs: 0 };
+  state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+  state.realEstate = { owned: {}, personalUse: {} };
+  farmInvestments.forEach((inv) => {
+    state.farm.investments[inv.id] = 0;
+  });
   state.research = { automation: 0, hr: 0, branding: 0 };
   state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
   state.dailyMissions = { dateKey: "", list: [] };
@@ -2342,6 +4273,7 @@ function resetCharacter() {
   state.participations = { holdings: {}, market: {} };
   state.aviation = { fleet: [], nextAircraftId: 1, accruedUsd: 0, debtUsd: 0, selectedAircraftId: 0 };
   state.passport = { countries: {}, totalTrips: 0 };
+  state.saf = defaultSafState();
   state.worldWealth = {};
   state.garage = [];
   state.nextCarId = 1;
@@ -2349,6 +4281,8 @@ function resetCharacter() {
     usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
     eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
   };
+  state.crypto = defaultCryptoState();
+  state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   state.stats = {
     totalClicks: 0,
     clickRevenue: 0,
@@ -2358,6 +4292,7 @@ function resetCharacter() {
     taxesPaid: 0,
     interestPaid: 0,
     contractRevenue: 0,
+    realEstateRevenue: 0,
     dailyRevenue: 0,
     achievementRevenue: 0,
     loanReceived: 0,
@@ -2439,6 +4374,7 @@ function doPrestige() {
   state.prestigePoints += ganho;
   state.money = 0;
   state.clickValue = 10;
+  state.clickCombo = { streak: 0, best: 0, lastTs: 0 };
   state.monthRevenue = 0;
   state.year = 1;
   state.month = 1;
@@ -2463,38 +4399,63 @@ function doPrestige() {
   state.nextCarId = 1;
   state.aviation = { fleet: [], nextAircraftId: 1, accruedUsd: 0, debtUsd: 0, selectedAircraftId: 0 };
   state.passport = { countries: {}, totalTrips: 0 };
+  state.saf = defaultSafState();
   state.forex.usd.balance = 0;
   state.forex.eur.balance = 0;
+  state.crypto = defaultCryptoState();
+  state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
   state.reputation = clamp(state.reputation + 4, 0, 100);
+  state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+  state.realEstate = { owned: {}, personalUse: {} };
+  farmInvestments.forEach((inv) => {
+    state.farm.investments[inv.id] = 0;
+  });
   generateDailyMissions();
 
-  logEvent(`Prestigio realizado: +${ganho} ponto(s). BÃ´nus permanente aumentado.`, "warn");
+  logEvent(`Prestigio realizado: +${ganho} ponto(s). Bonus permanente aumentado.`, "warn");
   setStatus("Prestigio realizado com sucesso.", "ok");
   sfxAchievement();
   render();
 }
 
 function render() {
-  ensureDailyMissionsFresh();
-  ensureContractOffers();
-  checkAchievements();
+  try {
+    ensureDailyMissionsFresh();
+    ensureContractOffers();
+    checkAchievements();
 
   const clickGain = effectiveClickValue();
+  const comboMult = currentClickComboMultiplier();
+  const comboStreak = safeInt(state.clickCombo?.streak, 0);
   const companyIncome = effectiveCompanyIncome();
   const participationIncome = totalParticipationIncome();
+  const farmIncome = farmMonthlyIncome();
+  const realEstateIncome = realEstateMonthlyIncome();
+  const safNetMonth = safeNumber(state.saf?.lastMonthly?.net, 0);
   const opsCost = monthlyOperationalCost();
+  const cryptoOps = cryptoOpsMonthlyCost();
   const payrollCost = monthlyPayrollCost();
   const installment = totalMonthlyInstallment();
+  const fixedAnnual = fixedAnnualCosts();
   const mult = getIncomeMultiplier();
 
   el.money.textContent = formatMoney(state.money);
-  el.dateLine.textContent = `Ano ${state.year} â€¢ Mes ${state.month}`;
+  el.dateLine.textContent = `Ano ${state.year} | Mes ${state.month}`;
   el.countdown.textContent = hasPendingTaxDecision() ? "Aguardando decisao de imposto anual" : `Prox. mes em ${state.secondsToMonth}s`;
-  el.clickLine.textContent = `Valor por clique: ${formatMoney(clickGain)} (base ${formatMoney(state.clickValue)})`;
-  el.incomeLine.textContent = `Renda mensal empresas/participacoes: ${formatMoney(companyIncome)} (participacoes ${formatMoney(participationIncome)})`;
+  el.clickLine.textContent = `Valor por clique: ${formatMoney(clickGain)} (base ${formatMoney(state.clickValue)} | combo x${comboMult.toFixed(2)})`;
+  if (el.comboText) el.comboText.textContent = `Combo x${comboMult.toFixed(2)}`;
+  if (el.comboStreak) el.comboStreak.textContent = `${comboStreak} cliques`;
+  if (el.comboBar) {
+    const pct = Math.min(100, (comboStreak / 30) * 100);
+    el.comboBar.style.width = `${pct}%`;
+  }
+  el.incomeLine.textContent = `Renda mensal empresas/participacoes/agro/imoveis/SAF: ${formatMoney(companyIncome + farmIncome + realEstateIncome + safNetMonth)} (participacoes ${formatMoney(participationIncome)} | agro ${formatMoney(farmIncome)} | imoveis ${formatMoney(realEstateIncome)} | SAF ${formatMoney(safNetMonth)})`;
   el.econLine.textContent = `Economia: inflacao ${(state.economy.inflation * 100).toFixed(1)}% | juros ${(state.economy.interest * 100).toFixed(1)}% | confianca ${(state.economy.confidence * 100).toFixed(0)}%`;
-  el.expenseLine.textContent = `Custos: ops ${formatMoney(opsCost)} + folha ${formatMoney(payrollCost)} + banco ${formatMoney(installment)}`;
+  el.expenseLine.textContent = `Custos: ops ${formatMoney(opsCost)} + mineracao ${formatMoney(cryptoOps)} + folha ${formatMoney(payrollCost)} + banco ${formatMoney(installment)}`;
+  if (el.fixedCostLine) {
+    el.fixedCostLine.textContent = `Gastos fixos anuais: ${formatMoney(fixedAnnual)}`;
+  }
   el.monthRevenue.textContent = formatMoney(state.monthRevenue);
   el.clickBtn.textContent = `CLICAR (+${formatMoney(clickGain)})`;
   el.profilePreview.textContent = profileText();
@@ -2524,9 +4485,13 @@ function render() {
   const usdBrl = forexValueBrl("USD");
   const eurBrl = forexValueBrl("EUR");
   const fxTotal = usdBrl + eurBrl;
+  const savingsBalance = Math.max(0, safeNumber(state.savings?.balance, 0));
+  const savingsLastYield = Math.max(0, safeNumber(state.savings?.lastYield, 0));
 
   el.bankCash.textContent = formatMoney(state.money);
   el.bankTaxDebt.textContent = formatMoney(state.tax.debt);
+  if (el.savingsBalance) el.savingsBalance.textContent = formatMoney(savingsBalance);
+  if (el.savingsMonthlyYield) el.savingsMonthlyYield.textContent = formatMoney(savingsLastYield);
   el.usdRate.textContent = `${formatMoney(state.forex.usd.rate)} por USD`;
   el.eurRate.textContent = `${formatMoney(state.forex.eur.rate)} por EUR`;
   el.usdWallet.textContent = formatUsd(state.forex.usd.balance);
@@ -2535,7 +4500,7 @@ function render() {
   el.eurWalletBrl.textContent = formatMoney(eurBrl);
   el.fxTotalBrl.textContent = formatMoney(fxTotal);
 
-  el.workforceLine.textContent = `Modelo simplificado: lucro por valuation + margem | Custos fixos: ${formatMoney(opsCost)}/mes`;
+  el.workforceLine.textContent = `Modelo simples: renda base + nivel + margem | Custos operacionais baixos: ${formatMoney(opsCost)}/mes`;
   if (state.loan.monthsLeft > 0) {
     el.loanStatus.textContent = `${state.loan.label}: saldo ${formatMoney(state.loan.principalRemaining)} | parcela ${formatMoney(state.loan.installment)} | ${state.loan.monthsLeft} mes(es) restantes`;
   } else {
@@ -2547,6 +4512,8 @@ function render() {
   el.loanLargeBtn.disabled = loanActive;
   el.usdBuyBtn.disabled = state.money < 1;
   el.eurBuyBtn.disabled = state.money < 1;
+  if (el.savingsDepositBtn) el.savingsDepositBtn.disabled = state.money < 1;
+  if (el.savingsWithdrawBtn) el.savingsWithdrawBtn.disabled = savingsBalance < 1;
   el.usdSellAllBtn.disabled = state.forex.usd.balance <= 0;
   el.eurSellAllBtn.disabled = state.forex.eur.balance <= 0;
 
@@ -2567,21 +4534,32 @@ function render() {
   renderContracts();
   renderUpgrades();
   renderCompanies();
+  renderRealEstate();
   renderParticipations();
   renderCarShop();
+  renderFarm();
   renderAircraftShop();
   renderTravel();
+  renderCrypto();
   renderPassport();
+  renderSaf();
   renderAchievements();
   renderDailyMissions();
   renderRanking();
   renderWorldRanking();
-  el.eventLog.innerHTML = state.logs.join("");
+    el.eventLog.innerHTML = state.logs.join("");
+  } catch (err) {
+    console.error("Render error:", err);
+    if (el.statusMsg) {
+      el.statusMsg.className = "mini bad";
+      el.statusMsg.textContent = `Erro no jogo: ${err?.message || err}`;
+    }
+  }
 }
 
 function serializeState() {
   return {
-    version: 12,
+    version: 18,
     player: state.player,
     money: state.money,
     clickValue: state.clickValue,
@@ -2590,10 +4568,12 @@ function serializeState() {
     month: state.month,
     secondsToMonth: state.secondsToMonth,
     yearlyRevenues: state.yearlyRevenues,
+    yearlyClickRevenue: state.yearlyClickRevenue,
     level: state.level,
     xp: state.xp,
     reputation: state.reputation,
     prestigePoints: state.prestigePoints,
+    clickCombo: state.clickCombo,
     research: state.research,
     contracts: state.contracts,
     dailyMissions: state.dailyMissions,
@@ -2603,10 +4583,15 @@ function serializeState() {
     participations: state.participations,
     aviation: state.aviation,
     passport: state.passport,
+    saf: state.saf,
     worldWealth: state.worldWealth,
     garage: state.garage,
     nextCarId: state.nextCarId,
     forex: state.forex,
+    crypto: state.crypto,
+    savings: state.savings,
+    farm: state.farm,
+    realEstate: state.realEstate,
     stats: state.stats,
     achievementsUnlocked: state.achievementsUnlocked,
     upgrades: upgrades.map((u) => ({ id: u.id, level: u.level })),
@@ -2616,7 +4601,7 @@ function serializeState() {
 }
 
 function applySave(data) {
-  if (!data || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(safeInt(data.version, 0))) throw new Error("Save invalido");
+  if (!data || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(safeInt(data.version, 0))) throw new Error("Save invalido");
 
   if (data.player && typeof data.player === "object") {
     state.player = {
@@ -2637,10 +4622,66 @@ function applySave(data) {
   state.yearlyRevenues = Array.isArray(data.yearlyRevenues)
     ? data.yearlyRevenues.map((v) => safeNumber(v, 0)).filter(Number.isFinite)
     : [];
+  state.yearlyClickRevenue = Math.max(0, safeNumber(data.yearlyClickRevenue, 0));
   state.level = Math.max(1, safeInt(data.level, 1));
   state.xp = Math.max(0, safeInt(data.xp, 0));
   state.reputation = clamp(safeNumber(data.reputation, 50), 0, 100);
   state.prestigePoints = Math.max(0, safeInt(data.prestigePoints, 0));
+  if (data.clickCombo && typeof data.clickCombo === "object") {
+    state.clickCombo = {
+      streak: Math.max(0, safeInt(data.clickCombo.streak, 0)),
+      best: Math.max(0, safeInt(data.clickCombo.best, 0)),
+      lastTs: Math.max(0, safeInt(data.clickCombo.lastTs, 0))
+    };
+  } else {
+    state.clickCombo = { streak: 0, best: 0, lastTs: 0 };
+  }
+
+  if (data.farm && typeof data.farm === "object") {
+    const investments = data.farm.investments && typeof data.farm.investments === "object" ? data.farm.investments : {};
+    state.farm = {
+      name: String(data.farm.name || "").trim().slice(0, 32),
+      hectares: Math.max(0, safeInt(data.farm.hectares, 0)),
+      investments: {},
+      cattle: Array.isArray(data.farm.cattle)
+        ? data.farm.cattle.map((c) => ({
+          id: Math.max(1, safeInt(c?.id, 1)),
+          cattleId: String(c?.cattleId || ""),
+          nome: String(c?.nome || "Gado"),
+          qty: Math.max(1, safeInt(c?.qty, 1)),
+          buyPrice: Math.max(1, safeNumber(c?.buyPrice, 1)),
+          sellPrice: Math.max(1, safeNumber(c?.sellPrice, 1))
+        })).filter((c) => c.cattleId && c.qty > 0).slice(0, 200)
+        : [],
+      nextCattleId: Math.max(1, safeInt(data.farm.nextCattleId, 1))
+    };
+    farmInvestments.forEach((inv) => {
+      state.farm.investments[inv.id] = Math.max(0, safeInt(investments[inv.id], 0));
+    });
+  } else {
+    state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+    farmInvestments.forEach((inv) => {
+      state.farm.investments[inv.id] = 0;
+    });
+  }
+  const maxCattleId = state.farm.cattle.reduce((max, c) => Math.max(max, c.id), 0);
+  state.farm.nextCattleId = Math.max(maxCattleId + 1, state.farm.nextCattleId || 1);
+
+  if (data.realEstate && typeof data.realEstate === "object") {
+    const owned = data.realEstate.owned && typeof data.realEstate.owned === "object" ? data.realEstate.owned : {};
+    const personal = data.realEstate.personalUse && typeof data.realEstate.personalUse === "object" ? data.realEstate.personalUse : {};
+    state.realEstate = { owned: {}, personalUse: {} };
+    realEstateCatalog.forEach((item) => {
+      state.realEstate.owned[item.id] = Boolean(owned[item.id]);
+      state.realEstate.personalUse[item.id] = item.tipo === "casa" ? Boolean(personal[item.id]) : false;
+    });
+  } else {
+    state.realEstate = { owned: {}, personalUse: {} };
+    realEstateCatalog.forEach((item) => {
+      state.realEstate.owned[item.id] = false;
+      state.realEstate.personalUse[item.id] = false;
+    });
+  }
 
   const savedStats = data.stats && typeof data.stats === "object" ? data.stats : {};
   state.stats = {
@@ -2652,6 +4693,7 @@ function applySave(data) {
     taxesPaid: Math.max(0, safeNumber(savedStats.taxesPaid, 0)),
     interestPaid: Math.max(0, safeNumber(savedStats.interestPaid, 0)),
     contractRevenue: Math.max(0, safeNumber(savedStats.contractRevenue, 0)),
+    realEstateRevenue: Math.max(0, safeNumber(savedStats.realEstateRevenue, 0)),
     dailyRevenue: Math.max(0, safeNumber(savedStats.dailyRevenue, 0)),
     achievementRevenue: Math.max(0, safeNumber(savedStats.achievementRevenue, 0)),
     loanReceived: Math.max(0, safeNumber(savedStats.loanReceived, 0)),
@@ -2769,6 +4811,7 @@ function applySave(data) {
     const pending = data.tax.pendingYearClose && typeof data.tax.pendingYearClose === "object"
       ? {
         closeYear: Math.max(1, safeInt(data.tax.pendingYearClose.closeYear, state.year)),
+        totalYearRevenue: Math.max(0, safeNumber(data.tax.pendingYearClose.totalYearRevenue, 0)),
         avg: Math.max(0, safeNumber(data.tax.pendingYearClose.avg, 0)),
         rate: clamp(safeNumber(data.tax.pendingYearClose.rate, 0), 0, 1),
         yearlyTax: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyTax, 0)),
@@ -2856,6 +4899,119 @@ function applySave(data) {
     state.passport = { countries: {}, totalTrips: 0 };
   }
 
+  if (data.saf && typeof data.saf === "object") {
+    const saved = data.saf;
+    const base = defaultSafState();
+    state.saf = {
+      ...base,
+      owned: Boolean(saved.owned),
+      profileId: String(saved.profileId || ""),
+      clubName: String(saved.clubName || ""),
+      league: String(saved.league || ""),
+      region: String(saved.region || ""),
+      purchasePrice: Math.max(0, safeNumber(saved.purchasePrice, 0)),
+      debt: Math.max(0, safeNumber(saved.debt, 0)),
+      reputation: clamp(safeNumber(saved.reputation, 35), 0, 100),
+      fanMood: clamp(safeNumber(saved.fanMood, 60), 0, 100),
+      pressure: clamp(safeNumber(saved.pressure, 50), 0, 100),
+      valuation: Math.max(0, safeNumber(saved.valuation, 0)),
+      safSoldPct: clamp(safeNumber(saved.safSoldPct, 0), 0, 90),
+      sponsorsLevel: Math.max(0, safeInt(saved.sponsorsLevel, 0)),
+      tvLevel: Math.max(0, safeInt(saved.tvLevel, 0)),
+      structures: {
+        ct: Math.max(0, safeInt(saved.structures?.ct, 0)),
+        base: Math.max(0, safeInt(saved.structures?.base, 0)),
+        estadio: Math.max(0, safeInt(saved.structures?.estadio, 0)),
+        medico: Math.max(0, safeInt(saved.structures?.medico, 0)),
+        scout: Math.max(0, safeInt(saved.structures?.scout, 0))
+      },
+      europeBranch: Boolean(saved.europeBranch),
+      networkClubs: clamp(safeInt(saved.networkClubs, 0), 0, 2),
+      roster: Array.isArray(saved.roster) ? saved.roster.map((p) => ({
+        id: String(p?.id || ""),
+        age: clamp(safeInt(p?.age, 18), 14, 45),
+        potential: clamp(safeInt(p?.potential, 70), 50, 99),
+        mediaScore: clamp(safeInt(p?.mediaScore, 0), 0, 100),
+        value: Math.max(0, safeNumber(p?.value, 0)),
+        developed: Boolean(p?.developed)
+      })).filter((p) => p.id).slice(0, 120) : [],
+      youthPool: Array.isArray(saved.youthPool) ? saved.youthPool.map((p) => ({
+        id: String(p?.id || ""),
+        age: clamp(safeInt(p?.age, 16), 14, 21),
+        potential: clamp(safeInt(p?.potential, 72), 50, 99),
+        mediaScore: clamp(safeInt(p?.mediaScore, 0), 0, 100),
+        value: Math.max(0, safeNumber(p?.value, 0)),
+        developed: Boolean(p?.developed)
+      })).filter((p) => p.id).slice(0, 20) : [],
+      investors: {
+        arab: Boolean(saved.investors?.arab),
+        us: Boolean(saved.investors?.us),
+        ipo: Boolean(saved.investors?.ipo)
+      },
+      titles: Math.max(0, safeInt(saved.titles, 0)),
+      libertadores: Math.max(0, safeInt(saved.libertadores, 0)),
+      champions: Math.max(0, safeInt(saved.champions, 0)),
+      trophies: {
+        brasileirao: Math.max(0, safeInt(saved.trophies?.brasileirao, 0)),
+        copaDoBrasil: Math.max(0, safeInt(saved.trophies?.copaDoBrasil, 0)),
+        libertadores: Math.max(0, safeInt(saved.trophies?.libertadores, 0)),
+        champions: Math.max(0, safeInt(saved.trophies?.champions, 0))
+      },
+      trophyHistory: Array.isArray(saved.trophyHistory)
+        ? saved.trophyHistory.map((t) => ({
+          year: Math.max(1, safeInt(t?.year, 1)),
+          name: String(t?.name || "").trim().slice(0, 48)
+        })).filter((t) => t.name).slice(0, 24)
+        : [],
+      competitions: (() => {
+        const baseComp = createSafCompetitions();
+        const src = saved.competitions && typeof saved.competitions === "object" ? saved.competitions : {};
+        const srcLeague = src.league && typeof src.league === "object" ? src.league : {};
+        const srcCopa = src.copa && typeof src.copa === "object" ? src.copa : {};
+        const srcLib = src.libertadores && typeof src.libertadores === "object" ? src.libertadores : {};
+        return {
+          seasonYear: Math.max(1, safeInt(src.seasonYear, state.year)),
+          lastActionMonthStamp: String(src.lastActionMonthStamp || ""),
+          league: {
+            tier: String(srcLeague.tier || baseComp.league.tier || "A"),
+            name: String(srcLeague.name || baseComp.league.name),
+            roundsTotal: Math.max(10, safeInt(srcLeague.roundsTotal, baseComp.league.roundsTotal)),
+            roundsPlayed: Math.max(0, safeInt(srcLeague.roundsPlayed, 0)),
+            points: Math.max(0, safeInt(srcLeague.points, 0)),
+            wins: Math.max(0, safeInt(srcLeague.wins, 0)),
+            draws: Math.max(0, safeInt(srcLeague.draws, 0)),
+            losses: Math.max(0, safeInt(srcLeague.losses, 0)),
+            goalsFor: Math.max(0, safeInt(srcLeague.goalsFor, 0)),
+            goalsAgainst: Math.max(0, safeInt(srcLeague.goalsAgainst, 0)),
+            position: clamp(safeInt(srcLeague.position, 20), 1, 20),
+            finished: Boolean(srcLeague.finished)
+          },
+          copa: {
+            phase: Math.max(0, safeInt(srcCopa.phase, 0)),
+            phases: Array.isArray(srcCopa.phases) && srcCopa.phases.length ? srcCopa.phases.slice(0, 8).map((x) => String(x || "")) : baseComp.copa.phases,
+            alive: Boolean(srcCopa.alive ?? true),
+            finished: Boolean(srcCopa.finished)
+          },
+          libertadores: {
+            qualified: Boolean(srcLib.qualified),
+            phase: Math.max(0, safeInt(srcLib.phase, 0)),
+            phases: Array.isArray(srcLib.phases) && srcLib.phases.length ? srcLib.phases.slice(0, 8).map((x) => String(x || "")) : baseComp.libertadores.phases,
+            alive: Boolean(srcLib.alive ?? true),
+            finished: Boolean(srcLib.finished)
+          }
+        };
+      })(),
+      lastMonthly: {
+        revenue: Math.max(0, safeNumber(saved.lastMonthly?.revenue, 0)),
+        costs: Math.max(0, safeNumber(saved.lastMonthly?.costs, 0)),
+        net: safeNumber(saved.lastMonthly?.net, 0)
+      },
+      eventFeed: Array.isArray(saved.eventFeed) ? saved.eventFeed.filter((x) => typeof x === "string").slice(0, 40) : []
+    };
+  } else {
+    state.saf = defaultSafState();
+  }
+
   if (Array.isArray(data.garage)) {
     state.garage = data.garage
       .map((car) => ({
@@ -2897,6 +5053,40 @@ function applySave(data) {
       usd: { balance: 0, rate: 5.45, min: 4.9, max: 7.1 },
       eur: { balance: 0, rate: 7.15, min: 6.7, max: 7.8 }
     };
+  }
+
+  if (data.crypto && typeof data.crypto === "object") {
+    const base = defaultCryptoState();
+    state.crypto = {
+      selectedCoinId: cryptoCoinById(String(data.crypto.selectedCoinId || "BTC")).id,
+      coins: { ...base.coins },
+      market: { ...base.market },
+      spaces: {},
+      gpus: {}
+    };
+    cryptoCoinsCatalog.forEach((coin) => {
+      state.crypto.coins[coin.id] = Math.max(0, safeNumber(data.crypto.coins?.[coin.id], 0));
+      state.crypto.market[coin.id] = clamp(safeNumber(data.crypto.market?.[coin.id], coin.priceUsd), coin.min, coin.max);
+    });
+    cryptoMiningSpacesCatalog.forEach((space) => {
+      state.crypto.spaces[space.id] = Math.max(0, safeInt(data.crypto.spaces?.[space.id], 0));
+    });
+    cryptoGpuCatalog.forEach((gpu) => {
+      state.crypto.gpus[gpu.id] = Math.max(0, safeInt(data.crypto.gpus?.[gpu.id], 0));
+    });
+  } else {
+    state.crypto = defaultCryptoState();
+  }
+
+  if (data.savings && typeof data.savings === "object") {
+    state.savings = {
+      balance: Math.max(0, safeNumber(data.savings.balance, 0)),
+      monthlyRate: clamp(safeNumber(data.savings.monthlyRate, 0.01), 0, 0.05),
+      lastYield: Math.max(0, safeNumber(data.savings.lastYield, 0)),
+      totalYield: Math.max(0, safeNumber(data.savings.totalYield, 0))
+    };
+  } else {
+    state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   }
 
   const savedUpgrades = Array.isArray(data.upgrades) ? data.upgrades : [];
@@ -2968,11 +5158,13 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 
 el.clickBtn.addEventListener("click", () => {
   ensureAudio();
+  updateClickCombo();
   const gain = effectiveClickValue();
   state.money += gain;
   state.monthRevenue += gain;
   state.stats.totalClicks += 1;
   state.stats.clickRevenue += gain;
+  state.yearlyClickRevenue += gain;
   state.stats.peakMoney = Math.max(state.stats.peakMoney, state.money);
   addXp(1 + state.prestigePoints);
   animateClickFx(gain);
@@ -3003,6 +5195,24 @@ el.saveProfileBtn.addEventListener("click", () => {
   setStatus("Personagem salvo.", "ok");
   render();
 });
+
+if (el.farmNameBtn) {
+  el.farmNameBtn.addEventListener("click", () => {
+    const name = String(el.farmNameInput?.value || "").trim();
+    if (!name) {
+      setStatus("Informe um nome para a fazenda.", "warn");
+      return;
+    }
+    state.farm.name = name.slice(0, 32);
+    if (el.farmNameInput) el.farmNameInput.value = "";
+    setStatus("Nome da fazenda atualizado.", "ok");
+    render();
+  });
+}
+
+if (el.farmBuyHectaresBtn) {
+  el.farmBuyHectaresBtn.addEventListener("click", () => buyHectares());
+}
 
 el.saveLocalBtn.addEventListener("click", () => {
   const phone = (state.player.telefone || el.phoneInput.value || "").replace(/\D/g, "");
@@ -3096,10 +5306,21 @@ el.refreshContractsBtn.addEventListener("click", () => {
 el.loanSmallBtn.addEventListener("click", () => requestLoan(25000, 12, 0.14, "Emprestimo pequeno"));
 el.loanMediumBtn.addEventListener("click", () => requestLoan(90000, 18, 0.18, "Emprestimo medio"));
 el.loanLargeBtn.addEventListener("click", () => requestLoan(260000, 24, 0.22, "Emprestimo grande"));
+if (el.savingsDepositBtn) el.savingsDepositBtn.addEventListener("click", depositSavings);
+if (el.savingsWithdrawBtn) el.savingsWithdrawBtn.addEventListener("click", withdrawSavings);
 el.usdBuyBtn.addEventListener("click", () => buyForex("USD"));
 el.usdSellAllBtn.addEventListener("click", () => sellAllForex("USD"));
 el.eurBuyBtn.addEventListener("click", () => buyForex("EUR"));
 el.eurSellAllBtn.addEventListener("click", () => sellAllForex("EUR"));
+if (el.cryptoCoinSelect) {
+  el.cryptoCoinSelect.addEventListener("change", () => {
+    state.crypto.selectedCoinId = cryptoCoinById(el.cryptoCoinSelect.value).id;
+    render();
+  });
+}
+if (el.cryptoSellAllBtn) {
+  el.cryptoSellAllBtn.addEventListener("click", convertAllCryptoToUsd);
+}
 el.researchAutomationBtn.addEventListener("click", () => investResearch("automation"));
 el.researchHrBtn.addEventListener("click", () => investResearch("hr"));
 el.researchBrandingBtn.addEventListener("click", () => investResearch("branding"));
@@ -3140,6 +5361,7 @@ setInterval(() => {
     render();
     return;
   }
+  mineCryptoSecond();
   state.secondsToMonth -= 1;
   if (state.secondsToMonth <= 0) {
     processMonth();
@@ -3171,3 +5393,6 @@ if (loadedDeviceSave) {
   logEvent("Jogo iniciado. Clique para ganhar dinheiro.", "ok");
 }
 render();
+
+
+
