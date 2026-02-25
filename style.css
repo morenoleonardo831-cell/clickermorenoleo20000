@@ -31,10 +31,11 @@ body {
     linear-gradient(140deg, var(--bg-1), var(--bg-2));
   background-size: 140% 140%;
   animation: bgShift 11s ease-in-out infinite alternate;
-  touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes bgShift {
@@ -45,8 +46,10 @@ body {
 .wrap {
   width: min(100%, 430px);
   margin: 0 auto;
+  min-height: 100svh;
   min-height: 100dvh;
   padding: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
   display: grid;
   gap: 10px;
 }
@@ -234,6 +237,7 @@ body {
   gap: 8px;
   max-height: 44dvh;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 2px;
 }
 
@@ -243,6 +247,7 @@ body {
   gap: 8px;
   max-height: 30dvh;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
   padding-right: 2px;
 }
 
@@ -534,6 +539,13 @@ textarea {
 }
 
 @media (max-width: 560px) {
+  .list,
+  .ach-list,
+  .ranking-list {
+    max-height: none;
+    overflow: visible;
+  }
+
   .tax-dialog {
     width: min(100%, 460px);
     padding: 12px;
