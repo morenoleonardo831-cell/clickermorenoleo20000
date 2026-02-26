@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   @default("player")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  save      Save?
+}
+
+model Save {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  data        Json
+  money       Float    @default(0)
+  patrimonio  Float    @default(0)
+  level       Int      @default(1)
+  prestige    Int      @default(0)
+  year        Int      @default(1)
+  month       Int      @default(1)
+  playerName  String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

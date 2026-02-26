@@ -764,6 +764,20 @@ textarea {
       <div class="title">Ranking local por telefone</div>
       <button class="btn" id="refreshRankingBtn">Atualizar ranking</button>
       <div class="ranking-list" id="rankingList"></div>
+      <div class="title">Conta online</div>
+      <div class="mini">Crie uma conta para salvar no servidor e recuperar em qualquer dispositivo.</div>
+      <input id="cloudEmail" type="email" placeholder="Email" />
+      <input id="cloudPassword" type="password" placeholder="Senha (min 6)" />
+      <div class="btn-row">
+        <button class="btn" id="cloudRegisterBtn">Criar conta</button>
+        <button class="btn alt" id="cloudLoginBtn">Entrar</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="cloudSaveBtn">Salvar na nuvem</button>
+        <button class="btn alt" id="cloudLoadBtn">Carregar da nuvem</button>
+      </div>
+      <button class="btn alt" id="cloudLogoutBtn">Sair da conta</button>
+      <div class="mini" id="cloudStatus">Conta online desconectada.</div>
     </section>
 
     <section class="panel glass" id="tab-banco">
@@ -920,6 +934,34 @@ textarea {
         <button class="btn alt" id="adminClearDebtsBtn">Quitar dividas</button>
         <button class="btn alt" id="adminLogoutBtn">Sair do painel admin</button>
       </div>
+
+      <div class="title">Admin online (contas)</div>
+      <div class="mini">Gerencie contas e salvos do servidor.</div>
+      <input id="adminApiEmail" type="email" placeholder="Email admin" />
+      <input id="adminApiPassword" type="password" placeholder="Senha admin" />
+      <div class="btn-row">
+        <button class="btn" id="adminApiLoginBtn">Entrar no servidor</button>
+        <button class="btn alt" id="adminApiLogoutBtn">Sair do servidor</button>
+      </div>
+      <div class="mini" id="adminApiStatus">Admin online desconectado.</div>
+
+      <input id="adminUserEmail" type="email" placeholder="Email do jogador" />
+      <div class="btn-row">
+        <button class="btn" id="adminFetchUserBtn">Buscar conta</button>
+      </div>
+      <div class="mini" id="adminUserInfo">Nenhum jogador selecionado.</div>
+      <input id="adminUserMoneyInput" type="number" min="1" step="1" placeholder="Valor em R$" />
+      <div class="btn-row">
+        <button class="btn" id="adminUserAddMoneyBtn">Adicionar dinheiro</button>
+        <button class="btn alt" id="adminUserRemoveMoneyBtn">Remover dinheiro</button>
+        <button class="btn alt" id="adminUserSetMoneyBtn">Definir dinheiro</button>
+      </div>
+      <div class="mini">Edicao direta do save (JSON)</div>
+      <textarea id="adminUserSaveText" placeholder="Carregue o save do jogador aqui"></textarea>
+      <div class="btn-row">
+        <button class="btn" id="adminUserLoadSaveBtn">Carregar save</button>
+        <button class="btn alt" id="adminUserApplySaveBtn">Aplicar save</button>
+      </div>
     </section>
 
     <section class="panel glass" id="tab-reset">
@@ -967,20 +1009,24 @@ const DEVICE_AUTOSAVE_KEY = "imperio_clicker_device_autosave_v1";
 const ADMIN_ACCESS = "admin";
 const ADMIN_PASSWORD = "Nub@2026";
 const ADMIN_MAX_ADVANCE_MONTHS = 120;
+const CLOUD_API_BASE = window.CLOUD_API_BASE || "http://localhost:4000";
+const CLOUD_TOKEN_KEY = "imperio_clicker_cloud_token_v1";
+const CLOUD_EMAIL_KEY = "imperio_clicker_cloud_email_v1";
+const ADMIN_API_TOKEN_KEY = "imperio_clicker_admin_token_v1";
 const FARM_HECTARE_PRICE = 90000;
-const FARM_YIELD_PCT = 0.012;
+const FARM_YIELD_PCT = 0.0075;
 const COMPANY_MARGIN_OPTIONS = [
-  { label: "Conservador", mult: 0.9 },
-  { label: "Equilibrado", mult: 1 },
-  { label: "Agressivo", mult: 1.12 },
-  { label: "Premium", mult: 1.25 }
+  { label: "Conservador", mult: 0.8 },
+  { label: "Equilibrado", mult: 0.9 },
+  { label: "Agressivo", mult: 1 },
+  { label: "Premium", mult: 1.1 }
 ];
 const GPU_CAPACITY_PER_UNIT = 20;
 const CLICK_VALUE_BASE = 10;
 const CLICK_VALUE_MAX = 1000;
 const CLICK_UPGRADE_STEP = 10;
-const CLICK_UPGRADE_BASE_COST = 4000;
-const CLICK_UPGRADE_GROWTH = 1.45;
+const CLICK_UPGRADE_BASE_COST = 8000;
+const CLICK_UPGRADE_GROWTH = 1.65;
 const CLICK_UPGRADE_LEVEL_BASE = 2;
 
 const cryptoCoinsCatalog = [
@@ -1010,24 +1056,24 @@ const upgrades = [
 ];
 
 const companies = [
-  { id: "quiosque", nome: "Quiosque", setor: "Varejo", baseCost: 50000, baseIncome: 2500, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "cafeteria", nome: "Cafeteria", setor: "Alimentos", baseCost: 150000, baseIncome: 6500, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "mercado", nome: "Mini mercado", setor: "Varejo", baseCost: 350000, baseIncome: 14000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "academia", nome: "Academia", setor: "Servicos", baseCost: 600000, baseIncome: 23000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "agencia_marketing", nome: "Agencia de marketing", setor: "Digital", baseCost: 900000, baseIncome: 33000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "startup", nome: "Startup", setor: "Tecnologia", baseCost: 1400000, baseIncome: 50000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "fabrica", nome: "Fabrica", setor: "Industria", baseCost: 3000000, baseIncome: 100000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "rede_hoteis", nome: "Rede de hoteis", setor: "Turismo", baseCost: 7000000, baseIncome: 210000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "fintech", nome: "Fintech", setor: "Financeiro", baseCost: 15000000, baseIncome: 420000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 35000000, baseIncome: 900000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "ecommerce", nome: "E-commerce nacional", setor: "Digital", baseCost: 65000000, baseIncome: 1600000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "logistica", nome: "Operadora logistica", setor: "Industria", baseCost: 95000000, baseIncome: 2300000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "construtora", nome: "Construtora urbana", setor: "Industria", baseCost: 140000000, baseIncome: 3300000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "rede_hospitais", nome: "Rede de hospitais", setor: "Servicos", baseCost: 220000000, baseIncome: 5200000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "telecom", nome: "Operadora telecom", setor: "Tecnologia", baseCost: 320000000, baseIncome: 7600000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "energia", nome: "Geradora de energia", setor: "Industria", baseCost: 500000000, baseIncome: 12200000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "biotech", nome: "Biotech farmaceutica", setor: "Tecnologia", baseCost: 780000000, baseIncome: 19000000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
-  { id: "banco_investimentos", nome: "Banco de investimentos", setor: "Financeiro", baseCost: 1200000000, baseIncome: 30000000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
+  { id: "quiosque", nome: "Quiosque", setor: "Varejo", baseCost: 75000, baseIncome: 2000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "cafeteria", nome: "Cafeteria", setor: "Alimentos", baseCost: 225000, baseIncome: 5200, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "mercado", nome: "Mini mercado", setor: "Varejo", baseCost: 525000, baseIncome: 11200, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "academia", nome: "Academia", setor: "Servicos", baseCost: 900000, baseIncome: 18400, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "agencia_marketing", nome: "Agencia de marketing", setor: "Digital", baseCost: 1350000, baseIncome: 26400, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "startup", nome: "Startup", setor: "Tecnologia", baseCost: 2100000, baseIncome: 40000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fabrica", nome: "Fabrica", setor: "Industria", baseCost: 4500000, baseIncome: 80000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "rede_hoteis", nome: "Rede de hoteis", setor: "Turismo", baseCost: 10500000, baseIncome: 168000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "fintech", nome: "Fintech", setor: "Financeiro", baseCost: 22500000, baseIncome: 336000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "holding", nome: "Holding global", setor: "Conglomerado", baseCost: 52500000, baseIncome: 720000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "ecommerce", nome: "E-commerce nacional", setor: "Digital", baseCost: 97500000, baseIncome: 1280000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "logistica", nome: "Operadora logistica", setor: "Industria", baseCost: 142500000, baseIncome: 1840000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "construtora", nome: "Construtora urbana", setor: "Industria", baseCost: 210000000, baseIncome: 2640000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "rede_hospitais", nome: "Rede de hospitais", setor: "Servicos", baseCost: 330000000, baseIncome: 4160000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "telecom", nome: "Operadora telecom", setor: "Tecnologia", baseCost: 480000000, baseIncome: 6080000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "energia", nome: "Geradora de energia", setor: "Industria", baseCost: 750000000, baseIncome: 9760000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "biotech", nome: "Biotech farmaceutica", setor: "Tecnologia", baseCost: 1170000000, baseIncome: 15200000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 },
+  { id: "banco_investimentos", nome: "Banco de investimentos", setor: "Financeiro", baseCost: 1800000000, baseIncome: 24000000, owned: 0, level: 0, employees: 0, salaryTier: 1, marketFactor: 1, lastIncome: 0 }
 ];
 
 const initialUpgradeBase = upgrades.map((u) => ({ id: u.id, baseCost: u.baseCost }));
@@ -1688,7 +1734,30 @@ const el = {
   adminBoostBtn: document.getElementById("adminBoostBtn"),
   adminUnlockBtn: document.getElementById("adminUnlockBtn"),
   adminClearDebtsBtn: document.getElementById("adminClearDebtsBtn"),
-  adminLogoutBtn: document.getElementById("adminLogoutBtn")
+  adminLogoutBtn: document.getElementById("adminLogoutBtn"),
+  cloudEmail: document.getElementById("cloudEmail"),
+  cloudPassword: document.getElementById("cloudPassword"),
+  cloudRegisterBtn: document.getElementById("cloudRegisterBtn"),
+  cloudLoginBtn: document.getElementById("cloudLoginBtn"),
+  cloudSaveBtn: document.getElementById("cloudSaveBtn"),
+  cloudLoadBtn: document.getElementById("cloudLoadBtn"),
+  cloudLogoutBtn: document.getElementById("cloudLogoutBtn"),
+  cloudStatus: document.getElementById("cloudStatus"),
+  adminApiEmail: document.getElementById("adminApiEmail"),
+  adminApiPassword: document.getElementById("adminApiPassword"),
+  adminApiLoginBtn: document.getElementById("adminApiLoginBtn"),
+  adminApiLogoutBtn: document.getElementById("adminApiLogoutBtn"),
+  adminApiStatus: document.getElementById("adminApiStatus"),
+  adminUserEmail: document.getElementById("adminUserEmail"),
+  adminFetchUserBtn: document.getElementById("adminFetchUserBtn"),
+  adminUserInfo: document.getElementById("adminUserInfo"),
+  adminUserMoneyInput: document.getElementById("adminUserMoneyInput"),
+  adminUserAddMoneyBtn: document.getElementById("adminUserAddMoneyBtn"),
+  adminUserRemoveMoneyBtn: document.getElementById("adminUserRemoveMoneyBtn"),
+  adminUserSetMoneyBtn: document.getElementById("adminUserSetMoneyBtn"),
+  adminUserSaveText: document.getElementById("adminUserSaveText"),
+  adminUserLoadSaveBtn: document.getElementById("adminUserLoadSaveBtn"),
+  adminUserApplySaveBtn: document.getElementById("adminUserApplySaveBtn")
 };
 
 const moneyFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -2294,7 +2363,7 @@ function companyPayroll(c) {
   if (c.owned <= 0) return 0;
   const tierMult = salaryTierMultiplier(c.salaryTier);
   const levelPressure = 1 + c.level * 0.05;
-  const base = companyTotalIncome(c) * 0.18;
+  const base = companyTotalIncome(c) * 0.27;
   return Math.floor(base * tierMult * levelPressure);
 }
 
@@ -2331,7 +2400,7 @@ function ownedRealEstateCount() {
 }
 
 function monthlyOperationalCost() {
-  const variable = Math.floor(totalCompanyIncome() * 0.12);
+  const variable = Math.floor(totalCompanyIncome() * 0.21);
   return Math.floor(variable * automationCostFactor());
 }
 
@@ -3646,6 +3715,292 @@ function setStatus(msg, type = "") {
   el.statusMsg.textContent = msg;
 }
 
+let adminApiSession = { token: "", userId: "" };
+let adminSelectedUserId = "";
+
+function getCloudToken() {
+  return localStorage.getItem(CLOUD_TOKEN_KEY) || "";
+}
+
+function setCloudToken(token, email = "") {
+  if (token) localStorage.setItem(CLOUD_TOKEN_KEY, token);
+  if (email) localStorage.setItem(CLOUD_EMAIL_KEY, email);
+  renderCloudStatus();
+}
+
+function clearCloudToken() {
+  localStorage.removeItem(CLOUD_TOKEN_KEY);
+  renderCloudStatus();
+}
+
+function getCloudEmail() {
+  return localStorage.getItem(CLOUD_EMAIL_KEY) || "";
+}
+
+function getAdminApiToken() {
+  return localStorage.getItem(ADMIN_API_TOKEN_KEY) || "";
+}
+
+function setAdminApiToken(token) {
+  if (token) localStorage.setItem(ADMIN_API_TOKEN_KEY, token);
+  renderAdminApiStatus();
+}
+
+function clearAdminApiToken() {
+  localStorage.removeItem(ADMIN_API_TOKEN_KEY);
+  renderAdminApiStatus();
+}
+
+function setCloudStatus(msg, type = "") {
+  if (!el.cloudStatus) return;
+  el.cloudStatus.className = `mini ${type}`.trim();
+  el.cloudStatus.textContent = msg;
+}
+
+function renderCloudStatus() {
+  if (!el.cloudStatus) return;
+  const token = getCloudToken();
+  if (token) {
+    const email = getCloudEmail();
+    if (el.cloudEmail && email && !el.cloudEmail.value) el.cloudEmail.value = email;
+    setCloudStatus(`Conectado${email ? `: ${email}` : ""}.`, "ok");
+  } else {
+    setCloudStatus("Conta online desconectada.", "warn");
+  }
+}
+
+function setAdminApiStatus(msg, type = "") {
+  if (!el.adminApiStatus) return;
+  el.adminApiStatus.className = `mini ${type}`.trim();
+  el.adminApiStatus.textContent = msg;
+}
+
+function renderAdminApiStatus() {
+  if (!el.adminApiStatus) return;
+  const token = getAdminApiToken();
+  setAdminApiStatus(token ? "Admin online conectado." : "Admin online desconectado.", token ? "ok" : "warn");
+}
+
+async function apiRequest(path, opts = {}) {
+  const url = `${CLOUD_API_BASE}${path}`;
+  const headers = { "Content-Type": "application/json", ...(opts.headers || {}) };
+  const res = await fetch(url, { ...opts, headers });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error || "Falha na API.";
+    throw new Error(msg);
+  }
+  return data;
+}
+
+async function cloudRegister() {
+  const email = String(el.cloudEmail?.value || "").trim().toLowerCase();
+  const password = String(el.cloudPassword?.value || "");
+  if (!email || password.length < 6) {
+    setCloudStatus("Informe email e senha valida (min 6).", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password }) });
+    setCloudToken(data.token, email);
+    setCloudStatus("Conta criada e conectada.", "ok");
+  } catch (err) {
+    setCloudStatus(err.message, "bad");
+  }
+}
+
+async function cloudLogin() {
+  const email = String(el.cloudEmail?.value || "").trim().toLowerCase();
+  const password = String(el.cloudPassword?.value || "");
+  if (!email || !password) {
+    setCloudStatus("Informe email e senha.", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    setCloudToken(data.token, email);
+    setCloudStatus("Conectado com sucesso.", "ok");
+  } catch (err) {
+    setCloudStatus(err.message, "bad");
+  }
+}
+
+async function cloudSave() {
+  const token = getCloudToken();
+  if (!token) {
+    setCloudStatus("Faca login antes de salvar.", "warn");
+    return;
+  }
+  const payload = {
+    data: serializeState(),
+    meta: {
+      money: state.money,
+      patrimonio: getPatrimonio(),
+      level: state.level,
+      prestige: state.prestigePoints,
+      year: state.year,
+      month: state.month,
+      playerName: state.player?.nome || ""
+    }
+  };
+  try {
+    await apiRequest("/api/save", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload)
+    });
+    setCloudStatus("Save enviado para a nuvem.", "ok");
+  } catch (err) {
+    setCloudStatus(err.message, "bad");
+  }
+}
+
+async function cloudLoad() {
+  const token = getCloudToken();
+  if (!token) {
+    setCloudStatus("Faca login antes de carregar.", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest("/api/save", { headers: { Authorization: `Bearer ${token}` } });
+    applySave(data.data);
+    render();
+    setCloudStatus("Save carregado da nuvem.", "ok");
+  } catch (err) {
+    setCloudStatus(err.message, "bad");
+  }
+}
+
+async function adminApiLogin() {
+  const email = String(el.adminApiEmail?.value || "").trim().toLowerCase();
+  const password = String(el.adminApiPassword?.value || "");
+  if (!email || !password) {
+    setAdminApiStatus("Informe email e senha.", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+    setAdminApiToken(data.token);
+    setAdminApiStatus("Admin conectado.", "ok");
+  } catch (err) {
+    setAdminApiStatus(err.message, "bad");
+  }
+}
+
+async function adminApiFetchUser() {
+  const token = getAdminApiToken();
+  const email = String(el.adminUserEmail?.value || "").trim().toLowerCase();
+  if (!token) {
+    setAdminApiStatus("Faca login admin.", "warn");
+    return;
+  }
+  if (!email) {
+    setAdminApiStatus("Informe o email do jogador.", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest(`/api/admin/users?search=${encodeURIComponent(email)}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const match = (data.users || []).find((u) => String(u.email).toLowerCase() === email) || data.users?.[0];
+    if (!match) {
+      adminSelectedUserId = "";
+      if (el.adminUserInfo) el.adminUserInfo.textContent = "Jogador nao encontrado.";
+      return;
+    }
+    adminSelectedUserId = match.id;
+    if (el.adminUserInfo) {
+      const save = match.save;
+      el.adminUserInfo.textContent = save
+        ? `ID ${match.id} | ${match.email} | Patrimonio ${formatMoney(save.patrimonio)} | Dinheiro ${formatMoney(save.money)} | Atualizado ${new Date(save.updatedAt).toLocaleString("pt-BR")}`
+        : `ID ${match.id} | ${match.email} | Sem save registrado.`;
+    }
+  } catch (err) {
+    setAdminApiStatus(err.message, "bad");
+  }
+}
+
+async function adminApiAdjustMoney(mode) {
+  const token = getAdminApiToken();
+  const amount = Math.floor(safeNumber(el.adminUserMoneyInput?.value, 0));
+  if (!token) {
+    setAdminApiStatus("Faca login admin.", "warn");
+    return;
+  }
+  if (!adminSelectedUserId) {
+    setAdminApiStatus("Selecione um jogador.", "warn");
+    return;
+  }
+  if (!amount || amount <= 0) {
+    setAdminApiStatus("Informe um valor valido.", "warn");
+    return;
+  }
+  try {
+    await apiRequest(`/api/admin/users/${adminSelectedUserId}/money`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ mode, amount })
+    });
+    await adminApiFetchUser();
+    setAdminApiStatus("Saldo atualizado.", "ok");
+  } catch (err) {
+    setAdminApiStatus(err.message, "bad");
+  }
+}
+
+async function adminApiLoadSave() {
+  const token = getAdminApiToken();
+  if (!token) {
+    setAdminApiStatus("Faca login admin.", "warn");
+    return;
+  }
+  if (!adminSelectedUserId) {
+    setAdminApiStatus("Selecione um jogador.", "warn");
+    return;
+  }
+  try {
+    const data = await apiRequest(`/api/admin/users/${adminSelectedUserId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (el.adminUserSaveText) {
+      el.adminUserSaveText.value = data.save ? JSON.stringify(data.save.data, null, 2) : "";
+    }
+    setAdminApiStatus("Save carregado.", "ok");
+  } catch (err) {
+    setAdminApiStatus(err.message, "bad");
+  }
+}
+
+async function adminApiApplySave() {
+  const token = getAdminApiToken();
+  if (!token) {
+    setAdminApiStatus("Faca login admin.", "warn");
+    return;
+  }
+  if (!adminSelectedUserId) {
+    setAdminApiStatus("Selecione um jogador.", "warn");
+    return;
+  }
+  let data;
+  try {
+    data = JSON.parse(String(el.adminUserSaveText?.value || ""));
+  } catch {
+    setAdminApiStatus("JSON invalido.", "bad");
+    return;
+  }
+  try {
+    await apiRequest(`/api/admin/users/${adminSelectedUserId}/save`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ data })
+    });
+    await adminApiFetchUser();
+    setAdminApiStatus("Save aplicado.", "ok");
+  } catch (err) {
+    setAdminApiStatus(err.message, "bad");
+  }
+}
+
 function renderAdminPanel() {
   if (!el.adminLoginBox || !el.adminActionsBox) return;
   const locked = !adminSession.loggedIn;
@@ -3858,12 +4213,12 @@ function adminClearDebts() {
 
 function taxRateFor(avgMonthly) {
   const income = Math.max(0, safeNumber(avgMonthly, 0));
-  if (income <= 10000) return 0.1;
-  if (income <= 50000) return 0.16;
-  if (income <= 150000) return 0.23;
-  if (income <= 400000) return 0.3;
-  if (income <= 900000) return 0.38;
-  return 0.44;
+  if (income <= 10000) return 0.14;
+  if (income <= 50000) return 0.22;
+  if (income <= 150000) return 0.31;
+  if (income <= 400000) return 0.4;
+  if (income <= 900000) return 0.5;
+  return 0.58;
 }
 
 function applyYearlyInflation() {
@@ -4196,22 +4551,46 @@ function upsertRankingEntry() {
 function renderRanking() {
   const list = loadRanking();
   el.rankingList.innerHTML = "";
-  if (!list.length) {
+  const playerName = (state.player.nome || "Jogador").trim();
+  const playerPhone = (state.player.telefone || "").replace(/\D/g, "");
+  const liveEntry = {
+    name: playerName,
+    phone: playerPhone || "-",
+    patrimonio: getPatrimonio(),
+    money: state.money,
+    level: state.level,
+    prestige: state.prestigePoints,
+    year: state.year,
+    month: state.month,
+    live: true
+  };
+
+  const combined = list.slice();
+  if (playerPhone) {
+    const idx = combined.findIndex((x) => String(x.phone) === playerPhone);
+    if (idx >= 0) combined[idx] = { ...combined[idx], ...liveEntry };
+    else combined.push(liveEntry);
+  } else if (combined.length === 0) {
+    combined.push(liveEntry);
+  }
+
+  if (!combined.length) {
     el.rankingList.innerHTML = `<div class="mini">Ranking vazio. Salve um jogo vinculado ao telefone.</div>`;
     return;
   }
 
-  list
+  combined
     .sort((a, b) => Number(b.patrimonio || 0) - Number(a.patrimonio || 0))
     .slice(0, 20)
     .forEach((r, i) => {
       const name = escapeHtml(r.name || "Jogador");
       const phone = escapeHtml(r.phone || "-");
+      const label = r.live ? `${name} (voce)` : name;
       const row = document.createElement("div");
       row.className = "rank-item";
       row.innerHTML = `
-        <div class="rank-head"><span>#${i + 1} ${name}</span><span>${formatMoney(Number(r.patrimonio || 0))}</span></div>
-        <div class="rank-meta">Tel: ${phone} | Nivel ${Number(r.level || 1)} | Prestigio ${Number(r.prestige || 0)}</div>
+        <div class="rank-head"><span>#${i + 1} ${label}</span><span>${formatMoney(Number(r.patrimonio || 0))}</span></div>
+        <div class="rank-meta">Tel: ${phone} | Nivel ${Number(r.level || 1)} | Prestigio ${Number(r.prestige || 0)} | Dinheiro ${formatMoney(Number(r.money || 0))}</div>
         <div class="rank-meta">Tempo: Ano ${Number(r.year || 1)}, Mes ${Number(r.month || 1)}</div>
       `;
       el.rankingList.appendChild(row);
@@ -4238,15 +4617,17 @@ function renderWorldRanking() {
   roster.sort((a, b) => b.wealthBrl - a.wealthBrl);
   const playerRank = roster.findIndex((x) => x.isPlayer) + 1;
   const top5 = roster.slice(0, 5);
+  const showPlayer = playerRank > 5 && playerRank <= 6;
+  const displayList = showPlayer ? top5.concat(roster[playerRank - 1]) : top5;
 
   el.worldRankingInfo.textContent = `Base Forbes 2025 | Conversao atual: USD ${formatMoney(usdRate)}. Sua posicao: #${playerRank}`;
   el.worldRankingList.innerHTML = "";
-  top5.forEach((r, i) => {
+  displayList.forEach((r, i) => {
     const row = document.createElement("div");
     row.className = "rank-item";
     const label = r.isPlayer ? `${escapeHtml(r.name)} (voce)` : escapeHtml(r.name);
     row.innerHTML = `
-      <div class="rank-head"><span>#${i + 1} ${label}</span><span class="rank-value">${formatWealthBrl(r.wealthBrl)}</span></div>
+      <div class="rank-head"><span>#${i + 1} ${label}</span><span class="rank-value">${formatMoney(r.wealthBrl)}</span></div>
       <div class="rank-meta">${r.isPlayer ? "Patrimonio atual no jogo" : "Fortuna de referencia convertida para BRL"}</div>
     `;
     el.worldRankingList.appendChild(row);
@@ -4260,6 +4641,12 @@ function buildAnnualCloseSummary() {
   const avg = Math.max(0, total / 12);
   const rate = taxRateFor(avg);
   const yearlyTax = Math.floor(avg * rate);
+  const patrimonio = Math.max(0, getPatrimonio());
+  let wealthRate = 0;
+  if (patrimonio > 1000000000) wealthRate = 0.015;
+  else if (patrimonio > 200000000) wealthRate = 0.01;
+  else if (patrimonio > 50000000) wealthRate = 0.005;
+  const yearlyWealthTax = Math.floor(patrimonio * wealthRate);
   const yearlyIpva = Math.floor(garageAnnualIpva());
   const previousDebt = Math.max(0, safeNumber(state.tax.debt, 0));
   const debtInterest = Math.floor(previousDebt * state.economy.interest);
@@ -4271,11 +4658,14 @@ function buildAnnualCloseSummary() {
     avg,
     rate,
     yearlyTax,
+    patrimonio,
+    wealthRate,
+    yearlyWealthTax,
     yearlyIpva,
     previousDebt,
     debtInterest,
     debtDue,
-    totalDue: yearlyTax + yearlyIpva + debtDue
+    totalDue: yearlyTax + yearlyWealthTax + yearlyIpva + debtDue
   };
 }
 
@@ -4297,6 +4687,9 @@ function updateTaxOverlay() {
   const avg = Math.max(0, safeNumber(summary.avg, 0));
   const rate = clamp(safeNumber(summary.rate, 0), 0, 1);
   const yearlyTax = Math.max(0, safeNumber(summary.yearlyTax, 0));
+  const patrimonio = Math.max(0, safeNumber(summary.patrimonio, 0));
+  const wealthRate = clamp(safeNumber(summary.wealthRate, 0), 0, 1);
+  const yearlyWealthTax = Math.max(0, safeNumber(summary.yearlyWealthTax, 0));
   const yearlyIpva = Math.max(0, safeNumber(summary.yearlyIpva, 0));
   const previousDebt = Math.max(0, safeNumber(summary.previousDebt, 0));
   const debtInterest = Math.max(0, safeNumber(summary.debtInterest, 0));
@@ -4316,10 +4709,13 @@ function updateTaxOverlay() {
           <div class="tax-row"><span>Receita de cliques</span><strong>${formatMoney(clickYear)}</strong></div>
           <div class="tax-row"><span>Media mensal</span><strong>${formatMoney(avg)}</strong></div>
           <div class="tax-row"><span>Aliquota</span><strong>${(rate * 100).toFixed(1)}%</strong></div>
+          <div class="tax-row"><span>Base de patrimonio</span><strong>${formatMoney(patrimonio)}</strong></div>
+          <div class="tax-row"><span>Aliquota grandes fortunas</span><strong>${(wealthRate * 100).toFixed(2)}%</strong></div>
         </div>
         <div class="tax-block">
           <div class="tax-block-title">Composicao da cobranca</div>
           <div class="tax-row"><span>Imposto base</span><strong>${formatMoney(yearlyTax)}</strong></div>
+          <div class="tax-row"><span>Imposto grandes fortunas</span><strong>${formatMoney(yearlyWealthTax)}</strong></div>
           <div class="tax-row"><span>IPVA anual</span><strong>${formatMoney(yearlyIpva)}</strong></div>
           <div class="tax-row"><span>Divida anterior</span><strong>${formatMoney(previousDebt)}</strong></div>
           <div class="tax-row"><span>Juros da divida</span><strong>${formatMoney(debtInterest)}</strong></div>
@@ -4346,6 +4742,7 @@ function closeYear(settleNow) {
     avg,
     rate,
     yearlyTax,
+    yearlyWealthTax,
     yearlyIpva,
     previousDebt,
     debtInterest,
@@ -5838,9 +6235,13 @@ function applySave(data) {
       ? {
         closeYear: Math.max(1, safeInt(data.tax.pendingYearClose.closeYear, state.year)),
         totalYearRevenue: Math.max(0, safeNumber(data.tax.pendingYearClose.totalYearRevenue, 0)),
+        clickYearRevenue: Math.max(0, safeNumber(data.tax.pendingYearClose.clickYearRevenue, 0)),
         avg: Math.max(0, safeNumber(data.tax.pendingYearClose.avg, 0)),
         rate: clamp(safeNumber(data.tax.pendingYearClose.rate, 0), 0, 1),
         yearlyTax: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyTax, 0)),
+        patrimonio: Math.max(0, safeNumber(data.tax.pendingYearClose.patrimonio, 0)),
+        wealthRate: clamp(safeNumber(data.tax.pendingYearClose.wealthRate, 0), 0, 1),
+        yearlyWealthTax: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyWealthTax, 0)),
         yearlyIpva: Math.max(0, safeNumber(data.tax.pendingYearClose.yearlyIpva, 0)),
         previousDebt: Math.max(0, safeNumber(data.tax.pendingYearClose.previousDebt, 0)),
         debtInterest: Math.max(0, safeNumber(data.tax.pendingYearClose.debtInterest, 0)),
@@ -6315,6 +6716,15 @@ el.importBtn.addEventListener("click", () => {
   }
 });
 
+if (el.cloudRegisterBtn) el.cloudRegisterBtn.addEventListener("click", cloudRegister);
+if (el.cloudLoginBtn) el.cloudLoginBtn.addEventListener("click", cloudLogin);
+if (el.cloudSaveBtn) el.cloudSaveBtn.addEventListener("click", cloudSave);
+if (el.cloudLoadBtn) el.cloudLoadBtn.addEventListener("click", cloudLoad);
+if (el.cloudLogoutBtn) el.cloudLogoutBtn.addEventListener("click", () => {
+  clearCloudToken();
+  setCloudStatus("Conta desconectada.", "warn");
+});
+
 el.refreshRankingBtn.addEventListener("click", () => {
   renderRanking();
   setStatus("Ranking atualizado.", "ok");
@@ -6332,9 +6742,9 @@ el.refreshContractsBtn.addEventListener("click", () => {
   render();
 });
 
-el.loanSmallBtn.addEventListener("click", () => requestLoan(25000, 12, 0.14, "Emprestimo pequeno"));
-el.loanMediumBtn.addEventListener("click", () => requestLoan(90000, 18, 0.18, "Emprestimo medio"));
-el.loanLargeBtn.addEventListener("click", () => requestLoan(260000, 24, 0.22, "Emprestimo grande"));
+el.loanSmallBtn.addEventListener("click", () => requestLoan(25000, 12, 0.22, "Emprestimo pequeno"));
+el.loanMediumBtn.addEventListener("click", () => requestLoan(90000, 18, 0.3, "Emprestimo medio"));
+el.loanLargeBtn.addEventListener("click", () => requestLoan(260000, 24, 0.38, "Emprestimo grande"));
 if (el.savingsDepositBtn) el.savingsDepositBtn.addEventListener("click", depositSavings);
 if (el.savingsWithdrawBtn) el.savingsWithdrawBtn.addEventListener("click", withdrawSavings);
 el.usdBuyBtn.addEventListener("click", () => buyForex("USD"));
@@ -6385,6 +6795,18 @@ if (el.adminPasswordInput) {
   });
 }
 
+if (el.adminApiLoginBtn) el.adminApiLoginBtn.addEventListener("click", adminApiLogin);
+if (el.adminApiLogoutBtn) el.adminApiLogoutBtn.addEventListener("click", () => {
+  clearAdminApiToken();
+  setAdminApiStatus("Admin online desconectado.", "warn");
+});
+if (el.adminFetchUserBtn) el.adminFetchUserBtn.addEventListener("click", adminApiFetchUser);
+if (el.adminUserAddMoneyBtn) el.adminUserAddMoneyBtn.addEventListener("click", () => adminApiAdjustMoney("add"));
+if (el.adminUserRemoveMoneyBtn) el.adminUserRemoveMoneyBtn.addEventListener("click", () => adminApiAdjustMoney("remove"));
+if (el.adminUserSetMoneyBtn) el.adminUserSetMoneyBtn.addEventListener("click", () => adminApiAdjustMoney("set"));
+if (el.adminUserLoadSaveBtn) el.adminUserLoadSaveBtn.addEventListener("click", adminApiLoadSave);
+if (el.adminUserApplySaveBtn) el.adminUserApplySaveBtn.addEventListener("click", adminApiApplySave);
+
 setInterval(() => {
   if (hasPendingTaxDecision()) {
     render();
@@ -6416,6 +6838,8 @@ const loadedDeviceSave = loadDeviceProgress();
 ensureDailyMissionsFresh();
 ensureWorldWealthInitialized();
 initParticipationMarket();
+renderCloudStatus();
+renderAdminApiStatus();
 if (loadedDeviceSave) {
   logEvent("Progresso local do dispositivo carregado automaticamente.", "ok");
 } else {
