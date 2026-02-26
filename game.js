@@ -27,6 +27,7 @@ const CLICK_UPGRADE_STEP = 10;
 const CLICK_UPGRADE_BASE_COST = 8000;
 const CLICK_UPGRADE_GROWTH = 1.65;
 const CLICK_UPGRADE_LEVEL_BASE = 2;
+const CLICK_DISABLE_WEALTH_THRESHOLD = 50000000;
 
 const franchiseSegments = [
   { id: "alimentacao", nome: "Alimentacao", setupCost: 350000, minSales: 1, maxSales: 4, annualGrowth: 0.11 },
@@ -125,10 +126,6 @@ const farmInvestments = [
   { id: "armazenagem", nome: "Armazenagem e silos", baseCost: 320000, bonus: 0.1 },
   { id: "maquinario", nome: "Maquinario moderno", baseCost: 520000, bonus: 0.14 },
   { id: "tecnologia", nome: "Agro 4.0 e sensores", baseCost: 760000, bonus: 0.18 }
-];
-
-const cattleCatalog = [
-  { id: "boi", nome: "Boi (padrao)", buy: 9000, sell: 13500 }
 ];
 
 const participationCatalog = [
@@ -418,9 +415,7 @@ const state = {
   farm: {
     name: "",
     hectares: 0,
-    investments: {},
-    cattle: [],
-    nextCattleId: 1
+    investments: {}
   },
   realEstate: {
     owned: {},
@@ -596,6 +591,7 @@ const el = {
   skipMonthBtn: document.getElementById("skipMonthBtn"),
   monthRevenue: document.getElementById("monthRevenue"),
   clickBtn: document.getElementById("clickBtn"),
+  clickBlockNotice: document.getElementById("clickBlockNotice"),
   floatGain: document.getElementById("floatGain"),
   monthBar: document.getElementById("monthBar"),
   contractList: document.getElementById("contractList"),
@@ -619,7 +615,6 @@ const el = {
   farmHectarePrice: document.getElementById("farmHectarePrice"),
   farmHectaresInput: document.getElementById("farmHectaresInput"),
   farmBuyHectaresBtn: document.getElementById("farmBuyHectaresBtn"),
-  cattleList: document.getElementById("cattleList"),
   farmInvestList: document.getElementById("farmInvestList"),
   aircraftSummary: document.getElementById("aircraftSummary"),
   aircraftAnnualDue: document.getElementById("aircraftAnnualDue"),
@@ -1652,45 +1647,6 @@ function buyHectares() {
   render();
 }
 
-function buyCattle(cattleId, qty) {
-  const item = cattleCatalog.find((x) => x.id === cattleId);
-  if (!item) return;
-  const amount = Math.floor(safeNumber(qty, 0));
-  if (!Number.isFinite(amount) || amount <= 0) {
-    setStatus("Informe a quantidade de gado.", "warn");
-    return;
-  }
-  const cost = amount * item.buy;
-  if (state.money < cost) {
-    setStatus("Saldo insuficiente para comprar gado.", "bad");
-    return;
-  }
-  state.money -= cost;
-  state.farm.cattle.push({
-    id: state.farm.nextCattleId++,
-    cattleId: item.id,
-    nome: item.nome,
-    qty: amount,
-    buyPrice: item.buy,
-    sellPrice: item.sell
-  });
-  logEvent(`Gado comprado: ${amount}x ${item.nome} por ${formatMoney(cost)}.`, "ok");
-  sfxBuy();
-  render();
-}
-
-function processFarmCattleSales() {
-  if (!state.farm?.cattle?.length) return 0;
-  const revenue = state.farm.cattle.reduce((sum, batch) => sum + batch.qty * batch.sellPrice, 0);
-  state.farm.cattle = [];
-  if (revenue > 0) {
-    state.money += revenue;
-    state.monthRevenue += revenue;
-    logEvent(`Venda automatica de gado: +${formatMoney(revenue)}.`, "ok");
-  }
-  return revenue;
-}
-
 function renderFarm() {
   if (!el.farmName) return;
   const name = (state.farm.name || "Sem nome").trim();
@@ -1700,25 +1656,6 @@ function renderFarm() {
   el.farmHectares.textContent = `${hectares.toLocaleString("pt-BR")} ha`;
   el.farmIncome.textContent = `${formatMoney(income)}/mes`;
   el.farmHectarePrice.textContent = formatMoney(FARM_HECTARE_PRICE);
-
-  if (el.cattleList) {
-    el.cattleList.innerHTML = "";
-    cattleCatalog.forEach((item) => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <div class="title">${escapeHtml(item.nome)}</div>
-        <div class="meta">Compra: ${formatMoney(item.buy)} | Venda automatica: ${formatMoney(item.sell)}</div>
-        <div class="btn-row">
-          <input class="input-mini" type="number" min="1" step="1" placeholder="Qtd" />
-          <button class="btn">Comprar gado</button>
-        </div>
-      `;
-      const input = card.querySelector("input");
-      card.querySelector("button").addEventListener("click", () => buyCattle(item.id, input.value));
-      el.cattleList.appendChild(card);
-    });
-  }
 
   if (el.farmInvestList) {
     el.farmInvestList.innerHTML = "";
@@ -3924,7 +3861,6 @@ function updateTaxOverlay() {
 
 function closeYear(settleNow) {
   settleAviationYearlyCharges();
-  const cattleRevenue = processFarmCattleSales();
   const summary = hasPendingTaxDecision() ? state.tax.pendingYearClose : buildAnnualCloseSummary();
   const {
     avg,
@@ -3989,10 +3925,6 @@ function closeYear(settleNow) {
   } else if (totalDue > 0) {
     logEvent(`Impostos/IPVA quitados. BRL ${formatMoney(paidFromCash)} + contas globais ${formatMoney(paidFromFx)}.`, "ok");
   }
-  if (cattleRevenue > 0) {
-    logEvent(`Venda anual de gado: +${formatMoney(cattleRevenue)}.`, "ok");
-  }
-
   evolveEconomyYearly();
   applyYearlyInflation();
   logEvent(
@@ -4865,7 +4797,7 @@ function resetCharacter() {
   state.reputation = 50;
   state.prestigePoints = 0;
   state.clickCombo = { streak: 0, best: 0, lastTs: 0 };
-  state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+  state.farm = { name: "", hectares: 0, investments: {} };
   state.realEstate = { owned: {}, personalUse: {} };
   farmInvestments.forEach((inv) => {
     state.farm.investments[inv.id] = 0;
@@ -5014,7 +4946,7 @@ function doPrestige() {
   state.savings = { balance: 0, monthlyRate: 0.01, lastYield: 0, totalYield: 0 };
   state.contracts = { lastOfferMonthStamp: 0, offers: [], active: [] };
   state.reputation = clamp(state.reputation + 4, 0, 100);
-  state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+  state.farm = { name: "", hectares: 0, investments: {} };
   state.realEstate = { owned: {}, personalUse: {} };
   farmInvestments.forEach((inv) => {
     state.farm.investments[inv.id] = 0;
@@ -5065,7 +4997,18 @@ function render() {
     el.fixedCostLine.textContent = `Gastos fixos anuais: ${formatMoney(fixedAnnual)}`;
   }
   el.monthRevenue.textContent = formatMoney(state.monthRevenue);
-  el.clickBtn.textContent = `CLICAR (+${formatMoney(clickGain)})`;
+  const patrimonio = getPatrimonio();
+  const clickBlockedByPatrimonio = patrimonio >= CLICK_DISABLE_WEALTH_THRESHOLD;
+  el.clickBtn.disabled = clickBlockedByPatrimonio;
+  el.clickBtn.textContent = clickBlockedByPatrimonio
+    ? `CLIQUE BLOQUEADO (${formatMoney(CLICK_DISABLE_WEALTH_THRESHOLD)})`
+    : `CLICAR (+${formatMoney(clickGain)})`;
+  if (el.clickBlockNotice) {
+    el.clickBlockNotice.classList.toggle("show", clickBlockedByPatrimonio);
+    el.clickBlockNotice.textContent = clickBlockedByPatrimonio
+      ? `Clique bloqueado: patrimonio atual ${formatMoney(patrimonio)} (limite ${formatMoney(CLICK_DISABLE_WEALTH_THRESHOLD)}).`
+      : `Clique sera bloqueado automaticamente ao atingir patrimonio de ${formatMoney(CLICK_DISABLE_WEALTH_THRESHOLD)}.`;
+  }
   const clickUpgradeCost = nextClickUpgradeCost();
   const clickUpgradeLevelReq = nextClickUpgradeLevelReq();
   if (el.clickUpgradeLevelReq) {
@@ -5085,7 +5028,6 @@ function render() {
   el.skipMonthBtn.disabled = hasPendingTaxDecision();
   updateTaxOverlay();
 
-  const patrimonio = getPatrimonio();
   el.statLevel.textContent = String(state.level);
   el.statXp.textContent = `${state.xp} / ${xpToNext(state.level)}`;
   el.statMultiplier.textContent = `x${mult.toFixed(2)}`;
@@ -5264,30 +5206,17 @@ function applySave(data) {
     state.farm = {
       name: String(data.farm.name || "").trim().slice(0, 32),
       hectares: Math.max(0, safeInt(data.farm.hectares, 0)),
-      investments: {},
-      cattle: Array.isArray(data.farm.cattle)
-        ? data.farm.cattle.map((c) => ({
-          id: Math.max(1, safeInt(c?.id, 1)),
-          cattleId: String(c?.cattleId || ""),
-          nome: String(c?.nome || "Gado"),
-          qty: Math.max(1, safeInt(c?.qty, 1)),
-          buyPrice: Math.max(1, safeNumber(c?.buyPrice, 1)),
-          sellPrice: Math.max(1, safeNumber(c?.sellPrice, 1))
-        })).filter((c) => c.cattleId && c.qty > 0).slice(0, 200)
-        : [],
-      nextCattleId: Math.max(1, safeInt(data.farm.nextCattleId, 1))
+      investments: {}
     };
     farmInvestments.forEach((inv) => {
       state.farm.investments[inv.id] = Math.max(0, safeInt(investments[inv.id], 0));
     });
   } else {
-    state.farm = { name: "", hectares: 0, investments: {}, cattle: [], nextCattleId: 1 };
+    state.farm = { name: "", hectares: 0, investments: {} };
     farmInvestments.forEach((inv) => {
       state.farm.investments[inv.id] = 0;
     });
   }
-  const maxCattleId = state.farm.cattle.reduce((max, c) => Math.max(max, c.id), 0);
-  state.farm.nextCattleId = Math.max(maxCattleId + 1, state.farm.nextCattleId || 1);
 
   if (data.realEstate && typeof data.realEstate === "object") {
     const owned = data.realEstate.owned && typeof data.realEstate.owned === "object" ? data.realEstate.owned : {};
@@ -5822,6 +5751,11 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 });
 
 el.clickBtn.addEventListener("click", () => {
+  if (getPatrimonio() >= CLICK_DISABLE_WEALTH_THRESHOLD) {
+    setStatus(`Clique bloqueado ao atingir patrimonio de ${formatMoney(CLICK_DISABLE_WEALTH_THRESHOLD)}.`, "warn");
+    render();
+    return;
+  }
   ensureAudio();
   updateClickCombo();
   const gain = effectiveClickValue();

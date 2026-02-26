@@ -188,6 +188,18 @@ body {
   animation: floatUp 0.65s ease;
 }
 
+.click-block-note {
+  display: none;
+  border: 1px solid rgba(245, 194, 81, 0.45);
+  background: rgba(245, 194, 81, 0.1);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.click-block-note.show {
+  display: block;
+}
+
 @keyframes floatUp {
   0% { opacity: 0; transform: translateY(8px); }
   20% { opacity: 1; }
